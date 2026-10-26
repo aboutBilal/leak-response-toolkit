@@ -1,0 +1,3 @@
+# Output of the scripts: leaked code and reports never get committed here
+evidence/
+*secrets-report*.json
