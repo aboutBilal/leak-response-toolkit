@@ -37,7 +37,7 @@ commit_all() {
 }
 
 @test "every script exits 2 when required arguments are missing" {
-  for s in snapshot-evidence list-forks hunt-copies find-commit-copies scan-secrets; do
+  for s in snapshot-evidence list-forks hunt-copies find-commit-copies scan-secrets make-report; do
     run "$ROOT/scripts/$s.sh"
     [ "$status" -eq 2 ] || { echo "$s exited $status"; false; }
   done
@@ -102,4 +102,78 @@ commit_all() {
   [[ "$output" == *"FULL git history"* ]]
   run "$ROOT/leak" forks "not a repo"
   [ "$status" -eq 2 ]
+}
+
+@test "audit: a repository tracking .env gets grade F and exits 1" {
+  new_repo "$TMP/bad"
+  echo "DB_PASSWORD=$(LC_ALL=C tr -dc 'a-z0-9' </dev/urandom | head -c 12)" > "$TMP/bad/.env"
+  commit_all "$TMP/bad" "add env"
+  NO_COLOR=1 run "$ROOT/scripts/audit.sh" --no-scan "$TMP/bad"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"tracked by Git: .env"* ]]
+  [[ "$output" == *"Grade F"* ]]
+}
+
+@test "audit: a repository using the prevention kit gets grade A" {
+  new_repo "$TMP/good"
+  cp "$ROOT/prevention/gitignore-secrets" "$TMP/good/.gitignore"
+  cp "$ROOT/prevention/pre-commit-config.yaml" "$TMP/good/.pre-commit-config.yaml"
+  mkdir -p "$TMP/good/.github/workflows"
+  cp "$ROOT/prevention/ci/github-actions.yml" "$TMP/good/.github/workflows/secret-scan.yml"
+  cp "$ROOT/prevention/hooks/pre-commit" "$TMP/good/.git/hooks/pre-commit"
+  echo "hello" > "$TMP/good/README.md"
+  commit_all "$TMP/good" "init"
+  NO_COLOR=1 run "$ROOT/scripts/audit.sh" --no-scan "$TMP/good"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Grade A"* ]] || [[ "$output" == *"Grade B"* ]]
+}
+
+@test "audit: not a git repository exits 2" {
+  run "$ROOT/scripts/audit.sh" --no-scan "$TMP"
+  [ "$status" -eq 2 ]
+}
+
+@test "report: builds HTML from hunt results and escapes content" {
+  mkdir -p "$TMP/hunt"
+  echo '{"run":"20260101T000000Z","since":"2025-12-01","repos":["someone/example"]}' > "$TMP/hunt/meta.json"
+  {
+    echo '{"section":"someone/example","check":"Wayback Machine","status":"clean","detail":"0 captures"}'
+    echo '{"section":"someone/example","check":"Direct forks","status":"found","detail":"<script>alert(1)</script>"}'
+  } > "$TMP/hunt/results.jsonl"
+  run "$ROOT/scripts/make-report.sh" "$TMP/hunt" --out "$TMP/r.html"
+  [ "$status" -eq 0 ]
+  grep -q "1 found" "$TMP/r.html"
+  grep -q "someone/example" "$TMP/r.html"
+  ! grep -q "<script>alert" "$TMP/r.html"
+}
+
+@test "report: rejects a folder that is not a hunt" {
+  run "$ROOT/scripts/make-report.sh" "$TMP"
+  [ "$status" -eq 2 ]
+}
+
+@test "doctor: runs offline and reports the required tools" {
+  NO_COLOR=1 run "$ROOT/scripts/doctor.sh" --offline
+  [[ "$output" == *"Required"* ]]
+  [[ "$output" == *"jq"* ]]
+}
+
+@test "audit: documentation and example files do not cause false warnings" {
+  new_repo "$TMP/docs"
+  printf 'Load settings with dotenv or os.environ.\n' > "$TMP/docs/GUIDE.md"
+  printf 'FROM alpine\nENV API_TOKEN=placeholder\n' > "$TMP/docs/Dockerfile.example"
+  cp "$ROOT/prevention/gitignore-secrets" "$TMP/docs/.gitignore"
+  commit_all "$TMP/docs" "docs only"
+  NO_COLOR=1 run "$ROOT/scripts/audit.sh" --no-scan "$TMP/docs"
+  [[ "$output" != *"no .env.example"* ]]
+  [[ "$output" == *"no Dockerfiles"* ]]
+}
+
+@test "audit: a real Dockerfile baking a secret value is critical" {
+  new_repo "$TMP/img"
+  printf 'FROM alpine\nENV API_TOKEN=%s\n' "$(LC_ALL=C tr -dc 'a-z0-9' </dev/urandom | head -c 16)" > "$TMP/img/Dockerfile"
+  commit_all "$TMP/img" "image"
+  NO_COLOR=1 run "$ROOT/scripts/audit.sh" --no-scan "$TMP/img"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"baked into an image"* ]]
 }

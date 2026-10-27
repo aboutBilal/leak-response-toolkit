@@ -1,0 +1,24 @@
+# Organisation gitleaks configuration: the built-in rules, plus your own.
+# Use it:  gitleaks git --config prevention/gitleaks.toml .
+# Or put it at the repository root as .gitleaks.toml (picked up automatically).
+title = "organisation secret rules"
+
+[extend]
+# Keep every built-in rule (cloud providers, payment, chat, VCS tokens, private keys, ...)
+useDefault = true
+
+# Your own token formats: add one rule per internal credential type.
+# Prefix-based formats ("acme_live_") are the most reliable to detect.
+[[rules]]
+id = "internal-service-token"
+description = "Internal service token (example format: acme_svc_ followed by 32 hex characters)"
+regex = '''\bacme_svc_[0-9a-f]{32}\b'''
+keywords = ["acme_svc_"]
+
+# Allow-lists: keep them short and specific. Every entry is a place secrets are not looked for.
+[allowlist]
+description = "Paths that never hold real secrets"
+paths = [
+  '''(^|/)\.env\.(example|sample|template)$''',
+  '''(^|/)testdata/fixtures/''',
+]

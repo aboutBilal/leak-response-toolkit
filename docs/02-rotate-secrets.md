@@ -156,6 +156,24 @@ TLS private keys (`.pem`, `.pfx`, `.key`): **revoke the certificate** with the i
 
 ---
 
+## 🗂️ More secret types: where to revoke
+
+The pattern is the same everywhere: **create the replacement → deploy it → revoke the old one → check the provider's usage or audit page** for the exposure window.
+
+| Secret | Revoke or rotate at | Watch out for |
+|---|---|---|
+| **AI provider API keys** (OpenAI, Anthropic, Google Gemini, Azure OpenAI, others) | The provider console's API keys page; Azure OpenAI: regenerate the resource key | Bills grow fast when stolen keys run inference; check usage and set spend limits |
+| **Container registry tokens** (Docker Hub, GHCR, ACR, ECR) | Registry account → access tokens | Pushed images: an attacker could replace tags. Verify image digests |
+| **Package registry tokens** (npm, PyPI, NuGet, RubyGems) | Registry account → tokens | Check for new package versions published in the window: a supply-chain risk |
+| **Kubernetes** (kubeconfig, service account tokens) | Rotate cluster credentials or delete the token; prefer short-lived tokens | A kubeconfig with admin rights means full cluster access: review workloads and RBAC changes |
+| **Terraform Cloud / HCP tokens** | User or team settings → tokens | Could change infrastructure: review runs in the window |
+| **Source platform tokens** (GitLab PAT, Bitbucket app password or access token, Azure DevOps PAT) | User or organisation settings → tokens | Check for new deploy keys, webhooks and pushes made with the token |
+| **Messaging and email** (Slack, Twilio, SendGrid, Mailgun) | The provider's API keys or app settings | Spam and phishing sent in your name; check sending logs |
+| **Payment providers** (Stripe and others) | Dashboard → API keys → roll key (most allow an overlap period) | Refunds, payouts or customer data access: review the event log |
+| **Webhooks with secrets in the URL** (chat incoming webhooks, CI triggers) | Delete and recreate the webhook | The URL **is** the secret |
+
+---
+
 ## 🧭 Order of operations, when there are many
 
 1. Anything that can **create resources or read customer data**.

@@ -4,6 +4,27 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-10-27
+
+Prevention becomes the second half of the kit: not only responding to leaks, but designing them out.
+
+### Added
+
+- **[Secrets by design](docs/08-secrets-by-design.md)**: an architecture guide with five principles, a reference architecture, an 8-layer control matrix, maturity levels 0–4, a 90-day rollout, metrics and a design-review checklist.
+- **[Prevention kit](prevention/README.md)**, every file tested: secret-aware `.gitignore`, pre-commit config (gitleaks, private-key detection, blocked secret file types), a plain git hook, a gitleaks config with custom rules, CI templates for GitHub Actions, GitLab, Azure Pipelines and Bitbucket, keyless OIDC login to AWS, Azure and Google Cloud, `.dockerignore`, a BuildKit build-secret example, `.env.example`.
+- `./leak audit`: grades a repository's secret hygiene A–F with a fix for every gap.
+- `./leak report`: builds the leadership report from hunt and scan results (secret types only; content HTML-escaped).
+- `./leak doctor`: checks a machine is ready before an incident.
+- **GitHub Action** (`action.yml`): `scan`, `audit` or `hunt` in any repository's CI, with job summaries; self-tested in this repository's CI.
+- `hunt` also writes machine-readable `results.jsonl` and `meta.json`.
+- Rotation guide: AI provider keys, container and package registries, Kubernetes, Terraform Cloud, source platform tokens, messaging, payments, webhooks.
+- Tests: 16 offline tests (audit grades, report escaping, doctor).
+
+### Changed
+
+- This repository now uses the prevention kit on itself (`./leak audit .` → Grade A).
+- README reorganised around **prevent** and **respond**.
+
 ## [1.1.0] - 2026-10-27
 
 ### Added
@@ -27,6 +48,7 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 - Templates: incident timeline, takedown request, notification messages, post-incident review, executive report (print-ready HTML).
 - Quality: offline bats tests, shellcheck, gitleaks on full history, link and anchor checks in CI, Dependabot for pinned actions, pre-commit hook, contribution guide, issue and pull request templates, security policy.
 
-[Unreleased]: https://github.com/aboutBilal/leak-response-toolkit/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/aboutBilal/leak-response-toolkit/compare/v2.0.0...HEAD
+[2.0.0]: https://github.com/aboutBilal/leak-response-toolkit/compare/v1.1.0...v2.0.0
 [1.1.0]: https://github.com/aboutBilal/leak-response-toolkit/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/aboutBilal/leak-response-toolkit/releases/tag/v1.0.0

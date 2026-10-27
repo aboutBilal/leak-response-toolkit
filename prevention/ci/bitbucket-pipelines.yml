@@ -1,0 +1,21 @@
+# Bitbucket Pipelines: merge into bitbucket-pipelines.yml.
+pipelines:
+  default:
+    - step:
+        name: Secret scan (full history, values redacted)
+        clone:
+          depth: full
+        services:
+          - docker
+        script:
+          - docker run --rm --network none -v "$BITBUCKET_CLONE_DIR:/repo:ro" ghcr.io/gitleaks/gitleaks:v8.30.1 git /repo --redact --no-banner --verbose
+  pull-requests:
+    "**":
+      - step:
+          name: Secret scan (full history, values redacted)
+          clone:
+            depth: full
+          services:
+            - docker
+          script:
+            - docker run --rm --network none -v "$BITBUCKET_CLONE_DIR:/repo:ro" ghcr.io/gitleaks/gitleaks:v8.30.1 git /repo --redact --no-banner --verbose

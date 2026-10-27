@@ -1,0 +1,29 @@
+# Copy to .github/workflows/secret-scan.yml
+# Scans every push and pull request across the full history, and the whole
+# repository weekly (catches secrets in branches nobody touched recently).
+name: secret-scan
+
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: "17 3 * * 1" # Mondays 03:17 UTC
+
+permissions:
+  contents: read
+
+jobs:
+  gitleaks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0 # full history: a secret deleted later is still a leak
+          persist-credentials: false
+
+      - name: Scan the full history (values redacted)
+        run: |
+          docker run --rm --network none -v "$PWD:/repo:ro" \
+            ghcr.io/gitleaks/gitleaks:v8.30.1 \
+            git /repo --redact --no-banner --verbose

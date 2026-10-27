@@ -1,0 +1,83 @@
+name: Leak Response Toolkit
+description: Scan the full git history for secrets, grade a repository's secret hygiene, or hunt for public copies of a leaked repository.
+author: aboutBilal
+branding:
+  icon: shield
+  color: orange
+
+inputs:
+  mode:
+    description: "scan (secrets in full history), audit (hygiene grade A-F), or hunt (public copies of a repository)"
+    required: false
+    default: scan
+  path:
+    description: Repository path for scan and audit (check it out with fetch-depth 0)
+    required: false
+    default: "."
+  repos:
+    description: "For hunt: space-separated owner/repo list"
+    required: false
+    default: ""
+  since:
+    description: "For hunt: look for same-name copies created on or after this date (YYYY-MM-DD)"
+    required: false
+    default: ""
+  fail-on-findings:
+    description: Fail the step when secrets, critical audit findings or copies are found
+    required: false
+    default: "true"
+
+outputs:
+  findings:
+    description: "Number of findings (scan: secrets; audit: 1 if critical; hunt: items needing follow-up)"
+    value: ${{ steps.run.outputs.findings }}
+
+runs:
+  using: composite
+  steps:
+    - id: run
+      shell: bash
+      env:
+        MODE: ${{ inputs.mode }}
+        TARGET: ${{ inputs.path }}
+        REPOS: ${{ inputs.repos }}
+        SINCE: ${{ inputs.since }}
+        FAIL: ${{ inputs.fail-on-findings }}
+        TOOLKIT: ${{ github.action_path }}
+      run: |
+        set -uo pipefail
+        out="${RUNNER_TEMP}/leak-toolkit"; mkdir -p "$out"
+        findings=0
+        case "$MODE" in
+          scan)
+            "$TOOLKIT/leak" scan "$TARGET" "$out/secrets-report.json" | tee "$out/log.txt"; rc=${PIPESTATUS[0]}
+            [[ "$rc" -gt 1 ]] && exit "$rc"
+            if [[ -f "$out/secrets-report.json" ]]; then findings="$(jq 'length' "$out/secrets-report.json")"; fi
+            {
+              echo "## 🔎 Secret scan (full history)"
+              if [[ "$findings" -eq 0 ]]; then echo "✅ No secrets found in any commit."
+              else
+                echo "⚠️ **$findings finding(s).** Values are redacted. Rotate each secret first, then clean history."
+                echo; echo "| Type | Findings | Files |"; echo "|---|---|---|"
+                jq -r 'group_by(.RuleID)[] | "| \(.[0].RuleID) | \(length) | \([.[].File]|unique|length) |"' "$out/secrets-report.json"
+              fi
+            } >> "$GITHUB_STEP_SUMMARY" ;;
+          audit)
+            NO_COLOR=1 "$TOOLKIT/leak" audit "$TARGET" | tee "$out/audit.txt"; findings=${PIPESTATUS[0]}
+            [[ "$findings" -gt 1 ]] && exit "$findings"
+            { echo "## 🛡️ Secret hygiene audit"; echo; echo '```'; cat "$out/audit.txt"; echo '```'; } >> "$GITHUB_STEP_SUMMARY" ;;
+          hunt)
+            [[ -n "$REPOS" ]] || { echo "::error::mode hunt needs the repos input"; exit 2; }
+            args=(--out "$out/hunts"); [[ -n "$SINCE" ]] && args+=(--since "$SINCE")
+            # shellcheck disable=SC2086
+            "$TOOLKIT/leak" hunt "${args[@]}" $REPOS
+            report="$(ls -d "$out"/hunts/hunt_*/REPORT.md | head -1)"
+            findings="$(grep -c '^| .*| ⚠️ \*\*found\*\* |' "$report" || true)"
+            cat "$report" >> "$GITHUB_STEP_SUMMARY" ;;
+          *) echo "::error::unknown mode: $MODE (use scan, audit or hunt)"; exit 2 ;;
+        esac
+        echo "findings=$findings" >> "$GITHUB_OUTPUT"
+        if [[ "$FAIL" == "true" && "$findings" -gt 0 ]]; then
+          echo "::error::$findings finding(s) - see the job summary"
+          exit 1
+        fi

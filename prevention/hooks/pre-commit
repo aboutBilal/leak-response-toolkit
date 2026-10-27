@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# Plain git pre-commit hook: no framework needed. Blocks commits that add files
+# which usually hold secrets, then scans the staged changes with gitleaks.
+#
+# Usage: cp prevention/hooks/pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
+#        (or, for every repo: git config --global core.hooksPath ~/.githooks and copy it there)
+# Note:  hooks run on the developer's machine and can be skipped with --no-verify.
+#        Enforce on the server too: push protection and a CI scan.
+set -euo pipefail
+
+case "${1:-}" in -h|--help) sed -n '2,/^set -/{/^#/s/^# \{0,1\}//p;}' "$0"; exit 0 ;; esac
+
+blocked='(^|/)(\.env(\.[^/]*)?|[^/]*\.(pem|key|p12|pfx|jks|keystore)|id_(rsa|dsa|ecdsa|ed25519)|[^/]*\.tfstate(\.[^/]*)?|kubeconfig|[^/]*\.kubeconfig)$'
+allowed='(^|/)\.env\.(example|sample|template)$'
+
+files="$(git diff --cached --name-only --diff-filter=ACMR | grep -E "$blocked" | grep -vE "$allowed" || true)"
+if [[ -n "$files" ]]; then
+  echo "✘ Commit blocked: these files usually hold secrets:" >&2
+  while read -r f; do echo "    $f" >&2; done <<<"$files"
+  echo "  Unstage with:  git restore --staged <file>   and add it to .gitignore." >&2
+  echo "  Commit a placeholder copy instead, e.g. .env.example." >&2
+  exit 1
+fi
+
+scan=(git --pre-commit --staged --redact --no-banner)
+if command -v gitleaks >/dev/null; then
+  gitleaks "${scan[@]}" || { echo "✘ Commit blocked: gitleaks found a secret in the staged changes (value redacted above)." >&2; exit 1; }
+elif command -v docker >/dev/null; then
+  top="$(git rev-parse --show-toplevel)"
+  docker run --rm --network none --user "$(id -u):$(id -g)" -v "$top:/repo" -w /repo \
+    ghcr.io/gitleaks/gitleaks:v8.30.1 "${scan[@]}" /repo \
+    || { echo "✘ Commit blocked: gitleaks found a secret in the staged changes (value redacted above)." >&2; exit 1; }
+else
+  echo "! gitleaks not installed: only file names were checked. Install: https://github.com/gitleaks/gitleaks#installing" >&2
+fi

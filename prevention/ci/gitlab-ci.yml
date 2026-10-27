@@ -1,0 +1,14 @@
+# Add this job to .gitlab-ci.yml. GitLab also offers built-in Secret Detection
+# and secret push protection (availability depends on your plan); this job works on any plan.
+secret-scan:
+  stage: test
+  image:
+    name: ghcr.io/gitleaks/gitleaks:v8.30.1
+    entrypoint: [""]
+  variables:
+    GIT_DEPTH: "0" # full history
+  script:
+    - gitleaks git . --redact --no-banner --verbose
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH

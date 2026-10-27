@@ -1,0 +1,23 @@
+# Azure Pipelines: add as a stage or a separate pipeline.
+# Azure DevOps also offers secret push protection through GitHub Advanced Security
+# for Azure DevOps (a paid add-on); this scan works without it.
+trigger:
+  branches:
+    include: ["*"]
+pr:
+  branches:
+    include: ["*"]
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+  - checkout: self
+    fetchDepth: 0 # full history
+    persistCredentials: false
+
+  - script: |
+      docker run --rm --network none -v "$(Build.SourcesDirectory):/repo:ro" \
+        ghcr.io/gitleaks/gitleaks:v8.30.1 \
+        git /repo --redact --no-banner --verbose
+    displayName: Secret scan (full history, values redacted)

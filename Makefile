@@ -1,7 +1,7 @@
 SHELL := /bin/bash
-SCRIPTS := $(wildcard scripts/*.sh) leak
+SCRIPTS := $(wildcard scripts/*.sh) leak prevention/hooks/pre-commit
 
-.PHONY: help check lint test scan
+.PHONY: help check lint test scan audit
 
 help: ## List the targets
 	@grep -E '^[a-z]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  make %-6s %s\n", $$1, $$2}'
@@ -19,3 +19,6 @@ test: ## Offline bats tests (install: apt install bats / brew install bats-core)
 
 scan: ## Secret scan of this repository's full history
 	@./scripts/scan-secrets.sh . "$${TMPDIR:-/tmp}/leak-response-toolkit-self-scan.json"
+
+audit: ## Grade this repository's own secret hygiene
+	@./leak audit .

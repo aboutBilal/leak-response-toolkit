@@ -4,18 +4,19 @@
 
 <p align="center">
   <a href="https://github.com/aboutBilal/leak-response-toolkit/actions/workflows/secret-scan.yml"><img src="https://github.com/aboutBilal/leak-response-toolkit/actions/workflows/secret-scan.yml/badge.svg" alt="checks"></a>
-  <a href="CHANGELOG.md"><img src="https://img.shields.io/badge/version-1.1.0-informational.svg" alt="version 1.1.0"></a>
+  <a href="CHANGELOG.md"><img src="https://img.shields.io/badge/version-2.0.0-informational.svg" alt="version 2.0.0"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="license MIT"></a>
   <a href="CONTRIBUTING.md"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg" alt="PRs welcome"></a>
 </p>
 
-<h3 align="center">Code or secrets went public? Here is what to do in the first hour,<br>how to find where copies survive, and how to stop it happening again.</h3>
+<h3 align="center">Stop secrets from leaking, and when they do, respond in minutes.<br>Architecture, tested prevention configs, incident runbooks and tools in one kit.</h3>
 
 <p align="center">
   <a href="#-start-here-what-happened"><b>🚨 In an incident? Start here</b></a> ·
-  <a href="CHEATSHEET.md">📄 One-page cheat sheet</a> ·
-  <a href="docs/01-runbook.md">📘 Full runbook</a> ·
-  <a href="docs/07-practice-drill.md">🎯 Practise first</a>
+  <a href="#-prevent-it-secrets-by-design"><b>🛡️ Prevent it</b></a> ·
+  <a href="CHEATSHEET.md">📄 Cheat sheet</a> ·
+  <a href="docs/01-runbook.md">📘 Runbook</a> ·
+  <a href="docs/07-practice-drill.md">🎯 Drill</a>
 </p>
 
 ---
@@ -28,6 +29,16 @@
 
 > [!IMPORTANT]
 > **Rotate first, delete second.** Deleting a repository does not un-leak anything; a revoked key does. Everything else in this kit limits the spread and tells you what happened.
+
+---
+
+## 🧩 Two halves, one kit
+
+| 🛡️ **Prevent** (before) | 🚑 **Respond** (during and after) |
+|---|---|
+| [Secrets by design](docs/08-secrets-by-design.md): principles, reference architecture, control matrix, maturity model, 90-day rollout, metrics | [Runbook](docs/01-runbook.md) and [scenarios](docs/06-scenarios.md) for every kind of leak |
+| [Prevention kit](prevention/README.md): tested hooks, CI templates for 4 platforms, keyless cloud login, Docker and `.env` patterns | [Rotate](docs/02-rotate-secrets.md) 25+ secret types, [investigate](docs/03-investigate.md) misuse, [hunt copies](docs/05-where-copies-survive.md) |
+| `./leak audit`: grade any repository A–F, with a fix for each gap | `./leak scan · hunt · report`: from evidence to a leadership report |
 
 ---
 
@@ -86,6 +97,9 @@ cd leak-response-toolkit
 | `./leak forks someuser/leaked-repo` | Lists every fork, including forks of forks, for the takedown |
 | `./leak hunt --since 2026-01-31 someuser/leaked-repo` | Checks 15+ public sources for surviving copies and writes a markdown report |
 | `./leak commits --exclude someuser/leaked-repo <sha> <sha>` | Finds renamed re-uploads that carry the original commits |
+| `./leak report hunts/hunt_<time> --scan report.json` | Builds the print-ready leadership report from the results (types only, never values) |
+| `./leak audit [path]` | Grades a repository's secret hygiene A–F, with a fix for every gap |
+| `./leak doctor` | Checks a machine is ready **before** an incident: tools, scanner, token, API budget |
 
 <p align="center"><img src="assets/demo-scan.svg" alt="Real output of ./leak scan: two secrets found in a commit that was later deleted, values redacted" width="88%"></p>
 
@@ -105,13 +119,18 @@ leak-response-toolkit/
 │   ├── 04-prevention.md             layers that stop leaks, with a measured test of what each catches
 │   ├── 05-where-copies-survive.md   archives, forks, re-uploads, evidence that disappears, removal requests
 │   ├── 06-scenarios.md              what changes per leak type: own repo, made public, copied, alerts, non-Git leaks
-│   └── 07-practice-drill.md         a 45-minute team exercise, no real secrets
+│   ├── 07-practice-drill.md         a 45-minute team exercise, no real secrets
+│   └── 08-secrets-by-design.md      architecture: principles, control matrix, maturity model, rollout
+├── prevention/                      tested, copy-ready: hooks, CI for 4 platforms, OIDC, Docker, .env
 ├── scripts/                         every script has --help
 │   ├── snapshot-evidence.sh         mirror + metadata + forks + traffic, with a checksum manifest
 │   ├── scan-secrets.sh              full-history scan, redacted summary
 │   ├── list-forks.sh                every fork, for the takedown request
 │   ├── hunt-copies.sh               15+ public sources checked, dated markdown report
-│   └── find-commit-copies.sh        public repos containing the original commit IDs
+│   ├── find-commit-copies.sh        public repos containing the original commit IDs
+│   ├── make-report.sh               leadership report from hunt + scan results
+│   ├── audit.sh                     secret hygiene grade A–F
+│   └── doctor.sh                    readiness check before an incident
 ├── templates/
 │   ├── incident-issue.md            team checklist to paste into a private issue
 │   ├── incident-timeline.md         fill-in timeline and decision log
@@ -120,27 +139,63 @@ leak-response-toolkit/
 │   ├── post-incident-review.md      blameless review with actions and owners
 │   └── executive-report.html        leadership report, print-ready A4
 ├── leak                             one command for every script: ./leak help
+├── action.yml                       GitHub Action: scan, audit or hunt in any CI
 ├── CHEATSHEET.md                    the first 15 minutes on one page
-├── tests/scripts.bats               offline tests; test secrets generated at runtime
+├── tests/scripts.bats               16 offline tests; test secrets generated at runtime
 ├── Makefile                         make check = shellcheck + tests + secret scan
-└── .github/                         CI (secrets, shellcheck, tests, links), Dependabot, issue and PR templates
+└── .github/                         CI (secrets, shellcheck, tests, links, action self-test), Dependabot, templates
 ```
 
 ---
 
-## 🛡️ Prevention in two commands
+## 🔒 Prevent it: secrets by design
 
-This repository protects itself the same way it recommends:
+Most leaks are preventable with layers that each assume the previous one failed:
 
-```bash
-pipx install pre-commit     # or: uv tool install pre-commit
-pre-commit install          # gitleaks now runs before every commit
+```mermaid
+flowchart LR
+    A["💻 Commit<br/>pre-commit hook"] --> B["🗂️ Push<br/>push protection"] --> C["⚙️ CI<br/>full-history scan"] --> D["📦 Build<br/>no secrets in images"] --> E["☁️ Deploy<br/>OIDC, no stored keys"] --> F["🔭 Run<br/>vault + identity + alerts"]
 ```
 
-And CI runs the same scan on every push ([`secret-scan.yml`](.github/workflows/secret-scan.yml)). The bigger wins, such as removing long-lived keys entirely, are in [`docs/04-prevention.md`](docs/04-prevention.md).
+```bash
+# Grade your repository and get a fix for each gap
+./leak audit ~/code/my-service
+
+# Block .env files, keys and secrets at commit time (tested)
+cp prevention/pre-commit-config.yaml ~/code/my-service/.pre-commit-config.yaml
+cd ~/code/my-service && pre-commit install
+```
+
+| Read | For |
+|---|---|
+| [**08 · Secrets by design**](docs/08-secrets-by-design.md) | Architects and platform leads: principles, control matrix, maturity levels 0–4, 90-day rollout, metrics, design-review checklist |
+| [**Prevention kit**](prevention/README.md) | Engineers: copy-ready files for Git, CI (GitHub, GitLab, Azure Pipelines, Bitbucket), OIDC to AWS/Azure/Google Cloud, Docker, `.env` |
+| [04 · Prevention](docs/04-prevention.md) | The short version, with a measured test of what push protection and gitleaks catch |
 
 > [!TIP]
-> **Measured, not assumed:** in a test with one fake credential of each of 9 types, GitHub push protection blocked 5 and gitleaks caught all 9. Details in [`docs/04-prevention.md`](docs/04-prevention.md#-what-each-layer-catches-a-measured-test).
+> **This repository follows its own advice:** it uses the kit's hooks and ignore rules, scans its full history in CI, and `./leak audit .` gives it **Grade A**.
+
+---
+
+## 🤖 Use it in your CI (GitHub Action)
+
+```yaml
+# .github/workflows/secrets.yml
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { fetch-depth: 0, persist-credentials: false }
+      - uses: aboutBilal/leak-response-toolkit@v2   # pin to a commit SHA in production
+        with:
+          mode: scan        # or: audit (grade A-F), hunt (public copies of `repos`)
+```
+
+Results appear in the job summary; secret values are always redacted. A weekly `mode: hunt` job on your critical repositories doubles as cheap public-leak monitoring.
 
 ---
 

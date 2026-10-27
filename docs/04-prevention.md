@@ -1,5 +1,8 @@
 # 04 · Prevention
 
+> [!TIP]
+> This page is the short version. For the full architecture (principles, control matrix, maturity model, 90-day rollout, metrics), read [**08 · Secrets by design**](08-secrets-by-design.md). For tested, ready-to-copy files, use the [**prevention kit**](../prevention/README.md), and grade any repository with `./leak audit`.
+
 Two layers: **make a leak less likely**, and **make a leak worth less**. The second matters more, because the first always fails eventually.
 
 ```mermaid

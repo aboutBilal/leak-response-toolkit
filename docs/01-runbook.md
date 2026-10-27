@@ -116,7 +116,7 @@ Signs of abuse: logins from unfamiliar IPs or countries, new compute (crypto-min
 - **Do not rely on rewriting history** (`git filter-repo`, BFG) to "un-leak" anything. It is useful for cleaning your *own* repo later; it does nothing about copies already taken.
 - Run a short blameless review with [`post-incident-review.md`](../templates/post-incident-review.md): how did the code leave, why was a secret in the repo, what would have caught it sooner?
 - Practise before the next one: [`07-practice-drill.md`](07-practice-drill.md).
-- Pick at least two changes from [`04-prevention.md`](04-prevention.md) and give each an owner and a date.
+- Pick at least two changes from [`08-secrets-by-design.md`](08-secrets-by-design.md) (the [prevention kit](../prevention/README.md) has tested files) and give each an owner and a date.
 
 ## ✅ Done when
 

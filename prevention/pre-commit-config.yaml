@@ -1,0 +1,27 @@
+# Block secrets before they become commits.
+# Install once per clone:   pipx install pre-commit && pre-commit install
+# Run on everything:        pre-commit run --all-files
+repos:
+  # 1. Secrets inside files (300+ formats, values redacted in output)
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.1
+    hooks:
+      - id: gitleaks
+
+  # 2. Private key blocks, even in unexpected file types
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: detect-private-key
+
+  # 3. Files that usually hold secrets, whatever their content
+  - repo: local
+    hooks:
+      - id: forbid-secret-files
+        name: Block files that usually hold secrets
+        language: fail
+        entry: >-
+          This file type usually holds secrets. Keep it out of Git (add it to .gitignore)
+          and commit a placeholder version such as .env.example instead.
+        files: '(^|/)(\.env(\.[^/]*)?|[^/]*\.(pem|key|p12|pfx|jks|keystore)|id_(rsa|dsa|ecdsa|ed25519)|[^/]*\.tfstate(\.[^/]*)?|kubeconfig|[^/]*\.kubeconfig)$'
+        exclude: '(^|/)\.env\.(example|sample|template)$'

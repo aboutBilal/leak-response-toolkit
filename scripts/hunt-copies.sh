@@ -32,6 +32,8 @@ out="$outroot/hunt_$stamp"
 raw="$out/raw"
 mkdir -p "$raw"
 report="$out/REPORT.md"
+results="$out/results.jsonl" # one JSON object per check, for ./leak report
+section=""
 
 # --- helpers ---------------------------------------------------------------
 gh() { # gh <path> <outfile> -> http code
@@ -42,8 +44,14 @@ gh() { # gh <path> <outfile> -> http code
 search_pause() { [[ -n "${GITHUB_TOKEN:-}" ]] && sleep 2 || sleep 7; } # search API: 10/min anonymous
 fetch() { curl -s --max-time 90 -o "$2" -w '%{http_code}' -A "leak-response-toolkit" "$1"; }
 safe() { echo "$1" | tr '/*:?&=' '______'; }
-row() { printf '| %s | %s | %s |\n' "$1" "$2" "$3" >> "$report"; }
 CLEAN="✅ clean"; FOUND="⚠️ **found**"; UNKNOWN="❔ not checked"
+row() {
+  printf '| %s | %s | %s |\n' "$1" "$2" "$3" >> "$report"
+  local status=info
+  case "$2" in "$CLEAN") status=clean ;; "$FOUND") status=found ;; "$UNKNOWN") status=unknown ;; esac
+  jq -cn --arg section "$section" --arg check "$1" --arg status "$status" --arg detail "$3" \
+    '{section: $section, check: $check, status: $status, detail: $detail}' >> "$results"
+}
 
 {
   echo "# Copy hunt report"
@@ -56,6 +64,8 @@ CLEAN="✅ clean"; FOUND="⚠️ **found**"; UNKNOWN="❔ not checked"
   echo "Legend: $CLEAN nothing found · $FOUND needs follow-up · $UNKNOWN source unavailable or rate-limited (check by hand)"
 } > "$report"
 
+jq -cn --arg run "$stamp" --arg since "$since" --args '{run: $run, since: $since, repos: $ARGS.positional}' "${repos[@]}" > "$out/meta.json"
+
 owners=()
 for r in "${repos[@]}"; do
   o="${r%%/*}"
@@ -66,6 +76,7 @@ done
 for r in "${repos[@]}"; do
   name="${r#*/}"; s="$(safe "$r")"
   echo "==> $r"
+  section="$r"
   { echo; echo "## \`$r\`"; echo; echo "| Check | Result | Detail |"; echo "|---|---|---|"; } >> "$report"
 
   code="$(gh "/repos/$r" "$raw/repo_$s.json")"
@@ -128,6 +139,7 @@ done
 for o in "${owners[@]}"; do
   s="$(safe "$o")"
   echo "==> owner $o"
+  section="owner:$o"
   { echo; echo "## Owner account \`$o\`"; echo; echo "| Check | Result | Detail |"; echo "|---|---|---|"; } >> "$report"
 
   code="$(gh "/users/$o" "$raw/user_$s.json")"
