@@ -6,6 +6,7 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 
 ### Fixed
 
+- Documentation site: the home page no longer overflows on phones (grid columns shrink; long command lines scroll inside their box).
 - The test suite no longer needs GNU `timeout`, which macOS does not have; hangs are caught by bats' own per-test limit (`BATS_TEST_TIMEOUT`) on every platform.
 
 ## [3.2.0] - 2026-10-27

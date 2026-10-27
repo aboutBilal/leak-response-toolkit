@@ -217,3 +217,15 @@ details summary { cursor: pointer; font-weight: 600; }
   .tabs { overflow-x: auto; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+/* Grid children may shrink below their content width; long code scrolls inside its box. */
+.hero-grid > *, .feature-grid > *, .proof-grid > *, .step-grid > li, .trust-grid > div { min-width: 0; }
+.cmdline { max-width: 100%; }
+.term-body { overflow-x: auto; }
+.landing pre { max-width: 100%; }
+@media (max-width: 600px) {
+  .hero .lede { font-size: 17px; }
+  .cta .btn { flex: 1 1 100%; text-align: center; }
+  .term-body { font-size: 12.5px; padding: 16px; }
+  .term-bar span { transform: none; margin: 0 0 0 8px; }
+}
