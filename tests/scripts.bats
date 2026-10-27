@@ -71,7 +71,7 @@ commit_all() {
   scanner_available || skip "needs gitleaks or docker"
   new_repo "$TMP/leaky"
   # Random, format-valid fake access key ID built at runtime. It works nowhere.
-  fake="AKIA$(LC_ALL=C tr -dc 'A-Z2-7' </dev/urandom | head -c 16)"
+  fake="AKIA$(head -c 4096 /dev/urandom | LC_ALL=C tr -dc 'A-Z2-7' | head -c 16)"
   echo "aws_access_key_id = $fake" > "$TMP/leaky/config"
   commit_all "$TMP/leaky" "add config"
   git -C "$TMP/leaky" rm -q config
@@ -106,7 +106,7 @@ commit_all() {
 
 @test "audit: a repository tracking .env gets grade F and exits 1" {
   new_repo "$TMP/bad"
-  echo "DB_PASSWORD=$(LC_ALL=C tr -dc 'a-z0-9' </dev/urandom | head -c 12)" > "$TMP/bad/.env"
+  echo "DB_PASSWORD=$(head -c 4096 /dev/urandom | LC_ALL=C tr -dc 'a-z0-9' | head -c 12)" > "$TMP/bad/.env"
   commit_all "$TMP/bad" "add env"
   NO_COLOR=1 run "$ROOT/scripts/audit.sh" --no-scan "$TMP/bad"
   [ "$status" -eq 1 ]
@@ -171,7 +171,7 @@ commit_all() {
 
 @test "audit: a real Dockerfile baking a secret value is critical, and the value is never printed" {
   new_repo "$TMP/img"
-  value="$(LC_ALL=C tr -dc 'a-z0-9' </dev/urandom | head -c 16)"
+  value="$(head -c 4096 /dev/urandom | LC_ALL=C tr -dc 'a-z0-9' | head -c 16)"
   printf 'FROM alpine\nENV API_TOKEN=%s\n' "$value" > "$TMP/img/Dockerfile"
   commit_all "$TMP/img" "image"
   NO_COLOR=1 run "$ROOT/scripts/audit.sh" --no-scan "$TMP/img"
@@ -194,7 +194,7 @@ commit_all() {
 @test "scan: --sarif writes valid SARIF 2.1.0 without secret values" {
   scanner_available || skip "needs gitleaks or docker"
   new_repo "$TMP/s"
-  fake="AKIA$(LC_ALL=C tr -dc 'A-Z2-7' </dev/urandom | head -c 16)"
+  fake="AKIA$(head -c 4096 /dev/urandom | LC_ALL=C tr -dc 'A-Z2-7' | head -c 16)"
   echo "key = $fake" > "$TMP/s/app.ini"
   commit_all "$TMP/s" "add"
   run "$ROOT/scripts/scan-secrets.sh" "$TMP/s" "$TMP/s.json" --sarif "$TMP/s.sarif"
@@ -229,7 +229,7 @@ commit_all() {
   echo "ok" > "$TMP/org/good/README.md"
   commit_all "$TMP/org/good" "init"
   new_repo "$TMP/org/bad"
-  value="$(LC_ALL=C tr -dc 'a-z0-9' </dev/urandom | head -c 16)"
+  value="$(head -c 4096 /dev/urandom | LC_ALL=C tr -dc 'a-z0-9' | head -c 16)"
   echo "DB_PASSWORD=$value" > "$TMP/org/bad/.env"
   commit_all "$TMP/org/bad" "init"
   run "$ROOT/scripts/audit-org.sh" --no-scan --out "$TMP/out" --dir "$TMP/org"

@@ -20,7 +20,7 @@ Teams that have practised respond in minutes; teams that have not lose the first
 # A private throwaway repository with a fake secret deep in its history
 mkdir drill && cd drill && git init -q
 echo "# Drill service" > README.md && git add -A && git commit -qm "init"
-echo "aws_access_key_id = AKIA$(LC_ALL=C tr -dc 'A-Z2-7' </dev/urandom | head -c 16)" > settings.ini
+echo "aws_access_key_id = AKIA$(head -c 4096 /dev/urandom | LC_ALL=C tr -dc 'A-Z2-7' | head -c 16)" > settings.ini
 git add -A && git commit -qm "add settings"
 git rm -q settings.ini && git commit -qm "remove settings"
 ```
