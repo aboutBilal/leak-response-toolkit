@@ -440,6 +440,30 @@
     });
   });
 
+  // ---------- Home page: the clock ----------
+  // Counts from the moment the page opened. The stopwatch dial covers five minutes,
+  // the time attackers have needed to use an exposed cloud key.
+  var clocks = document.querySelectorAll("[data-clock]");
+  if (clocks.length) {
+    var opened = Date.now();
+    var wedges = document.querySelectorAll(".ill .wedge");
+    var hands = document.querySelectorAll(".ill .hand-g");
+    var ticker = document.querySelector(".ticker");
+    var pad = function (n) { return (n < 10 ? "0" : "") + n; };
+    var tickClock = function () {
+      var s = Math.floor((Date.now() - opened) / 1000);
+      var h = Math.floor(s / 3600);
+      var text = (h ? h + ":" + pad(Math.floor(s / 60) % 60) : pad(Math.floor(s / 60))) + ":" + pad(s % 60);
+      var frac = Math.min(s / 300, 1);
+      Array.prototype.forEach.call(clocks, function (c) { c.textContent = text; });
+      Array.prototype.forEach.call(wedges, function (w) { w.style.strokeDasharray = (frac * 358.1).toFixed(1) + " 358.1"; });
+      Array.prototype.forEach.call(hands, function (g) { g.style.transform = "rotate(" + (frac * 360).toFixed(1) + "deg)"; });
+      if (ticker) ticker.classList.toggle("over", s >= 300);
+    };
+    tickClock();
+    setInterval(tickClock, 1000);
+  }
+
   // Regions that scroll sideways must be reachable with the keyboard.
   function focusScrollables() {
     each("pre, .table-wrap, .cmdline code", function (n) {

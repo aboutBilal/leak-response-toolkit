@@ -1,13 +1,12 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% if page.title %}{{ page.title }} · {{ site.title }}{% else %}{{ site.title }}: {{ site.description }}{% endif %}</title>
   <meta name="description" content="Open-source runbooks, tested prevention configs and a CLI that keeps secrets out of Git and helps you respond in minutes when one leaks.">
   <link rel="canonical" href="{{ site.url }}{{ site.baseurl }}/">
-  <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#0B0F1A" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#FBF8F3">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="{{ site.title }}">
   <meta property="og:url" content="{{ site.url }}{{ site.baseurl }}/">
@@ -23,7 +22,8 @@
   <link rel="stylesheet" href="{{ site.baseurl }}/assets/fonts/fonts.css">
   <link rel="stylesheet" href="{{ site.baseurl }}/assets/tokens.css">
   <link rel="stylesheet" href="{{ site.baseurl }}/assets/landing.css">
-  {% include theme-init.html %}
+  <link rel="preload" href="{{ site.baseurl }}/assets/fonts/IBMPlexSansCondensed-Bold.woff2" as="font" type="font/woff2" crossorigin>
+  <script>document.documentElement.classList.add("js");</script>
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -42,7 +42,7 @@
 </head>
 <body class="landing" data-base="{{ site.baseurl }}" data-repo="{{ site.repository }}">
   <a class="skip" href="#main">Skip to content</a>
-  {% include header.html %}
+  {% include header.html home=true %}
   <main id="main">{{ content }}</main>
   {% include footer.html %}
   {% include search.html %}

@@ -81,27 +81,46 @@ Weights: 400 for text, 600 for labels, 700 for titles. Labels above titles ("eye
 
 The documentation site and home page (`site/`) use the same tokens, with a few additions for an interactive surface. Source: [`site/assets/tokens.css`](../site/assets/tokens.css), [`docs.css`](../site/assets/docs.css) and [`landing.css`](../site/assets/landing.css).
 
-### Idea: an incident field manual
+### Idea: the clock is running
 
-The home page reads like the first pages of a well-made operations manual, not a marketing template. It leads with the one thing a reader under pressure needs, the first 15 minutes of a response, and everything after it is reference: the commands set like a manual page, output shown as captioned figures, the guides as a table of contents. Specific content does the persuading; decoration does not.
+A leaked cloud key can be in use within five minutes. The home page makes that felt: a clock starts when the page opens, a stopwatch illustration fills toward five minutes in real time, and the closing section reports how long the reader has been there. Everything else sells the product with real output and plain claims that can be checked.
 
-Avoid the patterns of generated landing pages: glow blobs, background grids, gradient text, a version pill above a centred hero, an uppercase label over every section, bento tiles, pointer spotlights, slogan headings ("X, not Y"), pulsing dots and scroll-in animations.
+The look takes Stripe's clarity and colour and Fly.io's warmth: deep violet ink, soft lavender and peach surfaces, vivid gradients reserved for product panels and the closing card, and friendly flat illustrations. Avoid the patterns of generated landing pages: glow blobs, background grids, gradient headline text, uppercase labels over every section, bento tiles, pointer spotlights, slogan headings ("X, not Y"), pulsing dots and scroll-in animations.
 
 ### Themes and type
 
 | Surface | Rule |
 |---|---|
-| Every page | Follows the reader's system setting; the header switch overrides it and is remembered. |
+| Home page | A fixed light design with its own warm palette (below). |
+| Documentation | Follows the reader's system setting; the header switch overrides it and is remembered. |
 | Code, terminals, install and verify blocks | Always dark, in both themes, so commands look the same as in a terminal. |
-| Text | IBM Plex Sans (variable, 100–700), an engineering typeface that reads as documentation. Headings 600, body 400. |
+| Text | IBM Plex Sans (variable, 100–700). Headings 650, body 400. |
+| Display | IBM Plex Sans Condensed Bold for clock digits, big numbers and times. |
 | Code | JetBrains Mono, as in the README images. |
 
-### Colour on the web
+### Home page palette
+
+| Token | Value | Use |
+|---|---|---|
+| Ink | `#1D1336` | Headings and illustration outlines |
+| Body / secondary | `#3B3354` / `#4F4768` | Text (7:1 or better on every surface it sits on) |
+| Violet | `#5B3FD6` | Primary buttons, links, small accents |
+| Deep violet | `#1B1530` / `#17112B` | The incident band, terminals, install card |
+| Alarm | `#C8261B` | The clock and the incident card only |
+| Hot | `#E0482A` | "Be faster." (large text, 3.3:1 on the hero band) |
+| Surfaces | `#EEE8FF` lavender, `#E3EEFF` sky, `#FFE9DF` peach, `#F7F5FC` mist | Illustration panels and alternate sections |
+| Gradient | `#5B3FD6` → `#B14BD9` → `#F2557E` → `#FF8A4C` | Thin rules, stat markers, product panels, the closing card |
+
+### Colour in the documentation
 
 - **Ink does the work.** Primary buttons are ink on paper (`#111827` on white; inverted in dark mode).
-- **Red means urgency.** The incident card's top rule, its label and the header's "Leaked a secret?" dot. Nowhere else.
 - **Ember marks links and the current page**, never large surfaces.
-- **Depth comes from hairlines** (`#E3E7EE` light, `rgba(230, 234, 242, 0.09)` dark), paper surfaces and one soft shadow on the incident card. The header is solid.
+- **Red means urgency**: the "Leaked a secret?" dot and caution callouts.
+- **Depth comes from hairlines** (`#E3E7EE` light, `rgba(230, 234, 242, 0.09)` dark). The header is solid.
+
+### Illustrations
+
+Flat shapes with a 2.4 px ink outline and round joins, filled from the palette (`#8F74F7`, `#FF7A4D`, `#FFC7B0`, `#B9D4FF`, `#F3DDBF`). Each one shows a real idea from the toolkit: a shield in front of a commit, a lens over a secret in history, rotating arrows around a key, a report with a seal, a stopwatch, a map of where copies survive. Built as inline SVG by `site/index.html`; no image files.
 
 ### Code colours
 
@@ -118,20 +137,19 @@ Two hues on the dark code surface, so syntax never competes with status colours.
 
 ### Motion
 
-Hover and focus changes only: 150 ms, `cubic-bezier(0.2, 0.7, 0.2, 1)`. Nothing moves on scroll or on load, and nothing loops. Reduced-motion settings are respected.
+Hover and focus changes: 150 ms, `cubic-bezier(0.2, 0.7, 0.2, 1)`; cards lift 3 px on hover. The only other movement is the clock, which updates once a second. Nothing moves on scroll, and reduced-motion settings are respected.
 
 ### Components
 
 | Component | Specification |
 |---|---|
-| Header | Solid, hairline below. Brand, four links, search (`Ctrl K`, `⌘K` or `/`), theme switch, GitHub, and "Leaked a secret?" with a static `fail` dot that opens the cheat sheet. |
-| Incident card | Paper surface, 3 px `fail` top rule, label in `fail`. Rows: time in 13 px mono, the action in 15 px with the verb phrase in 600, an optional command chip. Footer links to the cheat sheet and the runbook. Content mirrors `CHEATSHEET.md`. |
-| Manual page | `dl` grid: command synopsis in mono (arguments in `muted`), description beside it; groups match `leak help` (Prevent, Respond, Setup). |
-| Figure | Hairline frame, 10 px radius, caption below starting with **Figure n.** Screenshots are cropped from the top at 16:9; terminals show in full. |
-| Table of contents | Four columns under a 2 px ink rule; each entry is a guide title in 600 with a one-line summary. |
+| Header | Solid, hairline below. Brand, four links, search (`Ctrl K`, `⌘K` or `/`), theme switch (documentation only), GitHub, and "Leaked a secret?" with a static red dot that opens the cheat sheet. |
+| Clock | Elapsed time since the page opened, in condensed digits. Drives the hero ticker, the stopwatch wedge and hand (a five-minute dial) and the closing headline. `role="timer"`, not announced every second. |
+| Incident card | White card, 4 px alarm top rule, label in alarm red. Rows: time in condensed violet, the action with the verb phrase in 600, an optional command chip. Content mirrors `CHEATSHEET.md`. |
 | Search | Modal dialog over a dimmed backdrop. Results are page sections, keyboard-driven (arrow keys, Enter, Esc). The index is built from the Markdown by `tools/build-search-index.py`. |
 | Callout | Tint background, 30% status-colour border, 18 px line icon, sentence-case label. Note uses `info`, Tip `pass`, Important `ember`, Warning `warn`, Caution `fail`. |
 | Code block | Dark surface, 40 px header with the language and a copy button, 13.5 px mono on a 1.7 line height. |
+| Product panel | A real screenshot on a 28 px-radius gradient panel, cropped from the top at 4:3. |
 | Logo strip | Monochrome marks in `text-2` from [Simple Icons](https://simpleicons.org) 16.36.0 (CC0), 19 px, each followed by the product name. Brands whose owners do not permit logo use without a licence (AWS, Microsoft Azure, Azure DevOps) and tools without a mark appear as names only. |
 | Sidebar | Group titles in 13 px semibold; pages on a 1 px guide line; the current page in ember with an ember guide segment. |
 
