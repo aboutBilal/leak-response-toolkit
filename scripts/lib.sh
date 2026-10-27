@@ -39,6 +39,20 @@ gh_get() {
     -H "Accept: application/vnd.github+json" "https://api.github.com$1" || echo "000"
 }
 
+# bb_get <url> <outfile>: GET a Bitbucket Cloud API URL. BITBUCKET_TOKEN (a workspace, project
+# or repository access token) is sent as a Bearer header on stdin. Prints the HTTP status code.
+bb_get() {
+  { if [[ -n "${BITBUCKET_TOKEN:-}" ]]; then printf 'header = "Authorization: Bearer %s"\n' "${BITBUCKET_TOKEN//\"/}"; fi; } \
+    | curl -s --max-time 60 -K - -o "$2" -w '%{http_code}' "$1" || echo "000"
+}
+
+# ado_get <url> <outfile>: GET an Azure DevOps API URL. AZURE_DEVOPS_PAT (a personal access
+# token with Code: Read) is sent as Basic auth on stdin. Prints the HTTP status code.
+ado_get() {
+  { if [[ -n "${AZURE_DEVOPS_PAT:-}" ]]; then printf 'header = "Authorization: Basic %s"\n' "$(printf ':%s' "$AZURE_DEVOPS_PAT" | base64 | tr -d '\n')"; fi; } \
+    | curl -s --max-time 60 -K - -o "$2" -w '%{http_code}' "$1" || echo "000"
+}
+
 # http_get <url> <outfile>: anonymous GET; prints the HTTP status code.
 http_get() {
   curl -s --max-time 90 -A "spillkit" -o "$2" -w '%{http_code}' "$1" || echo "000"
@@ -69,15 +83,18 @@ tlp_info() {
   esac
 }
 
-# git_auth_env: let `git clone` use GITHUB_TOKEN without putting it in argv,
-# and never prompt for credentials.
+# git_auth_env: let `git clone` use GITHUB_TOKEN, BITBUCKET_TOKEN and AZURE_DEVOPS_PAT
+# without putting them in argv (each only for its own host), and never prompt for credentials.
 git_auth_env() {
   export GIT_TERMINAL_PROMPT=0
-  if [[ -n "${GITHUB_TOKEN:-}" ]]; then
-    local basic
-    basic="$(printf 'x-access-token:%s' "$GITHUB_TOKEN" | base64 | tr -d '\n')"
-    export GIT_CONFIG_COUNT=1
-    export GIT_CONFIG_KEY_0="http.https://github.com/.extraheader"
-    export GIT_CONFIG_VALUE_0="Authorization: Basic $basic"
-  fi
+  local n=0
+  _git_header() {   # <host> <user:secret>
+    export "GIT_CONFIG_KEY_$n=http.https://$1/.extraheader"
+    export "GIT_CONFIG_VALUE_$n=Authorization: Basic $(printf '%s' "$2" | base64 | tr -d '\n')"
+    n=$((n + 1))
+  }
+  [[ -n "${GITHUB_TOKEN:-}" ]] && _git_header github.com "x-access-token:$GITHUB_TOKEN"
+  [[ -n "${BITBUCKET_TOKEN:-}" ]] && _git_header bitbucket.org "x-token-auth:$BITBUCKET_TOKEN"
+  [[ -n "${AZURE_DEVOPS_PAT:-}" ]] && _git_header dev.azure.com ":$AZURE_DEVOPS_PAT"
+  if ((n)); then export GIT_CONFIG_COUNT=$n; fi
 }

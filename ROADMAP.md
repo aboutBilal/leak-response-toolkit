@@ -10,16 +10,18 @@ What is planned next. Ideas and help are welcome: open an [improvement issue](ht
 - Alerts to Slack, Microsoft Teams and Discord from the GitHub Action.
 - Pre-commit hooks published from this repository; macOS support tested in CI.
 
-## Next
-
+## Done in 3.3 and 3.4
+- A documentation site with full-text search, built from `docs/` and checked on every pull request.
+- Standard incident reports (NIST SP 800-61r3 structure, FIRST TLP 2.0 labels) and a print-ready organisation report.
+- SARIF output for `leak audit`, with a precise location for each finding.
 - Bitbucket Cloud and Azure DevOps as `audit-org` sources.
-- SARIF output for `leak audit`.
+
+## Next
 - A Homebrew formula for macOS and Linux.
+- Rotation recipes as scripts for the most common cloud credentials (with a dry-run mode).
+- GitLab groups as an `audit-org` source.
 
 ## Later
-
-- A documentation site with search (built from `docs/`, with hash-pinned dependencies).
-- Rotation recipes as scripts for the most common cloud credentials (with a dry-run mode).
 - Translations of the runbook and cheat sheet.
 
 ## Principles that will not change

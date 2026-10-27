@@ -27,7 +27,7 @@ inputs:
     required: false
     default: ""
   sarif-file:
-    description: "For scan: also write SARIF to this path (upload it with github/codeql-action/upload-sarif)"
+    description: "For scan and audit: also write SARIF to this path (upload it with github/codeql-action/upload-sarif)"
     required: false
     default: ""
   webhook-url:
@@ -100,7 +100,8 @@ runs:
               fi
             } >> "$GITHUB_STEP_SUMMARY" ;;
           audit)
-            NO_COLOR=1 "$TOOLKIT/leak" audit "$TARGET" | tee "$out/audit.txt"; findings=${PIPESTATUS[0]}
+            sarif_args=(); [[ -n "$SARIF" ]] && sarif_args=(--sarif "$SARIF")
+            NO_COLOR=1 "$TOOLKIT/leak" audit "${sarif_args[@]}" "$TARGET" | tee "$out/audit.txt"; findings=${PIPESTATUS[0]}
             [[ "$findings" -gt 1 ]] && { echo "::error::the audit failed (exit $findings)"; exit 4; }
             report="$out/audit.txt"
             summary="Secret hygiene audit of $REPOSITORY: $(tail -1 "$out/audit.txt")"

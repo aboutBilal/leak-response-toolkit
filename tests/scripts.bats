@@ -417,3 +417,59 @@ MOCK
   run "$ROOT/scripts/audit-org.sh" --no-scan --tlp purple --dir "$TMP/o2"
   [ "$status" -eq 2 ]
 }
+
+# ---------- audit --sarif; audit-org on Bitbucket and Azure DevOps ----------
+
+@test "audit: --sarif writes SARIF 2.1.0 that points at the finding, without its value" {
+  new_repo "$TMP/s"
+  value="$(head -c 4096 /dev/urandom | LC_ALL=C tr -dc 'a-z0-9' | head -c 16)"
+  echo "DB_PASSWORD=$value" > "$TMP/s/.env"
+  commit_all "$TMP/s" "init"
+  run "$ROOT/scripts/audit.sh" --no-scan --sarif "$TMP/a.sarif" "$TMP/s"
+  [ "$status" -eq 1 ]
+  run jq -r '.version, (.runs[0].tool.driver.rules | length), ([.runs[0].results[] | select(.ruleId == "secret-files")][0].locations[0].physicalLocation.artifactLocation.uri)' "$TMP/a.sarif"
+  [ "${lines[0]}" = "2.1.0" ] && [ "${lines[1]}" = "6" ] && [ "${lines[2]}" = ".env" ]
+  ! grep -q "$value" "$TMP/a.sarif"
+}
+
+# api_curl <body>: a curl double that records its arguments and the config read from stdin.
+api_curl() {
+  mkdir -p "$TMP/bin"
+  printf '%s' "$1" > "$TMP/api-body.json"
+  cat > "$TMP/bin/curl" <<MOCK
+#!/usr/bin/env bash
+printf '%s\n' "\$@" >> "$TMP/argv.txt"
+out=""; while ((\$#)); do case "\$1" in -o) out="\$2"; shift 2 ;; -K) [[ "\$2" == - ]] && cat >> "$TMP/config.txt"; shift 2 ;; *) shift ;; esac; done
+cp "$TMP/api-body.json" "\$out"; printf 200
+MOCK
+  chmod +x "$TMP/bin/curl"
+}
+
+@test "audit-org: lists a Bitbucket workspace, skips forks, keeps the token out of arguments" {
+  api_curl '{"values":[{"slug":"api","links":{"clone":[{"name":"https","href":"https://user@127.0.0.1:9/ws/api.git"}]}},{"slug":"fork","parent":{"full_name":"x/y"},"links":{"clone":[{"name":"https","href":"https://127.0.0.1:9/ws/fork.git"}]}}]}'
+  run env PATH="$TMP/bin:$PATH" BITBUCKET_TOKEN=bb-test-token-123 "$ROOT/scripts/audit-org.sh" --no-scan --bitbucket ws --out "$TMP/bb"
+  run jq -r '.repositories, .not_audited, .results[0].repository' "$TMP/bb/audit-org.json"
+  [ "${lines[0]}" = "1" ] && [ "${lines[1]}" = "1" ] && [ "${lines[2]}" = "api" ]
+  ! grep -q "bb-test-token-123" "$TMP/argv.txt"
+  grep -q "Authorization: Bearer bb-test-token-123" "$TMP/config.txt"
+}
+
+@test "audit-org: lists an Azure DevOps project, skips disabled repositories, keeps the PAT out of arguments" {
+  api_curl '{"count":2,"value":[{"name":"api","project":{"name":"Payments"},"remoteUrl":"https://org@127.0.0.1:9/org/Payments/_git/api","isDisabled":false},{"name":"old","project":{"name":"Payments"},"remoteUrl":"https://127.0.0.1:9/org/Payments/_git/old","isDisabled":true}]}'
+  run env PATH="$TMP/bin:$PATH" AZURE_DEVOPS_PAT=ado-test-pat-456 "$ROOT/scripts/audit-org.sh" --no-scan --azure-devops "org/Payments" --out "$TMP/ado"
+  run jq -r '.repositories, .results[0].repository' "$TMP/ado/audit-org.json"
+  [ "${lines[0]}" = "1" ] && [ "${lines[1]}" = "Payments/api" ]
+  [ -f "$TMP/ado/results/Payments__api.json" ]
+  ! grep -q "ado-test-pat-456" "$TMP/argv.txt"
+  grep -q "dev.azure.com/org/Payments/_apis/git/repositories" "$TMP/argv.txt"
+}
+
+@test "audit-org: an API error while listing exits 4, never an empty clean result" {
+  fake_curl 401 '{"error":{"message":"Unauthorized"}}'
+  run env PATH="$TMP/bin:$PATH" "$ROOT/scripts/audit-org.sh" --no-scan --bitbucket ws --out "$TMP/e1"
+  [ "$status" -eq 4 ]
+  run env PATH="$TMP/bin:$PATH" "$ROOT/scripts/audit-org.sh" --no-scan --azure-devops org --out "$TMP/e2"
+  [ "$status" -eq 4 ]
+  run "$ROOT/scripts/audit-org.sh" --no-scan --bitbucket ws --azure-devops org
+  [ "$status" -eq 2 ]
+}

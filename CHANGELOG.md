@@ -4,6 +4,13 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
+## [3.4.0] - 2026-10-27
+
+### Added
+
+- **`leak audit --sarif FILE`** writes the audit findings as SARIF 2.1.0 for GitHub code scanning. Each finding points at the file it concerns (the tracked secret file, the code that reads environment variables, the exact Dockerfile line, the first commit with a secret) and carries a severity, so critical findings rank as High. The GitHub Action passes `sarif-file` through in `audit` mode too.
+- **Bitbucket Cloud and Azure DevOps in `leak audit-org`:** `--bitbucket <workspace>` (with `BITBUCKET_TOKEN`, an access token) and `--azure-devops <org>[/<project>]` (with `AZURE_DEVOPS_PAT`). Forks and disabled repositories are skipped, and a listing error exits `4` instead of reporting an empty organisation as clean. As everywhere else, tokens reach `curl` and `git` on standard input or through the environment, never as command-line arguments.
+
 ## [3.3.0] - 2026-10-27
 
 ### Changed
@@ -191,7 +198,8 @@ Prevention becomes the second half of the kit: not only responding to leaks, but
 - Templates: incident timeline, takedown request, notification messages, post-incident review, executive report (print-ready HTML).
 - Quality: offline bats tests, shellcheck, gitleaks on full history, link and anchor checks in CI, Dependabot for pinned actions, pre-commit hook, contribution guide, issue and pull request templates, security policy.
 
-[Unreleased]: https://github.com/aboutBilal/spillkit/compare/v3.3.0...HEAD
+[Unreleased]: https://github.com/aboutBilal/spillkit/compare/v3.4.0...HEAD
+[3.4.0]: https://github.com/aboutBilal/spillkit/compare/v3.3.0...v3.4.0
 [3.3.0]: https://github.com/aboutBilal/spillkit/compare/v3.2.0...v3.3.0
 [3.2.0]: https://github.com/aboutBilal/spillkit/compare/v3.1.0...v3.2.0
 [3.1.0]: https://github.com/aboutBilal/spillkit/compare/v3.0.0...v3.1.0

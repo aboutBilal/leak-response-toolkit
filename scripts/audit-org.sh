@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
-# Grade every repository of a GitHub organisation or user (or every Git repository
-# in a local folder) and build one dashboard: HTML, markdown and JSON.
+# Grade every repository of a GitHub organisation or user, a Bitbucket Cloud workspace,
+# an Azure DevOps organisation (or one of its projects), or every Git repository in a
+# local folder, and build one report: HTML, Markdown and JSON.
 #
-# Usage: leak audit-org [options] <org-or-user>
+# Usage: leak audit-org [options] <org-or-user>                  GitHub
+#        leak audit-org [options] --bitbucket <workspace>        Bitbucket Cloud
+#        leak audit-org [options] --azure-devops <org>[/<project>]  Azure DevOps
 #        leak audit-org [options] --dir <folder-of-repos>
 # Options:
 #   --no-scan          skip full-history scans (much faster; history marked not checked)
@@ -10,15 +13,17 @@
 #   --include-forks    include forks and archived repositories (skipped by default)
 #   --out DIR          output folder (default: audits/audit_<time>)
 #   --tlp LABEL        handling label on the report: clear, green, amber, amber+strict (default) or red
-# Env:   GITHUB_TOKEN (optional) - includes private repositories you can read; higher API limits.
-# Exit:  0 no repository has critical findings, 1 at least one has, 2 bad arguments
+# Env:   GITHUB_TOKEN, BITBUCKET_TOKEN (an access token) or AZURE_DEVOPS_PAT (Code: Read), all
+#        optional: include private repositories you can read. Tokens never appear in command lines.
+# Exit:  0 no repository has critical findings, 1 at least one has, 2 bad arguments,
+#        4 the repositories could not be listed (API error or missing permission)
 set -uo pipefail
 # shellcheck source=scripts/lib.sh
 . "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 shopt -s dotglob nullglob   # include repositories such as .github
 
 help() { print_help "$0"; }
-scan_flag=(); limit=50; forks=0; out=""; owner=""; dir=""; tlp="amber+strict"
+scan_flag=(); limit=50; forks=0; out=""; owner=""; dir=""; bitbucket=""; ado=""; tlp="amber+strict"
 while (($#)); do
   case "$1" in
     -h|--help) help; exit 0 ;;
@@ -27,13 +32,19 @@ while (($#)); do
     --include-forks) forks=1; shift ;;
     --out) need_value "$1" "${2:-}"; out="$2"; shift 2 ;;
     --dir) need_value "$1" "${2:-}"; dir="$2"; shift 2 ;;
+    --bitbucket) need_value "$1" "${2:-}"; bitbucket="$2"; shift 2 ;;
+    --azure-devops) need_value "$1" "${2:-}"; ado="$2"; shift 2 ;;
     --tlp) need_value "$1" "${2:-}"; tlp="$2"; shift 2 ;;
     -*) echo "unknown option: $1" >&2; exit 2 ;;
     *) owner="$1"; shift ;;
   esac
 done
 [[ "$limit" =~ ^[0-9]+$ ]] || { echo "--limit needs a number" >&2; exit 2; }
+sources=0; for v in "$owner" "$dir" "$bitbucket" "$ado"; do [[ -n "$v" ]] && sources=$((sources + 1)); done
+((sources == 1)) || { help >&2; exit 2; }
 if [[ -n "$dir" ]]; then [[ -d "$dir" ]] || { echo "not a folder: $dir" >&2; exit 2; }
+elif [[ -n "$bitbucket" ]]; then [[ "$bitbucket" =~ ^[A-Za-z0-9_.-]+$ ]] || { echo "not a Bitbucket workspace name: $bitbucket" >&2; exit 2; }
+elif [[ -n "$ado" ]]; then [[ "$ado" =~ ^[A-Za-z0-9_.-]+(/[^/]+)?$ ]] || { echo "use --azure-devops <org> or <org>/<project>" >&2; exit 2; }
 elif [[ ! "$owner" =~ ^[A-Za-z0-9_.-]+$ ]]; then help >&2; exit 2; fi
 command -v jq >/dev/null || { echo "missing: jq" >&2; exit 2; }
 tlp_line="$(tlp_info "$tlp")" || { echo "--tlp must be clear, green, amber, amber+strict or red" >&2; exit 2; }
@@ -59,6 +70,32 @@ if [[ -n "$dir" ]]; then
   for d in "$dir"/*/; do
     git -C "$d" rev-parse --is-inside-work-tree >/dev/null 2>&1 && printf '%s\t%s\n' "$(basename "$d")" "$(cd "$d" && pwd)" >> "$targets"
   done
+elif [[ -n "$bitbucket" ]]; then
+  label="$bitbucket"
+  next="https://api.bitbucket.org/2.0/repositories/$bitbucket?pagelen=100"
+  while [[ -n "$next" && "$(wc -l < "$targets")" -lt "$limit" ]]; do
+    code="$(bb_get "$next" "$work/page.json")"
+    if [[ "$code" != 200 ]] || ! jq -e '.values | type == "array"' "$work/page.json" >/dev/null 2>&1; then
+      echo "Bitbucket API error (HTTP $code) listing $bitbucket. For private repositories set BITBUCKET_TOKEN." >&2
+      exit "$EXIT_FAILED"
+    fi
+    # Clone URLs may carry a user name (https://user@bitbucket.org/...); credentials come from git_auth_env.
+    jq -r --argjson forks "$forks" '.values[] | select($forks == 1 or (.parent == null))
+      | [.slug, ([.links.clone[]? | select(.name == "https") | .href][0] // "" | sub("^https://[^@/]*@"; "https://"))]
+      | select(.[1] != "") | @tsv' "$work/page.json" >> "$targets"
+    next="$(jq -r '.next // empty' "$work/page.json")"
+  done
+elif [[ -n "$ado" ]]; then
+  label="$ado"
+  ado_org="${ado%%/*}"; ado_path=""
+  [[ "$ado" == */* ]] && ado_path="$(jq -rn --arg p "${ado#*/}" '$p|@uri')/"
+  code="$(ado_get "https://dev.azure.com/$ado_org/${ado_path}_apis/git/repositories?api-version=7.1" "$work/page.json")"
+  if [[ "$code" != 200 ]] || ! jq -e '.value | type == "array"' "$work/page.json" >/dev/null 2>&1; then
+    echo "Azure DevOps API error (HTTP $code) listing $ado. Set AZURE_DEVOPS_PAT with Code: Read." >&2
+    exit "$EXIT_FAILED"
+  fi
+  jq -r --argjson forks "$forks" '.value[] | select((.isDisabled // false) | not) | select($forks == 1 or ((.isFork // false) | not))
+    | ["\(.project.name)/\(.name)", (.remoteUrl | sub("^https://[^@/]*@"; "https://"))] | @tsv' "$work/page.json" >> "$targets"
 else
   label="$owner"
   kind=orgs; gh "/orgs/$owner" >/dev/null 2>&1 || kind=users
@@ -80,18 +117,19 @@ i=0
 while IFS=$'\t' read -r name src; do
   i=$((i + 1))
   path="$src"
+  file="${name//\//__}"   # Azure DevOps names are project/repo
   if [[ "$src" == https://* ]]; then
-    path="$work/repos/$name"
+    path="$work/repos/$file"
     depth=(); ((${#scan_flag[@]})) && depth=(--depth 1)
     if ! git clone --quiet "${depth[@]}" "$src" "$path" 2>/dev/null; then
-      jq -n --arg r "$name" '{repository: $r, grade: "not audited", score: 0, max: 0, percent: null, critical: false, error: "could not be cloned (private without a token, or unavailable)", checks: []}' > "$out/results/$name.json"
+      jq -n --arg r "$name" '{repository: $r, grade: "not audited", score: 0, max: 0, percent: null, critical: false, error: "could not be cloned (private without a token, or unavailable)", checks: []}' > "$out/results/$file.json"
       printf '  [%d/%d] %-40s not audited (clone failed)\n' "$i" "$total" "$name"
       continue
     fi
   fi
-  NO_COLOR=1 "$here/audit.sh" "${scan_flag[@]}" --json "$path" > "$out/results/$name.json" 2>/dev/null
-  jq --arg r "$name" '.repository = $r' "$out/results/$name.json" > "$work/j" && mv "$work/j" "$out/results/$name.json"
-  printf '  [%d/%d] %-40s grade %s\n' "$i" "$total" "$name" "$(jq -r .grade "$out/results/$name.json")"
+  NO_COLOR=1 "$here/audit.sh" "${scan_flag[@]}" --json "$path" > "$out/results/$file.json" 2>/dev/null
+  jq --arg r "$name" '.repository = $r' "$out/results/$file.json" > "$work/j" && mv "$work/j" "$out/results/$file.json"
+  printf '  [%d/%d] %-40s grade %s\n' "$i" "$total" "$name" "$(jq -r .grade "$out/results/$file.json")"
 done < "$targets"
 
 # 3. Aggregate

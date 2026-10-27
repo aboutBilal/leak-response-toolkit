@@ -116,7 +116,7 @@ Or use the hooks directly from this repository:
 # .pre-commit-config.yaml
 repos:
   - repo: https://github.com/aboutBilal/spillkit
-    rev: v3.3.0
+    rev: v3.4.0
     hooks:
       - id: forbid-secret-files    # no dependencies
       - id: leak-guard             # also scans staged changes with gitleaks
@@ -129,11 +129,13 @@ This repository uses the kit on itself, and `leak audit .` grades it A.
 
 ## Organisation dashboard
 
-`leak audit-org` grades every repository in a GitHub organisation, or a local folder of repositories, and writes an HTML report, a Markdown summary and JSON for automation. Repositories are listed worst first; every finding is labelled Critical or Fix and comes with its remedy, and the method section states exactly how grades are given.
+`leak audit-org` grades every repository in a GitHub organisation, a Bitbucket Cloud workspace, an Azure DevOps organisation or project, or a local folder of repositories, and writes an HTML report, a Markdown summary and JSON for automation. Repositories are listed worst first; every finding is labelled Critical or Fix and comes with its remedy, and the method section states exactly how grades are given.
 
 ```bash
-leak audit-org my-org                 # GITHUB_TOKEN includes private repositories you can read
-leak audit-org --no-scan my-org       # faster: skips full-history scans
+leak audit-org my-org                         # GitHub; GITHUB_TOKEN adds private repositories
+leak audit-org --bitbucket my-workspace       # Bitbucket Cloud; BITBUCKET_TOKEN (an access token)
+leak audit-org --azure-devops my-org/Project  # Azure DevOps; AZURE_DEVOPS_PAT (Code: Read)
+leak audit-org --no-scan my-org               # faster: skips full-history scans
 ```
 
 <p align="center"><img src="assets/dashboard-preview.png" alt="The secret hygiene report from leak audit-org: summary of average score, critical findings and repositories not audited, then a grade distribution" width="100%"></p>
@@ -172,7 +174,7 @@ jobs:
       - uses: aboutBilal/spillkit@v3   # pin to a commit SHA in production
         with:
           mode: scan                                # scan, audit, audit-org or hunt
-          sarif-file: leak.sarif
+          sarif-file: leak.sarif                    # scan and audit modes
           webhook-url: ${{ secrets.SECURITY_WEBHOOK }} # optional: Slack, Teams or Discord
       - uses: github/codeql-action/upload-sarif@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
         if: always()
@@ -185,8 +187,8 @@ Findings appear in the job summary and, with SARIF, in the repository's Security
 
 | Command | Purpose |
 |---|---|
-| `leak audit [--json] [path]` | Grade a repository's secret hygiene from A to F, with a fix for each gap |
-| `leak audit-org [--no-scan] <org>` | Grade every repository in an organisation (or `--dir` a folder of repositories); HTML report, Markdown and JSON |
+| `leak audit [--json] [--sarif file] [path]` | Grade a repository's secret hygiene from A to F, with a fix for each gap; SARIF for code scanning |
+| `leak audit-org [--no-scan] <org>` | Grade every repository in a GitHub organisation (or `--bitbucket`, `--azure-devops`, `--dir`); HTML report, Markdown and JSON |
 | `leak scan <path> [--sarif file]` | Scan every commit for secrets; values are always redacted |
 | `leak snapshot owner/repo` | Preserve a leaked repository: mirror, metadata, forks, traffic and a checksum manifest |
 | `leak forks owner/repo` | List every fork, including forks of forks, for a takedown request |
@@ -206,7 +208,7 @@ A tool that handles leak investigations has to be trustworthy itself. Each of th
 - Container images ship with an SBOM and SLSA build provenance.
 - [OpenSSF Scorecard](https://scorecard.dev/viewer/?uri=github.com/aboutBilal/spillkit) runs on every push to `main`.
 - GitHub Actions are pinned to commit SHAs and container images to digests; Dependabot keeps them current.
-- Every push runs shellcheck, actionlint, 37 offline tests on Linux and macOS, and a full-history secret scan; CodeQL analyses every change to `main` and every pull request.
+- Every push runs shellcheck, actionlint, 41 offline tests on Linux and macOS, and a full-history secret scan; CodeQL analyses every change to `main` and every pull request.
 - No command prints or tests a secret value, and tests enforce this. `leak snapshot` keeps a copy of a leaked repository as evidence, so evidence folders are git-ignored and must be handled as sensitive. The repository itself contains no secrets, not even fake ones.
 - Tokens and webhook URLs are passed to `curl` on standard input, never as command-line arguments, so they do not appear in process lists.
 - A source that fails or is rate-limited is reported as "not checked", never as clean.
