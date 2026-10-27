@@ -169,11 +169,24 @@ commit_all() {
   [[ "$output" == *"no Dockerfiles"* ]]
 }
 
-@test "audit: a real Dockerfile baking a secret value is critical" {
+@test "audit: a real Dockerfile baking a secret value is critical, and the value is never printed" {
   new_repo "$TMP/img"
-  printf 'FROM alpine\nENV API_TOKEN=%s\n' "$(LC_ALL=C tr -dc 'a-z0-9' </dev/urandom | head -c 16)" > "$TMP/img/Dockerfile"
+  value="$(LC_ALL=C tr -dc 'a-z0-9' </dev/urandom | head -c 16)"
+  printf 'FROM alpine\nENV API_TOKEN=%s\n' "$value" > "$TMP/img/Dockerfile"
   commit_all "$TMP/img" "image"
   NO_COLOR=1 run "$ROOT/scripts/audit.sh" --no-scan "$TMP/img"
   [ "$status" -eq 1 ]
   [[ "$output" == *"baked into an image"* ]]
+  [[ "$output" == *"API_TOKEN=<redacted>"* ]]
+  [[ "$output" != *"$value"* ]]
+}
+
+@test "leak works through a symlink (make install, container image)" {
+  mkdir -p "$TMP/bin"
+  ln -s "$ROOT/leak" "$TMP/bin/leak"
+  run "$TMP/bin/leak" version
+  [ "$status" -eq 0 ]
+  run "$TMP/bin/leak" help scan
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"FULL git history"* ]]
 }

@@ -22,6 +22,7 @@ make check           # shellcheck + bats tests + secret scan (what CI runs)
 - **Scripts:** `bash`, `set -euo pipefail`, a header comment with `Usage:` (it becomes `--help`), exit `2` on bad arguments, `shellcheck -S warning` clean, and a test in `tests/scripts.bats`. Tests must run offline. A new script also gets a subcommand in `./leak`.
 - **Prevention kit:** every file in `prevention/` must be tested before it is added, and the result recorded in `prevention/README.md` ("Tested behaviour").
 - **Docs:** check links still work; CI checks every link between files, including heading anchors.
+- **README images** come from real output only: capture it with `NO_COLOR=1`, then render with `tools/render-terminal-svg.py`.
 - **Commits:** a short summary line in the imperative ("Add Bitbucket takedown steps"), then why, if it is not obvious.
 
 ## Ideas that would help

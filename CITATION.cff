@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+message: "If you use or reference this toolkit, please cite it as below."
+title: "Leak Response Toolkit"
+abstract: "Prevent secret leaks and respond in minutes: an architecture guide, a tested prevention kit, incident runbooks, and a CLI, container image and GitHub Action to scan, audit, hunt for copies and report."
+type: software
+authors:
+  - name: "Muhammad Bilal"
+    alias: "aboutBilal"
+repository-code: "https://github.com/aboutBilal/leak-response-toolkit"
+license: MIT
+version: 2.1.0
+date-released: "2026-10-27"
+keywords:
+  - security
+  - secret-scanning
+  - incident-response
+  - devsecops
+  - gitleaks
+  - secrets-management

@@ -1,0 +1,15 @@
+# Only the toolkit goes into the image (see Dockerfile COPY lines); never secrets or evidence.
+.git
+.github
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+evidence
+hunts
+assets
+tests
+docs
+*.md
+!LICENSE

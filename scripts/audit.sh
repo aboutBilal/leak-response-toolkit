@@ -74,7 +74,9 @@ else
   bad_lines="$(cd "$repo" && grep -nHiE '^\s*(ARG|ENV)\s+[A-Z0-9_]*(SECRET|PASSWORD|PASSWD|TOKEN|API_KEY|PRIVATE_KEY)[A-Z0-9_]*\s*=\s*[^$[:space:]]' $dockerfiles 2>/dev/null | head -3 || true)"
   if [[ -f "$repo/.dockerignore" ]] && grep -qE '^\.env' "$repo/.dockerignore" && [[ -z "$bad_lines" ]]; then pass ".dockerignore excludes .env; no secret values in ARG/ENV" 10
   else
-    [[ -n "$bad_lines" ]] && { fail "secret-looking value baked into an image: $(echo "$bad_lines" | head -1 | cut -c1-80)" 10; tip "use BuildKit secret mounts: prevention/docker/Dockerfile.build-secrets.example"; }
+    # Show where, never the value: file:line and the variable name only.
+    where="$(echo "$bad_lines" | head -1 | sed -E 's/^([^:]+:[0-9]+):\s*(ARG|ENV)\s+([A-Za-z0-9_]+).*/\1 (\2 \3=<redacted>)/I')"
+    [[ -n "$bad_lines" ]] && { fail "secret-looking value baked into an image: $where" 10; tip "use BuildKit secret mounts: prevention/docker/Dockerfile.build-secrets.example"; }
     [[ -z "$bad_lines" ]] && { warn ".dockerignore missing or does not exclude .env" 10; tip "copy prevention/docker/dockerignore to .dockerignore"; }
   fi
 fi

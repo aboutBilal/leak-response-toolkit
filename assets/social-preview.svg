@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640">
+<defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0b1020"/><stop offset="1" stop-color="#1b2145"/></linearGradient>
+  <linearGradient id="acc" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ff7a59"/><stop offset="1" stop-color="#ffb347"/></linearGradient>
+  <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse"><path d="M32 0H0V32" fill="none" stroke="#ffffff" stroke-opacity="0.045"/></pattern>
+</defs>
+<rect width="1280" height="640" fill="url(#bg)"/><rect width="1280" height="640" fill="url(#grid)"/>
+<g transform="translate(96,150) scale(1.35)">
+  <rect x="0" y="40" width="112" height="92" rx="16" fill="url(#acc)"/>
+  <path d="M22 40 V18 a34 34 0 0 1 68 0 V40" fill="none" stroke="url(#acc)" stroke-width="14" stroke-linecap="round"/>
+  <path d="M90 40 V26" fill="none" stroke="#0b1020" stroke-width="16"/>
+  <circle cx="56" cy="78" r="12" fill="#0b1020"/><rect x="51" y="82" width="10" height="26" rx="4" fill="#0b1020"/>
+</g>
+<text x="300" y="250" fill="#f4f6fb" font-family="Ubuntu,'Segoe UI',Helvetica,Arial,sans-serif" font-size="70" font-weight="700">Leak Response Toolkit</text>
+<text x="302" y="312" fill="#aab3cf" font-family="Ubuntu,'Segoe UI',Helvetica,Arial,sans-serif" font-size="30">Prevent secret leaks. Respond in minutes.</text>
+<g font-family="ui-monospace,Menlo,Consolas,monospace" font-size="24" font-weight="700">
+  <rect x="302" y="356" width="150" height="50" rx="25" fill="#56d364" fill-opacity="0.12" stroke="#56d364"/><text x="377" y="389" fill="#7ee08a" text-anchor="middle">audit</text>
+  <rect x="468" y="356" width="130" height="50" rx="25" fill="#ff7a59" fill-opacity="0.16" stroke="#ff7a59"/><text x="533" y="389" fill="#ff9b80" text-anchor="middle">scan</text>
+  <rect x="614" y="356" width="130" height="50" rx="25" fill="#79c0ff" fill-opacity="0.12" stroke="#79c0ff"/><text x="679" y="389" fill="#9ccfff" text-anchor="middle">hunt</text>
+  <rect x="760" y="356" width="150" height="50" rx="25" fill="#d2a8ff" fill-opacity="0.12" stroke="#d2a8ff"/><text x="835" y="389" fill="#dcbcff" text-anchor="middle">report</text>
+</g>
+<text x="302" y="520" fill="#7d86a8" font-family="Ubuntu,'Segoe UI',Helvetica,Arial,sans-serif" font-size="24">Architecture · tested prevention kit · runbooks · CLI · GitHub Action · Docker</text>
+<text x="302" y="560" fill="#5c6488" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="22">github.com/aboutBilal/leak-response-toolkit</text>
+</svg>

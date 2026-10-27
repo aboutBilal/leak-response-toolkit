@@ -1,7 +1,8 @@
 SHELL := /bin/bash
 SCRIPTS := $(wildcard scripts/*.sh) leak prevention/hooks/pre-commit
+PREFIX ?= $(HOME)/.local
 
-.PHONY: help check lint test scan audit
+.PHONY: help check lint test scan audit install uninstall image
 
 help: ## List the targets
 	@grep -E '^[a-z]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  make %-6s %s\n", $$1, $$2}'
@@ -22,3 +23,13 @@ scan: ## Secret scan of this repository's full history
 
 audit: ## Grade this repository's own secret hygiene
 	@./leak audit .
+
+install: ## Put `leak` on your PATH (symlink into $(PREFIX)/bin)
+	@mkdir -p "$(PREFIX)/bin" && ln -sf "$(CURDIR)/leak" "$(PREFIX)/bin/leak"
+	@echo "installed: $(PREFIX)/bin/leak  (run: leak doctor)"
+
+uninstall: ## Remove the `leak` symlink
+	@rm -f "$(PREFIX)/bin/leak" && echo "removed: $(PREFIX)/bin/leak"
+
+image: ## Build the container image locally
+	@docker build -t leak-response-toolkit:local .

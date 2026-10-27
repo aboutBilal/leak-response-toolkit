@@ -4,6 +4,24 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
+## [2.1.0] - 2026-10-27
+
+### Added
+
+- **Container image** `ghcr.io/aboutbilal/leak-response-toolkit` (amd64 and arm64) with every dependency, gitleaks included; runs as a non-root user.
+- **Release automation:** every version tag publishes GitHub release notes from this changelog (backfilling earlier tags) and the image, with an **SBOM and build provenance**.
+- **OpenSSF Scorecard** analysis on every push to `main` and weekly, with a README badge.
+- `make install` / `make uninstall` (puts `leak` on your PATH) and `make image`.
+- README: install options, a real `leak audit` demo, an honest comparison with gitleaks, TruffleHog and GitGuardian, and an FAQ.
+- `tools/render-terminal-svg.py`: README images are generated from real command output.
+- `CITATION.cff`, `ROADMAP.md`, a social preview image.
+
+### Fixed
+
+- `leak audit` printed the value of a secret found in a Dockerfile `ARG`/`ENV` line. It now shows only the file, line and variable name (`API_TOKEN=<redacted>`), and a test enforces it.
+- `leak` now resolves symlinks, so it works when installed on the PATH or inside the image.
+- `leak audit` no longer warns about documentation that mentions environment variables, or about example Dockerfiles.
+
 ## [2.0.0] - 2026-10-27
 
 Prevention becomes the second half of the kit: not only responding to leaks, but designing them out.
@@ -48,7 +66,8 @@ Prevention becomes the second half of the kit: not only responding to leaks, but
 - Templates: incident timeline, takedown request, notification messages, post-incident review, executive report (print-ready HTML).
 - Quality: offline bats tests, shellcheck, gitleaks on full history, link and anchor checks in CI, Dependabot for pinned actions, pre-commit hook, contribution guide, issue and pull request templates, security policy.
 
-[Unreleased]: https://github.com/aboutBilal/leak-response-toolkit/compare/v2.0.0...HEAD
+[Unreleased]: https://github.com/aboutBilal/leak-response-toolkit/compare/v2.1.0...HEAD
+[2.1.0]: https://github.com/aboutBilal/leak-response-toolkit/compare/v2.0.0...v2.1.0
 [2.0.0]: https://github.com/aboutBilal/leak-response-toolkit/compare/v1.1.0...v2.0.0
 [1.1.0]: https://github.com/aboutBilal/leak-response-toolkit/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/aboutBilal/leak-response-toolkit/releases/tag/v1.0.0

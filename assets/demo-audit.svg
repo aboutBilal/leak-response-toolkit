@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="654" viewBox="0 0 1000 654" role="img" aria-label="Terminal: ./leak audit legacy-api">
+<rect width="100%" height="100%" rx="12" fill="#0d1117"/>
+<rect width="100%" height="38" rx="12" fill="#161b22"/><rect y="26" width="100%" height="12" fill="#161b22"/>
+<circle cx="22" cy="19" r="6" fill="#ff5f56"/><circle cx="42" cy="19" r="6" fill="#ffbd2e"/><circle cx="62" cy="19" r="6" fill="#27c93f"/>
+<text x="500.0" y="24" fill="#8b949e" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,'Liberation Mono',monospace" font-size="13" text-anchor="middle">leak-response-toolkit · real output · secret values never printed</text>
+<g font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,'Liberation Mono',monospace" font-size="14.5">
+<text style="white-space:pre" x="24" y="58" fill="#e6edf3" font-weight="700">$ ./leak audit legacy-api</text>
+<text style="white-space:pre" x="24" y="80" fill="#e6edf3" font-weight="700">Secret hygiene audit: legacy-api</text>
+<text style="white-space:pre" x="24" y="102" fill="#e6edf3" font-weight="700">1. Files that usually hold secrets</text>
+<text style="white-space:pre" x="24" y="124" fill="#ff7b72" font-weight="700">  ✘ tracked by Git: .env</text>
+<text style="white-space:pre" x="24" y="146" fill="#8b949e" font-weight="400">      → rotate anything inside them, then: git rm --cached &lt;file&gt; and add to .gitignore</text>
+<text style="white-space:pre" x="24" y="168" fill="#e6edf3" font-weight="700">2. Ignore rules</text>
+<text style="white-space:pre" x="24" y="190" fill="#f0b72f" font-weight="400">  ! not ignored: .env .env.local server.pem id_rsa terraform.tfstate</text>
+<text style="white-space:pre" x="24" y="212" fill="#8b949e" font-weight="400">      → append prevention/gitignore-secrets to .gitignore</text>
+<text style="white-space:pre" x="24" y="234" fill="#f0b72f" font-weight="400">  ! code reads environment variables but there is no .env.example</text>
+<text style="white-space:pre" x="24" y="256" fill="#8b949e" font-weight="400">      → commit prevention/env/env.example, adapted</text>
+<text style="white-space:pre" x="24" y="278" fill="#e6edf3" font-weight="700">3. Commit-time blocking</text>
+<text style="white-space:pre" x="24" y="300" fill="#f0b72f" font-weight="400">  ! no pre-commit secret scanner configured</text>
+<text style="white-space:pre" x="24" y="322" fill="#8b949e" font-weight="400">      → copy prevention/pre-commit-config.yaml to .pre-commit-config.yaml</text>
+<text style="white-space:pre" x="24" y="344" fill="#f0b72f" font-weight="400">  ! no pre-commit hook installed in this clone</text>
+<text style="white-space:pre" x="24" y="366" fill="#8b949e" font-weight="400">      → pre-commit install   (or copy prevention/hooks/pre-commit)</text>
+<text style="white-space:pre" x="24" y="388" fill="#e6edf3" font-weight="700">4. CI secret scanning</text>
+<text style="white-space:pre" x="24" y="410" fill="#f0b72f" font-weight="400">  ! CI exists but runs no secret scan</text>
+<text style="white-space:pre" x="24" y="432" fill="#8b949e" font-weight="400">      → add a job from prevention/ci/</text>
+<text style="white-space:pre" x="24" y="454" fill="#e6edf3" font-weight="700">5. Container hygiene</text>
+<text style="white-space:pre" x="24" y="476" fill="#ff7b72" font-weight="700">  ✘ secret-looking value baked into an image: Dockerfile:3 (ENV API_TOKEN=&lt;redacted&gt;)</text>
+<text style="white-space:pre" x="24" y="498" fill="#8b949e" font-weight="400">      → use BuildKit secret mounts: prevention/docker/Dockerfile.build-secrets.example</text>
+<text style="white-space:pre" x="24" y="520" fill="#e6edf3" font-weight="700">6. Full history</text>
+<text style="white-space:pre" x="24" y="542" fill="#ff7b72" font-weight="700">  ✘ 2 secret finding(s) in history (types: generic-api-key, stripe-access-token)</text>
+<text style="white-space:pre" x="24" y="564" fill="#8b949e" font-weight="400">      → rotate them first, then see docs/06-scenarios.md (scenario A) to clean history</text>
+<text style="white-space:pre" x="24" y="586" fill="#c9d1d9" font-weight="400"></text>
+<text style="white-space:pre" x="24" y="608" fill="#ff7b72" font-weight="700">Score: 0/100 (0%) · Grade F  (critical findings cap the grade at F)</text>
+</g></svg>

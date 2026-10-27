@@ -4,8 +4,11 @@
 
 <p align="center">
   <a href="https://github.com/aboutBilal/leak-response-toolkit/actions/workflows/secret-scan.yml"><img src="https://github.com/aboutBilal/leak-response-toolkit/actions/workflows/secret-scan.yml/badge.svg" alt="checks"></a>
-  <a href="CHANGELOG.md"><img src="https://img.shields.io/badge/version-2.0.0-informational.svg" alt="version 2.0.0"></a>
+  <a href="CHANGELOG.md"><img src="https://img.shields.io/badge/version-2.1.0-informational.svg" alt="version 2.1.0"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="license MIT"></a>
+  <a href="https://scorecard.dev/viewer/?uri=github.com/aboutBilal/leak-response-toolkit"><img src="https://api.scorecard.dev/projects/github.com/aboutBilal/leak-response-toolkit/badge" alt="OpenSSF Scorecard"></a>
+  <a href="#-use-it-in-your-ci-github-action"><img src="https://img.shields.io/badge/GitHub%20Action-ready-2088FF.svg?logo=githubactions&logoColor=white" alt="GitHub Action"></a>
+  <a href="#-install"><img src="https://img.shields.io/badge/docker-ghcr.io-2496ED.svg?logo=docker&logoColor=white" alt="Docker image"></a>
   <a href="CONTRIBUTING.md"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg" alt="PRs welcome"></a>
 </p>
 
@@ -39,6 +42,20 @@
 | [Secrets by design](docs/08-secrets-by-design.md): principles, reference architecture, control matrix, maturity model, 90-day rollout, metrics | [Runbook](docs/01-runbook.md) and [scenarios](docs/06-scenarios.md) for every kind of leak |
 | [Prevention kit](prevention/README.md): tested hooks, CI templates for 4 platforms, keyless cloud login, Docker and `.env` patterns | [Rotate](docs/02-rotate-secrets.md) 25+ secret types, [investigate](docs/03-investigate.md) misuse, [hunt copies](docs/05-where-copies-survive.md) |
 | `./leak audit`: grade any repository A–F, with a fix for each gap | `./leak scan · hunt · report`: from evidence to a leadership report |
+
+---
+
+## 📦 Install
+
+Pick one. All three give you the same `leak` command.
+
+| Way | Command | Best for |
+|---|---|---|
+| **Clone** | `git clone https://github.com/aboutBilal/leak-response-toolkit.git && cd leak-response-toolkit && make install` | Your laptop: puts `leak` on your PATH (`~/.local/bin`) |
+| **Docker** | `docker run --rm -v "$PWD:/repo" ghcr.io/aboutbilal/leak-response-toolkit audit /repo` | No installs at all; everything (gitleaks included) is in the image, for amd64 and arm64 |
+| **GitHub Action** | `uses: aboutBilal/leak-response-toolkit@v2` ([example](#-use-it-in-your-ci-github-action)) | Every pull request in every repository |
+
+Then run `leak doctor` once, **before** you need it.
 
 ---
 
@@ -140,10 +157,12 @@ leak-response-toolkit/
 │   └── executive-report.html        leadership report, print-ready A4
 ├── leak                             one command for every script: ./leak help
 ├── action.yml                       GitHub Action: scan, audit or hunt in any CI
+├── Dockerfile                       the whole toolkit as one image (amd64 + arm64)
 ├── CHEATSHEET.md                    the first 15 minutes on one page
-├── tests/scripts.bats               16 offline tests; test secrets generated at runtime
-├── Makefile                         make check = shellcheck + tests + secret scan
-└── .github/                         CI (secrets, shellcheck, tests, links, action self-test), Dependabot, templates
+├── tests/scripts.bats               17 offline tests; test secrets generated at runtime
+├── Makefile                         make check · make install · make image
+├── tools/render-terminal-svg.py     regenerates the README images from real output
+└── .github/                         CI, releases (SBOM + provenance), OpenSSF Scorecard, Dependabot, templates
 ```
 
 ---
@@ -165,6 +184,8 @@ flowchart LR
 cp prevention/pre-commit-config.yaml ~/code/my-service/.pre-commit-config.yaml
 cd ~/code/my-service && pre-commit install
 ```
+
+<p align="center"><img src="assets/demo-audit.svg" alt="Real output of ./leak audit on a repository with a tracked .env file, no hooks, no CI scan and a secret in a Dockerfile: grade F with a fix for every finding" width="88%"></p>
 
 | Read | For |
 |---|---|
@@ -196,6 +217,58 @@ jobs:
 ```
 
 Results appear in the job summary; secret values are always redacted. A weekly `mode: hunt` job on your critical repositories doubles as cheap public-leak monitoring.
+
+---
+
+## 🆚 How it fits with other tools
+
+This kit is **not another secret scanner**: it uses [gitleaks](https://github.com/gitleaks/gitleaks) for detection and adds what happens **around** detection. Use it alongside the tools you already have.
+
+| | gitleaks | TruffleHog | GitGuardian | **This toolkit** |
+|---|:-:|:-:|:-:|:-:|
+| Find secrets in the full git history | ✅ | ✅ | ✅ | ✅ (via gitleaks) |
+| Check whether a found secret is still live | — | ✅ | ✅ | ❌ **by design**: it never touches a leaked key |
+| Block secrets and secret files at commit | ✅ | ✅ | ✅ | ✅ tested configs, plus blocked file types |
+| Grade a repository's hygiene A–F | — | — | — | ✅ `leak audit` |
+| Incident runbook for every leak scenario | — | — | partial | ✅ |
+| Hunt for surviving public copies (forks, archives, re-uploads) | — | — | continuous monitoring (commercial) | ✅ point-in-time, free |
+| Leadership report from the evidence | — | — | dashboards | ✅ `leak report` |
+| Architecture, maturity model and rollout plan | — | — | — | ✅ |
+| Licence | MIT | AGPL-3.0 | Commercial | MIT |
+
+---
+
+## ❓ FAQ
+
+<details>
+<summary><b>Does it send my code or secrets anywhere?</b></summary>
+
+No. `scan` and `audit` run locally (gitleaks runs with networking disabled when used through Docker). `hunt`, `forks` and `commits` send only repository names and commit IDs to public APIs (GitHub, the Internet Archive, Software Heritage, Sourcegraph, GitLab, Codeberg).
+</details>
+
+<details>
+<summary><b>Will it tell me if a leaked key still works?</b></summary>
+
+No, on purpose. Testing a leaked credential is what attackers do, and it can trigger alarms or break terms of service. The answer is always the same anyway: rotate it.
+</details>
+
+<details>
+<summary><b>Does it only work with GitHub?</b></summary>
+
+`scan`, `audit`, the hooks and the CI templates work with any Git repository and GitHub, GitLab, Azure DevOps or Bitbucket. `hunt`, `forks` and `commits` look for copies on public GitHub and in public archives.
+</details>
+
+<details>
+<summary><b>Can my company use it, change it, or build on it?</b></summary>
+
+Yes. It is MIT-licensed: use it commercially, adapt the runbooks to your organisation, and ship the prevention kit in your templates.
+</details>
+
+<details>
+<summary><b>How do I know the prevention configs actually work?</b></summary>
+
+Each one was tested before it was added: the results are in [`prevention/README.md`](prevention/README.md#-tested-behaviour), and the scripts have 17 offline tests that run on every push.
+</details>
 
 ---
 
