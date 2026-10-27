@@ -73,6 +73,35 @@ If AWS has already attached the `AWSCompromisedKeyQuarantine` policy to the user
 
 ---
 
+## 🔷 Google Cloud
+
+```bash
+# Service account key (JSON file with a private key): disable at once, delete after consumers move
+gcloud iam service-accounts keys list    --iam-account=<sa>@<project>.iam.gserviceaccount.com
+gcloud iam service-accounts keys disable <key-id> --iam-account=<sa>@<project>.iam.gserviceaccount.com
+gcloud iam service-accounts keys delete  <key-id> --iam-account=<sa>@<project>.iam.gserviceaccount.com
+
+# API key: create a replacement, ship it, delete the old one
+gcloud services api-keys create --project=<project> --display-name="rotated-$(date +%F)"
+gcloud services api-keys delete <old-key-id> --project=<project>
+```
+
+Google can disable an exposed service account key automatically; the audit log then shows `gcp-compromised-key-response@system.gserviceaccount.com`. Prefer workload identity federation to a new key file.
+
+---
+
+## 🌐 Keys that are meant to be public
+
+Some keys are designed to ship inside web and mobile apps, so anyone using the app can read them. Scanners still flag them, and providers may still send exposure emails.
+
+| Examples | Real protection | After a leak |
+|---|---|---|
+| Firebase web config `apiKey`, Google Maps browser key, Stripe **publishable** key, Sentry DSN, analytics write keys | Restrictions on the key (allowed domains, apps, APIs) and **server-side rules** (database and storage security rules, backend authorisation) | Check the restrictions and rules are in place; rotate only if they were missing or the key was abused |
+
+The danger is never the key itself but **what it can reach without further checks**, for example a database whose rules allow anyone to read or write. Their **secret** counterparts (Stripe secret key, server-side API keys, service account keys) are real credentials: rotate them.
+
+---
+
 ## 🐙 GitHub
 
 | Secret | Revoke at |

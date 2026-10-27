@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Exposure Report Template</title>
+<style>
+  :root {
+    --ink: #172033; --ink-2: #3c4a63; --muted: #5d6b82;
+    --paper: #ffffff; --wash: #f4f6fa; --line: #dde3ec;
+    --brand: #23407a; --brand-soft: #e7edf8;
+    --ok: #17663a; --ok-soft: #e4f4ea;
+    --warn: #8a5300; --warn-soft: #fdf1dc;
+    --bad: #a3231b; --bad-soft: #fbe7e5;
+    --tbc: #fff3a8;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { margin: 0; background: var(--wash); color: var(--ink);
+         font: 15px/1.55 "Ubuntu", "Segoe UI", system-ui, -apple-system, Arial, sans-serif; }
+  main { max-width: 900px; margin: 24px auto; background: var(--paper); padding: 48px 56px;
+         border: 1px solid var(--line); border-radius: 6px; }
+  h1 { font-size: 28px; line-height: 1.2; margin: 0 0 6px; letter-spacing: -0.01em; }
+  h2 { font-size: 19px; margin: 36px 0 12px; padding-bottom: 6px; border-bottom: 2px solid var(--brand);
+       color: var(--brand); break-after: avoid; }
+  h3 { font-size: 15px; margin: 18px 0 6px; break-after: avoid; }
+  p { margin: 0 0 10px; }
+  ul, ol { margin: 0 0 10px; padding-left: 22px; } li { margin: 3px 0; }
+  .eyebrow { text-transform: uppercase; letter-spacing: .12em; font-size: 12px; font-weight: 700; color: var(--brand); margin-bottom: 8px; }
+  .meta { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; margin: 20px 0 8px;
+          border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+  .meta div { padding: 10px 14px; border-right: 1px solid var(--line); }
+  .meta div:last-child { border-right: 0; }
+  .meta b { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; }
+  .meta span { font-size: 14px; font-weight: 600; }
+  .summary { background: var(--brand-soft); border-left: 5px solid var(--brand); padding: 18px 22px; border-radius: 4px; margin: 18px 0; }
+  .summary p:last-child { margin: 0; }
+  .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 14px 0 6px; }
+  .card { border: 1px solid var(--line); border-radius: 6px; padding: 14px 16px; break-inside: avoid; }
+  .card .k { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; }
+  .card .v { font-size: 20px; font-weight: 700; margin: 4px 0 2px; }
+  .card p { font-size: 13.5px; color: var(--ink-2); margin: 0; }
+  .card.ok { background: var(--ok-soft); border-color: #b9dfc7; } .card.ok .v { color: var(--ok); }
+  .card.warn { background: var(--warn-soft); border-color: #f0d29a; } .card.warn .v { color: var(--warn); }
+  .card.bad { background: var(--bad-soft); border-color: #efbdb8; } .card.bad .v { color: var(--bad); }
+  table { width: 100%; border-collapse: collapse; margin: 8px 0 12px; font-size: 14px; }
+  th, td { text-align: left; vertical-align: top; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+  th { background: var(--wash); font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-2); }
+  tr { break-inside: avoid; }
+  td.n { width: 34px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .pill { display: inline-block; font-size: 12px; font-weight: 700; padding: 2px 9px; border-radius: 99px; white-space: nowrap; }
+  .pill.ok { background: var(--ok-soft); color: var(--ok); }
+  .pill.warn { background: var(--warn-soft); color: var(--warn); }
+  .pill.bad { background: var(--bad-soft); color: var(--bad); }
+  .pill.na { background: var(--wash); color: var(--ink-2); border: 1px solid var(--line); }
+  mark.tbc { background: var(--tbc); padding: 0 4px; border-radius: 3px; color: var(--ink); }
+  .draft { border: 2px dashed #d4b100; background: #fffbe0; padding: 12px 16px; border-radius: 6px; margin: 0 0 22px; font-size: 13.5px; }
+  .draft b { color: #6b5600; }
+  .note { font-size: 13px; color: var(--muted); }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .box { border: 1px solid var(--line); border-radius: 6px; padding: 14px 16px; break-inside: avoid; }
+  .box h3 { margin-top: 0; }
+  code { font-family: "Ubuntu Mono", "Fira Code", monospace; font-size: 13px; background: var(--wash); padding: 1px 5px; border-radius: 3px; }
+  footer { margin-top: 36px; padding-top: 12px; border-top: 1px solid var(--line); font-size: 12px; color: var(--muted); display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .flow { display: flex; align-items: stretch; gap: 0; margin: 10px 0 14px; }
+  .flow div { flex: 1; background: var(--wash); border: 1px solid var(--line); padding: 10px 12px; font-size: 13px; position: relative; }
+  .flow div + div { border-left: 0; }
+  .flow b { display: block; font-size: 13.5px; color: var(--brand); }
+  @media (max-width: 720px) {
+    main { margin: 0; padding: 24px 16px; border: 0; border-radius: 0; }
+    .meta, .cards, .two { grid-template-columns: 1fr; }
+    .meta div { border-right: 0; border-bottom: 1px solid var(--line); }
+    .flow { flex-direction: column; } .flow div + div { border-left: 1px solid var(--line); border-top: 0; }
+    table { display: block; overflow-x: auto; }
+  }
+  @page { size: A4; margin: 14mm 14mm 16mm; }
+  @media print {
+    body { background: #fff; font-size: 12.5px; }
+    main { margin: 0; padding: 0; border: 0; max-width: none; }
+    h2 { margin-top: 24px; }
+    .pagebreak { break-before: page; }
+  }
+</style>
+</head>
+<body>
+<main>
+
+<div class="draft"><b>How to use this template.</b> Replace every <mark class="tbc">[highlighted field]</mark>. Fill the investigation table from <code>hunt-copies.sh</code> and <code>find-commit-copies.sh</code> reports, and the actions table from the incident timeline. Delete rows that do not apply, then delete this box. Print to PDF from the browser (A4 is set up).</div>
+
+<div class="eyebrow">Incident report · Confidential</div>
+<h1>Exposure of source code on a public repository</h1>
+<p style="color:var(--ink-2);margin:0">Repository <mark class="tbc">[owner/repo]</mark> on <mark class="tbc">[platform, e.g. GitHub]</mark></p>
+
+<div class="meta">
+  <div><b>Report date</b><span><mark class="tbc">[date]</mark></span></div>
+  <div><b>Affected party</b><span><mark class="tbc">[team / client]</mark></span></div>
+  <div><b>Status</b><span><mark class="tbc">[Contained / Open / Closed]</mark></span></div>
+  <div><b>Prepared by</b><span><mark class="tbc">[name, role]</mark></span></div>
+</div>
+
+<h2>1. Executive summary</h2>
+<div class="summary">
+  <p><b>What happened.</b> <mark class="tbc">[One or two sentences: whose code, pushed where, by whom (role, not blame), public for how long.]</mark></p>
+  <p><b>What is confirmed.</b> <mark class="tbc">[Hard facts only, e.g. a provider exposure alert received at hh:mm, secrets found by the history scan.]</mark></p>
+  <p><b>What the investigation found.</b> <mark class="tbc">[e.g. A scan of N public sources on <date> found no surviving public copy / found copies at …]</mark></p>
+  <p><b>What remains.</b> Copies cloned while the code was public cannot be detected by anyone. Every credential in the code is treated as compromised and rotated, and the code itself as disclosed.</p>
+</div>
+
+<div class="cards">
+  <div class="card ok"><div class="k">Public copies today</div><div class="v"><mark class="tbc">[None found]</mark></div><p><mark class="tbc">[N sources checked]</mark></p></div>
+  <div class="card bad"><div class="k">Credentials in the code</div><div class="v"><mark class="tbc">[Compromised / Rotated]</mark></div><p>Assumed taken until every one is rotated.</p></div>
+  <div class="card warn"><div class="k">Source code</div><div class="v">Disclosed</div><p>May have been cloned while public; cannot be verified.</p></div>
+</div>
+
+<h3>Decisions requested</h3>
+<ol>
+  <li><b>Confirm</b> that every credential found in the code has been rotated, with the old values revoked.</li>
+  <li><b>Decide</b> communication and any contractual or regulatory notice (depends on whether personal data was exposed).</li>
+  <li><b>Approve</b> the prevention measures in Section 7, with owners and dates.</li>
+</ol>
+
+<h2>2. Key facts</h2>
+<table>
+  <tr><th style="width:32%">Item</th><th>Detail</th></tr>
+  <tr><td>Repository</td><td><mark class="tbc">[URL]</mark></td></tr>
+  <tr><td>How the code got there</td><td><mark class="tbc">[e.g. company repository cloned and pushed to a personal account]</mark></td></tr>
+  <tr><td>Exposure window</td><td><mark class="tbc">[date, hh:mm – hh:mm UTC; source: account security log]</mark></td></tr>
+  <tr><td>How it was noticed</td><td><mark class="tbc">[e.g. provider alert email, colleague, monitoring service]</mark></td></tr>
+  <tr><td>Current state</td><td><mark class="tbc">[e.g. repository returns Not Found as of <date time>]</mark></td></tr>
+  <tr><td>Credentials in the code</td><td><mark class="tbc">[types only, never values]</mark></td></tr>
+  <tr><td>Personal or customer data</td><td><mark class="tbc">[yes / no; if yes, what]</mark></td></tr>
+</table>
+
+<h2>3. How the exposure was detected</h2>
+<div class="flow">
+  <div><b>1 · Public push</b>Code pushed to a public repository</div>
+  <div><b>2 · Secret scanning</b>The platform scans every public push within seconds</div>
+  <div><b>3 · Partner alert</b>Recognised keys are forwarded to their issuer</div>
+  <div><b>4 · Owner email</b>The issuer notifies the account owner</div>
+</div>
+<p class="note">Automated harvesters watch the same public feed, which is why credentials are assumed taken even after a short exposure.</p>
+
+<h2>4. Investigation: is a public copy still out there?</h2>
+<p>Checked on <mark class="tbc">[date, hh:mm–hh:mm UTC]</mark>. Raw results are kept with this report.</p>
+<table>
+  <tr><th class="n">#</th><th style="width:34%">Where a copy could survive</th><th style="width:16%">Result</th><th>Detail</th></tr>
+  <tr><td class="n">1</td><td>The repository itself</td><td><span class="pill ok">Removed</span></td><td><mark class="tbc">[detail]</mark></td></tr>
+  <tr><td class="n">2</td><td>Forks, and same-name forks traced to their root</td><td><span class="pill ok">None</span></td><td><mark class="tbc">[N forks checked]</mark></td></tr>
+  <tr><td class="n">3</td><td>Re-uploads (commit search by author and by original commit IDs)</td><td><span class="pill ok">None</span></td><td><mark class="tbc">[detail]</mark></td></tr>
+  <tr><td class="n">4</td><td>Uploader’s other repositories and gists</td><td><span class="pill ok">None relevant</span></td><td><mark class="tbc">[detail]</mark></td></tr>
+  <tr><td class="n">5</td><td>Public activity feed and event archives</td><td><span class="pill na">No events</span></td><td><mark class="tbc">[detail]</mark></td></tr>
+  <tr><td class="n">6</td><td>Wayback Machine</td><td><span class="pill ok">0 captures</span></td><td><mark class="tbc">[detail]</mark></td></tr>
+  <tr><td class="n">7</td><td>Software Heritage</td><td><span class="pill ok">Not archived</span></td><td><mark class="tbc">[detail]</mark></td></tr>
+  <tr><td class="n">8</td><td>Code search (Sourcegraph, grep.app)</td><td><span class="pill ok">0 matches</span></td><td><mark class="tbc">[detail]</mark></td></tr>
+  <tr><td class="n">9</td><td>Mirror sites (GitLab, Codeberg)</td><td><span class="pill ok">None</span></td><td><mark class="tbc">[detail]</mark></td></tr>
+  <tr><td class="n">10</td><td>archive.today (manual check)</td><td><span class="pill warn"><mark class="tbc">[result]</mark></span></td><td><mark class="tbc">[detail]</mark></td></tr>
+</table>
+<p class="note">Pills: <span class="pill ok">clean</span> <span class="pill warn">pending or not checked</span> <span class="pill bad">copy found</span>. Change the class to match each result.</p>
+
+<h3>What no one can check</h3>
+<ul>
+  <li><b>Private clones</b> made while the code was public.</li>
+  <li><b>Who cloned it</b>, once the repository is deleted: traffic data covers 14 days and is visible only to the owner.</li>
+</ul>
+
+<div class="pagebreak"></div>
+<h2>5. Risk assessment</h2>
+<table>
+  <tr><th style="width:24%">Risk</th><th style="width:14%">Before actions</th><th style="width:14%">After actions</th><th>Why</th></tr>
+  <tr><td>Use of exposed credentials</td><td><span class="pill bad">High</span></td><td><span class="pill ok">Low</span></td><td>Keys are harvested within minutes; rotation removes the risk, logs show whether anything was used.</td></tr>
+  <tr><td>Disclosure of code and design</td><td><span class="pill warn">Medium</span></td><td><span class="pill warn">Medium</span></td><td>Cannot be undone; exposes logic, endpoints and architecture.</td></tr>
+  <tr><td>Personal or customer data</td><td><mark class="tbc">[depends]</mark></td><td><mark class="tbc">[depends]</mark></td><td>Legal notification duties may apply (e.g. GDPR: 72 hours).</td></tr>
+  <tr><td>Reputation and contract</td><td><span class="pill warn">Medium</span></td><td><span class="pill ok">Low</span></td><td>Reduced by prompt, factual communication and evidence of new controls.</td></tr>
+</table>
+
+<h2>6. Actions</h2>
+<table>
+  <tr><th style="width:44%">Action</th><th style="width:18%">Owner</th><th style="width:16%">Status</th><th>Notes</th></tr>
+  <tr><td>Remove the public repository and every fork</td><td><mark class="tbc">[owner]</mark></td><td><mark class="tbc">[status]</mark></td><td></td></tr>
+  <tr><td>Rotate every credential, revoking the old values</td><td><mark class="tbc">[owner]</mark></td><td><mark class="tbc">[status]</mark></td><td>Most powerful first.</td></tr>
+  <tr><td>Review logs from first push to rotation</td><td><mark class="tbc">[owner]</mark></td><td><mark class="tbc">[status]</mark></td><td>Cloud audit logs, database logins, billing.</td></tr>
+  <tr><td>Record the exact exposure window (account security log)</td><td><mark class="tbc">[owner]</mark></td><td><mark class="tbc">[status]</mark></td><td></td></tr>
+  <tr><td>Hunt for copies; repeat after 7 days</td><td><mark class="tbc">[owner]</mark></td><td><mark class="tbc">[status]</mark></td><td></td></tr>
+  <tr><td>Communication to affected parties</td><td><mark class="tbc">[owner]</mark></td><td><mark class="tbc">[status]</mark></td><td></td></tr>
+</table>
+
+<h2>7. Preventing a repeat</h2>
+<table>
+  <tr><th class="n">#</th><th style="width:34%">Measure</th><th style="width:12%">Effort</th><th>Effect</th></tr>
+  <tr><td class="n">1</td><td><b>No secrets in source code</b>: vault plus managed identities or short-lived tokens</td><td>Medium</td><td>A future leak of code exposes no working credentials.</td></tr>
+  <tr><td class="n">2</td><td><b>Automatic secret scanning</b>: pre-commit, CI, platform push protection</td><td>Low</td><td>Blocks most secrets before they leave a laptop.</td></tr>
+  <tr><td class="n">3</td><td><b>Control where code can go</b>: no forks to personal accounts, IP restrictions, audit alerts</td><td>Low–Medium</td><td>Copying company code becomes harder and visible.</td></tr>
+  <tr><td class="n">4</td><td><b>Policy, training and public-leak monitoring</b></td><td>Low</td><td>Most leaks are well-meant; clear rules and fast detection reduce both.</td></tr>
+</table>
+
+<h2>Appendix: method and evidence</h2>
+<div class="two">
+  <div class="box"><h3>Method</h3><ul><li>Read-only queries to public sources. No credential was used or tested.</li><li><mark class="tbc">[tools and sources used]</mark></li><li>Point-in-time result; repeat after 7 days.</li></ul></div>
+  <div class="box"><h3>Evidence</h3><ul><li><mark class="tbc">[location of raw results and checksum manifest]</mark></li><li><mark class="tbc">[scan start and end times]</mark></li></ul></div>
+</div>
+
+<footer>
+  <span>Confidential: <mark class="tbc">[distribution]</mark></span>
+  <span>Exposure of source code on a public repository · <mark class="tbc">[date]</mark></span>
+</footer>
+
+</main>
+</body>
+</html>

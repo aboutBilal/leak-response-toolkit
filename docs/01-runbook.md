@@ -34,6 +34,8 @@ Do this **before** the repo is deleted: once it is gone, you lose the exact cont
 
 It saves a full mirror, repo metadata (`created_at`, `pushed_at`, fork count), the fork list and, when your token belongs to the owner, **clones and unique visitors for the last 14 days**. Take screenshots too.
 
+Ask the owner for screenshots of **Insights → Traffic** and their **account security log** now: traffic is gone once the repository is deleted, and the security log gives the exact exposure window ([what disappears](05-where-copies-survive.md#-evidence-that-disappears)).
+
 ### 2. 🔎 Find every secret, in the full history
 
 ```bash
@@ -63,6 +65,12 @@ Record the **exact time** each secret was revoked. The investigation window ends
 2. **If they cannot or will not:** the company owns the copyright, so file a **GitHub DMCA takedown** at <https://github.com/contact/dmca>. List the repo **and every fork** ([`list-forks.sh`](../scripts/list-forks.sh)). The facts you need are in [`takedown-request.md`](../templates/takedown-request.md).
 3. **Forks survive** when a public repo is deleted; each needs its own takedown.
 4. Making the repo private is a stop-gap, not a fix: forks and clones already exist.
+5. **Hunt for other copies** (archives, re-uploads, mirrors) and record the result:
+   ```bash
+   ./scripts/hunt-copies.sh --since <first-push-date> <owner>/<repo>
+   ./scripts/find-commit-copies.sh --exclude <owner>/<repo> <commit-sha> <commit-sha>
+   ```
+   Every place a copy can survive is in [`05-where-copies-survive.md`](05-where-copies-survive.md).
 
 ---
 
@@ -90,6 +98,7 @@ Signs of abuse: logins from unfamiliar IPs or countries, new compute (crypto-min
 - Manager, security and legal.
 - **The client**, if it is their code or their data. Contracts usually require prompt notice.
 - Keep a written timeline from the start: [`incident-timeline.md`](../templates/incident-timeline.md).
+- For leadership, use [`executive-report.html`](../templates/executive-report.html): one page of summary, then the evidence.
 
 ### 8. 👤 The person involved
 
@@ -109,6 +118,7 @@ Signs of abuse: logins from unfamiliar IPs or countries, new compute (crypto-min
 
 - [ ] Every secret found is revoked, with the time recorded
 - [ ] Repo and all forks are gone (or a takedown is filed and tracked)
+- [ ] Copy hunt run and repeated after 7 days, reports kept
 - [ ] Logs checked for the full window, findings written down
 - [ ] Data exposure assessed and legal or client notified where required
 - [ ] Timeline complete and prevention actions assigned

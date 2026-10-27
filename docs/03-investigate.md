@@ -82,6 +82,21 @@ Also check **every region** for new EC2 instances, IAM users and access keys cre
 
 ---
 
+## 🔷 Google Cloud
+
+```bash
+# Everything the leaked service account did (Admin Activity audit logs are on by default)
+gcloud logging read \
+  'protoPayload.authenticationInfo.principalEmail="<sa>@<project>.iam.gserviceaccount.com"
+   AND timestamp>="<first-push-utc>"' \
+  --project=<project> --limit=500 \
+  --format='table(timestamp, protoPayload.methodName, protoPayload.requestMetadata.callerIp)'
+```
+
+Data reads are only logged if **Data Access audit logs** were enabled before the leak; say so in the findings if they were not. Check *Billing → Reports* by service for the window.
+
+---
+
 ## 🗄️ Databases
 
 | Engine | Where logins show up |

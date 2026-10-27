@@ -26,9 +26,9 @@ flowchart LR
 | 1 | Save a copy of the leaked repo, its metadata and forks **before** anything is deleted | [`scripts/snapshot-evidence.sh`](scripts/snapshot-evidence.sh) |
 | 2 | Scan the **full history**, not only the latest commit | [`scripts/scan-secrets.sh`](scripts/scan-secrets.sh) |
 | 3 | Rotate and **revoke** every secret found, most powerful first | [`docs/02-rotate-secrets.md`](docs/02-rotate-secrets.md) |
-| 4 | Delete the repo, or file a takedown, including every fork | [`scripts/list-forks.sh`](scripts/list-forks.sh), [`templates/takedown-request.md`](templates/takedown-request.md) |
+| 4 | Delete the repo or file a takedown (every fork too), then **hunt for other copies** | [`scripts/hunt-copies.sh`](scripts/hunt-copies.sh), [`scripts/find-commit-copies.sh`](scripts/find-commit-copies.sh), [`templates/takedown-request.md`](templates/takedown-request.md) |
 | 5 | Search logs from the **first push** to the **moment each key was rotated** | [`docs/03-investigate.md`](docs/03-investigate.md) |
-| 6 | Tell the right people and keep a timeline | [`templates/incident-timeline.md`](templates/incident-timeline.md) |
+| 6 | Tell the right people, keep a timeline, report to leadership | [`templates/incident-timeline.md`](templates/incident-timeline.md), [`templates/executive-report.html`](templates/executive-report.html) |
 
 The full walkthrough is in **[`docs/01-runbook.md`](docs/01-runbook.md)**.
 
@@ -48,6 +48,12 @@ cd leak-response-toolkit
 
 # 3. List forks that also need a takedown
 ./scripts/list-forks.sh someuser/leaked-repo
+
+# 4. Hunt for surviving copies: archives, re-uploads, mirrors, code search (markdown report)
+./scripts/hunt-copies.sh --since 2026-01-31 someuser/leaked-repo
+
+# 5. Find renamed re-uploads by commit IDs from the ORIGINAL repository
+./scripts/find-commit-copies.sh --exclude someuser/leaked-repo <first-commit-sha> <recent-commit-sha>
 ```
 
 **Needs:** `git`, `curl`, `jq`, and either [`gitleaks`](https://github.com/gitleaks/gitleaks) or Docker (the scan script falls back to the official gitleaks image).
@@ -61,18 +67,23 @@ Optional: set `GITHUB_TOKEN` for higher API limits; if the token belongs to the 
 leak-response-toolkit/
 ├── docs/
 │   ├── 01-runbook.md            the incident, step by step
-│   ├── 02-rotate-secrets.md     rotation commands per secret type (Azure, AWS, GitHub, DBs, SSH, JWT)
+│   ├── 02-rotate-secrets.md     rotation per secret type (Azure, AWS, Google Cloud, GitHub, DBs, SSH, app secrets)
 │   ├── 03-investigate.md        log queries: was the key used?
-│   └── 04-prevention.md         push protection, pre-commit, short-lived credentials, policy
+│   ├── 04-prevention.md         layers that stop leaks, with a measured test of what each catches
+│   └── 05-where-copies-survive.md   archives, forks, re-uploads, evidence that disappears, removal requests
 ├── scripts/
 │   ├── snapshot-evidence.sh     mirror + metadata + forks + traffic, with a checksum manifest
 │   ├── scan-secrets.sh          full-history scan, redacted summary
-│   └── list-forks.sh            every fork, for the takedown request
+│   ├── list-forks.sh            every fork, for the takedown request
+│   ├── hunt-copies.sh           15+ public sources checked, dated markdown report
+│   └── find-commit-copies.sh    public repos containing the original commit IDs
 ├── templates/
 │   ├── incident-timeline.md     fill-in timeline and decision log
-│   └── takedown-request.md      the facts a GitHub DMCA notice needs
+│   ├── takedown-request.md      the facts a GitHub DMCA notice needs
+│   └── executive-report.html    leadership report, print-ready A4
 ├── .pre-commit-config.yaml      gitleaks before every commit
-└── .github/workflows/secret-scan.yml   gitleaks on every push and PR
+├── .github/workflows/secret-scan.yml   gitleaks + shellcheck on every push and PR
+└── SECURITY.md                  how to report a problem privately
 ```
 
 ---
@@ -87,6 +98,9 @@ pre-commit install          # gitleaks now runs before every commit
 ```
 
 And CI runs the same scan on every push ([`secret-scan.yml`](.github/workflows/secret-scan.yml)). The bigger wins, such as removing long-lived keys entirely, are in [`docs/04-prevention.md`](docs/04-prevention.md).
+
+> [!TIP]
+> **Measured, not assumed:** in a test with one fake credential of each of 9 types, GitHub push protection blocked 5 and gitleaks caught all 9. Details in [`docs/04-prevention.md`](docs/04-prevention.md#-what-each-layer-catches-a-measured-test).
 
 ---
 

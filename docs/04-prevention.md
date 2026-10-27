@@ -55,6 +55,24 @@ gitleaks then blocks any commit that contains a secret. It runs locally, so it i
 
 [`.github/workflows/secret-scan.yml`](../.github/workflows/secret-scan.yml) runs gitleaks on every push and pull request, over the full history. A finding fails the check.
 
+### 📊 What each layer catches: a measured test
+
+A test branch with one **fake** credential of each type was pushed to a public repository on 26 October 2026 (the values were random and the branch was never accepted, so no secret exists in this repository):
+
+| Secret type | GitHub push protection | gitleaks (pre-commit / CI) |
+|---|:-:|:-:|
+| AWS access key ID | ✅ blocked | ✅ |
+| AWS secret access key | ✅ blocked | ✅ |
+| Azure storage account key | ✅ blocked | ✅ |
+| Slack bot token | ✅ blocked | ✅ |
+| Stripe API key | ✅ blocked | ✅ |
+| GitHub personal access token | ❌ passed (invalid checksum, recognised as fake) | ✅ |
+| Google API key | ❌ passed | ✅ |
+| Private key (PEM) | ❌ passed | ✅ |
+| Database password in a connection string | ❌ passed | ✅ |
+
+**Push protection blocked 5 of 9 types; gitleaks caught all 9.** Push protection only blocks high-confidence provider formats at push time, so it is a backstop, not the main control. Run a scanner before the commit and in CI as well.
+
 ### Around the source: who can take the code where
 
 | Control | Where |
