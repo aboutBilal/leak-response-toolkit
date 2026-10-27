@@ -4,6 +4,20 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
+## [2.3.0] - 2026-10-27
+
+A new face: the toolkit now presents itself like the product it is.
+
+### Added
+
+- **Brand:** a shield-and-keyhole logo, a product hero banner with a live `leak audit` card, a "How it works" lifecycle graphic, and a matching social preview card.
+- **Report preview:** a real `leak report` rendered as a document preview, so readers see what leadership receives.
+- **"Built to be trusted"** section: signed releases, SBOM and provenance, OpenSSF Scorecard, pinned dependencies, analysis and tests, each verifiable.
+
+### Changed
+
+- README rebuilt as a product page: hero, live badges (CI, Scorecard, latest release, signed releases), install, demos, incident quick-start, prevention, CI, commands, trust, comparison, FAQ.
+
 ## [2.2.0] - 2026-10-27
 
 Supply-chain hardening, guided by the OpenSSF Scorecard results.
@@ -82,7 +96,8 @@ Prevention becomes the second half of the kit: not only responding to leaks, but
 - Templates: incident timeline, takedown request, notification messages, post-incident review, executive report (print-ready HTML).
 - Quality: offline bats tests, shellcheck, gitleaks on full history, link and anchor checks in CI, Dependabot for pinned actions, pre-commit hook, contribution guide, issue and pull request templates, security policy.
 
-[Unreleased]: https://github.com/aboutBilal/leak-response-toolkit/compare/v2.2.0...HEAD
+[Unreleased]: https://github.com/aboutBilal/leak-response-toolkit/compare/v2.3.0...HEAD
+[2.3.0]: https://github.com/aboutBilal/leak-response-toolkit/compare/v2.2.0...v2.3.0
 [2.2.0]: https://github.com/aboutBilal/leak-response-toolkit/compare/v2.1.0...v2.2.0
 [2.1.0]: https://github.com/aboutBilal/leak-response-toolkit/compare/v2.0.0...v2.1.0
 [2.0.0]: https://github.com/aboutBilal/leak-response-toolkit/compare/v1.1.0...v2.0.0

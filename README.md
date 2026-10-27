@@ -1,28 +1,34 @@
 <p align="center">
-  <img src="assets/banner.svg" alt="Leak Response Toolkit: rotate, hunt copies, investigate, prevent" width="100%">
+  <img src="assets/banner.svg" alt="Leak Response Toolkit: prevent secret leaks, respond in minutes" width="100%">
 </p>
 
 <p align="center">
   <a href="https://github.com/aboutBilal/leak-response-toolkit/actions/workflows/secret-scan.yml"><img src="https://github.com/aboutBilal/leak-response-toolkit/actions/workflows/secret-scan.yml/badge.svg" alt="checks"></a>
-  <a href="CHANGELOG.md"><img src="https://img.shields.io/badge/version-2.2.0-informational.svg" alt="version 2.2.0"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="license MIT"></a>
   <a href="https://scorecard.dev/viewer/?uri=github.com/aboutBilal/leak-response-toolkit"><img src="https://img.shields.io/ossf-scorecard/github.com/aboutBilal/leak-response-toolkit?label=openssf%20scorecard&style=flat" alt="OpenSSF Scorecard"></a>
-  <a href="#-use-it-in-your-ci-github-action"><img src="https://img.shields.io/badge/GitHub%20Action-ready-2088FF.svg?logo=githubactions&logoColor=white" alt="GitHub Action"></a>
+  <a href="https://github.com/aboutBilal/leak-response-toolkit/releases/latest"><img src="https://img.shields.io/github/v/release/aboutBilal/leak-response-toolkit?label=release&color=ff7a59" alt="latest release"></a>
+  <a href="SECURITY.md#verifying-a-release"><img src="https://img.shields.io/badge/releases-sigstore%20signed-6f42c1.svg" alt="Sigstore-signed releases"></a>
   <a href="#-install"><img src="https://img.shields.io/badge/docker-ghcr.io-2496ED.svg?logo=docker&logoColor=white" alt="Docker image"></a>
-  <a href="CONTRIBUTING.md"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg" alt="PRs welcome"></a>
+  <a href="#-use-it-in-your-ci"><img src="https://img.shields.io/badge/GitHub%20Action-ready-2088FF.svg?logo=githubactions&logoColor=white" alt="GitHub Action"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="license MIT"></a>
 </p>
 
-<h3 align="center">Stop secrets from leaking, and when they do, respond in minutes.<br>Architecture, tested prevention configs, incident runbooks and tools in one kit.</h3>
+<h3 align="center">Stop secrets from leaking. When they do, respond in minutes.</h3>
 
 <p align="center">
-  <a href="#-start-here-what-happened"><b>🚨 In an incident? Start here</b></a> ·
-  <a href="#-prevent-it-secrets-by-design"><b>🛡️ Prevent it</b></a> ·
-  <a href="CHEATSHEET.md">📄 Cheat sheet</a> ·
-  <a href="docs/01-runbook.md">📘 Runbook</a> ·
-  <a href="docs/07-practice-drill.md">🎯 Drill</a>
+  An architecture, a tested prevention kit, incident runbooks and one CLI (<code>leak</code>)<br>
+  to <b>audit</b> a repository, <b>scan</b> its history, <b>hunt</b> for surviving copies and <b>report</b> to leadership.
 </p>
 
----
+<p align="center">
+  <a href="#-in-an-incident-start-here"><b>🚨 In an incident? Start here</b></a>
+  &nbsp;·&nbsp; <a href="#-prevent-it"><b>🛡️ Prevent it</b></a>
+  &nbsp;·&nbsp; <a href="#-install"><b>📦 Install</b></a>
+  &nbsp;·&nbsp; <a href="CHEATSHEET.md">📄 Cheat sheet</a>
+</p>
+
+<p align="center">
+  <img src="assets/how-it-works.svg" alt="How it works: prevent with leak audit, detect with leak scan, respond with leak hunt, report and learn with leak report" width="100%">
+</p>
 
 ## ⚡ Why minutes matter
 
@@ -31,37 +37,41 @@
 | Time attackers needed to find and use AWS keys exposed on public GitHub ([Unit 42, 2023](https://unit42.paloaltonetworks.com/malicious-operations-of-exposed-iam-keys-cryptojacking/)) | New hard-coded secrets pushed to public GitHub in 2025, up 34% ([GitGuardian, 2026](https://www.gitguardian.com/state-of-secrets-sprawl-report-2026)) | Secrets leaked in 2022 that were still exploitable four years later ([GitGuardian, 2026](https://www.gitguardian.com/state-of-secrets-sprawl-report-2026)) | Secret types GitHub push protection blocked in our test, while gitleaks caught 9 of 9 ([measured](docs/04-prevention.md#-what-each-layer-catches-a-measured-test)) |
 
 > [!IMPORTANT]
-> **Rotate first, delete second.** Deleting a repository does not un-leak anything; a revoked key does. Everything else in this kit limits the spread and tells you what happened.
-
----
-
-## 🧩 Two halves, one kit
-
-| 🛡️ **Prevent** (before) | 🚑 **Respond** (during and after) |
-|---|---|
-| [Secrets by design](docs/08-secrets-by-design.md): principles, reference architecture, control matrix, maturity model, 90-day rollout, metrics | [Runbook](docs/01-runbook.md) and [scenarios](docs/06-scenarios.md) for every kind of leak |
-| [Prevention kit](prevention/README.md): tested hooks, CI templates for 4 platforms, keyless cloud login, Docker and `.env` patterns | [Rotate](docs/02-rotate-secrets.md) 25+ secret types, [investigate](docs/03-investigate.md) misuse, [hunt copies](docs/05-where-copies-survive.md) |
-| `./leak audit`: grade any repository A–F, with a fix for each gap | `./leak scan · hunt · report`: from evidence to a leadership report |
-
----
+> **Rotate first, delete second.** Deleting a repository does not un-leak anything; a revoked key does. Everything else limits the spread and tells you what happened.
 
 ## 📦 Install
 
-Pick one. All three give you the same `leak` command.
-
-| Way | Command | Best for |
+| | Command | Best for |
 |---|---|---|
-| **Clone** | `git clone https://github.com/aboutBilal/leak-response-toolkit.git && cd leak-response-toolkit && make install` | Your laptop: puts `leak` on your PATH (`~/.local/bin`) |
-| **Docker** | `docker run --rm -v "$PWD:/repo" ghcr.io/aboutbilal/leak-response-toolkit audit /repo` | No installs at all; everything (gitleaks included) is in the image, for amd64 and arm64 |
-| **GitHub Action** | `uses: aboutBilal/leak-response-toolkit@v2` ([example](#-use-it-in-your-ci-github-action)) | Every pull request in every repository |
+| 🐳 **Docker** | `docker run --rm -v "$PWD:/repo" ghcr.io/aboutbilal/leak-response-toolkit audit /repo` | Zero installs. Everything, gitleaks included, in one signed image (amd64 + arm64) |
+| 💻 **Clone** | `git clone https://github.com/aboutBilal/leak-response-toolkit.git && cd leak-response-toolkit && make install` | Your laptop: puts `leak` on your PATH |
+| 🤖 **GitHub Action** | `uses: aboutBilal/leak-response-toolkit@v2` ([example](#-use-it-in-your-ci)) | Every pull request, in every repository |
 
-Then run `leak doctor` once, **before** you need it.
+Then run **`leak doctor`** once, *before* you need it.
 
----
+## 🎬 See it in action
 
-## 🧭 Start here: what happened?
+**`leak audit`**: grade any repository, with a fix for every gap. Secret values are never printed.
 
-| Situation | Go to |
+<p align="center"><img src="assets/demo-audit.svg" alt="Real output of leak audit on a repository with a tracked .env, no hooks and a secret in a Dockerfile: grade F with a fix for every finding, secret values redacted" width="92%"></p>
+
+<details>
+<summary><b><code>leak scan</code></b>: every commit, every branch, values always redacted (click to see the output)</summary>
+<br>
+<p align="center"><img src="assets/demo-scan.svg" alt="Real output of leak scan: two secrets found in a commit that was later deleted, values redacted" width="92%"></p>
+</details>
+
+**`leak report`**: from raw evidence to a leadership-ready report.
+
+<p align="center">
+  <img src="assets/report-preview.png" alt="leak report turns the evidence into a print-ready leadership report: executive summary, risk cards, key facts, every check and every secret type, never secret values" width="100%">
+</p>
+
+<sub>All images are real output of the tool on demo repositories, rendered with <a href="tools/render-terminal-svg.py"><code>tools/render-terminal-svg.py</code></a>. Test secrets were random and never stored.</sub>
+
+## 🚨 In an incident? Start here
+
+| What happened | Go to |
 |---|---|
 | 🔑 I committed a secret to a public repo | [Scenario A](docs/06-scenarios.md#a--a-secret-committed-to-your-own-public-repository) |
 | 🔓 A private repo was made public by mistake | [Scenario B](docs/06-scenarios.md#b--a-private-repository-was-made-public-by-mistake) |
@@ -70,135 +80,38 @@ Then run `leak doctor` once, **before** you need it.
 | 📦 It leaked outside Git: gist, paste, CI logs, image, package, chat | [Scenario E](docs/06-scenarios.md#e--leaks-outside-git) |
 | 🙋 Someone reported it to us | [Scenario F](docs/06-scenarios.md#f--someone-reported-it-to-you) |
 
-Whatever the case, the first move is the same: **rotate the exposed secrets** ([how, per secret type](docs/02-rotate-secrets.md)).
+**The first hour:**
 
----
-
-## ⏱️ The first hour on one page
-
-```mermaid
-flowchart LR
-    A["📸 1 · Snapshot<br/>evidence"] --> B["🔎 2 · Find every<br/>secret in history"]
-    B --> C["🔁 3 · Rotate +<br/>revoke all"]
-    C --> D["🗑️ 4 · Take repo<br/>and forks down"]
-    D --> E["🕵️ 5 · Check logs<br/>for misuse"]
-    E --> F["📣 6 · Notify +<br/>document"]
-    style C fill:#b42318,color:#fff
-```
-
-| Step | Do | Tool here |
+| | Do | With |
 |:-:|---|---|
-| 1 | Save a copy of the leaked repo, its metadata and forks **before** anything is deleted | `./leak snapshot` |
-| 2 | Scan the **full history**, not only the latest commit | `./leak scan` |
-| 3 | Rotate and **revoke** every secret found, most powerful first | [`docs/02-rotate-secrets.md`](docs/02-rotate-secrets.md) |
-| 4 | Delete the repo or file a takedown (every fork too), then **hunt for other copies** | `./leak forks`, `./leak hunt`, `./leak commits`, [takedown request](templates/takedown-request.md) |
-| 5 | Search logs from the **first push** to the **moment each key was rotated** | [`docs/03-investigate.md`](docs/03-investigate.md) |
-| 6 | Tell the right people, keep a timeline, report to leadership | [messages](templates/notification-messages.md), [timeline](templates/incident-timeline.md), [executive report](templates/executive-report.html) |
+| 1 | Save evidence **before** anything is deleted | `leak snapshot owner/repo` |
+| 2 | Find every secret in the **full history** | `leak scan <path>` |
+| 3 | **Rotate and revoke**, most powerful first | [Rotation guide](docs/02-rotate-secrets.md) (25+ secret types) |
+| 4 | Remove copies, then hunt for the rest | `leak forks` · `leak hunt` · `leak commits` · [takedown](templates/takedown-request.md) |
+| 5 | Check logs from first push to rotation | [Investigation guide](docs/03-investigate.md) |
+| 6 | Tell the right people; report to leadership | [Messages](templates/notification-messages.md) · `leak report` · [team checklist](templates/incident-issue.md) |
 
-The full walkthrough is in **[`docs/01-runbook.md`](docs/01-runbook.md)**. To track the response as a team, paste [`templates/incident-issue.md`](templates/incident-issue.md) into a private issue.
+Full walkthrough: **[the runbook](docs/01-runbook.md)** · Practise first: **[45-minute drill](docs/07-practice-drill.md)**
 
----
+## 🔐 Prevent it
 
-## 🚀 Quick start
-
-```bash
-git clone https://github.com/aboutBilal/leak-response-toolkit.git
-cd leak-response-toolkit
-./leak help
-```
-
-| Command | What it does |
-|---|---|
-| `./leak snapshot someuser/leaked-repo` | Saves a full mirror, metadata, forks and (with the owner's token) traffic, plus a checksum manifest |
-| `./leak scan <path>` | Scans **every commit** for secrets; values are always redacted |
-| `./leak forks someuser/leaked-repo` | Lists every fork, including forks of forks, for the takedown |
-| `./leak hunt --since 2026-01-31 someuser/leaked-repo` | Checks 15+ public sources for surviving copies and writes a markdown report |
-| `./leak commits --exclude someuser/leaked-repo <sha> <sha>` | Finds renamed re-uploads that carry the original commits |
-| `./leak report hunts/hunt_<time> --scan report.json` | Builds the print-ready leadership report from the results (types only, never values) |
-| `./leak audit [path]` | Grades a repository's secret hygiene A–F, with a fix for every gap |
-| `./leak doctor` | Checks a machine is ready **before** an incident: tools, scanner, token, API budget |
-
-<p align="center"><img src="assets/demo-scan.svg" alt="Real output of ./leak scan: two secrets found in a commit that was later deleted, values redacted" width="88%"></p>
-
-**Needs:** `git`, `curl`, `jq`, and either [`gitleaks`](https://github.com/gitleaks/gitleaks) or Docker (the scan script falls back to the official gitleaks image).
-Optional: set `GITHUB_TOKEN` for higher API limits; if the token belongs to the repo owner, the snapshot also saves **clone and visitor traffic** for the last 14 days.
-
----
-
-## 🗂️ What is in here
-
-```
-leak-response-toolkit/
-├── docs/
-│   ├── 01-runbook.md                the full response, step by step
-│   ├── 02-rotate-secrets.md         rotation per secret type (Azure, AWS, Google Cloud, GitHub, DBs, SSH, app secrets)
-│   ├── 03-investigate.md            log queries: was the key used?
-│   ├── 04-prevention.md             layers that stop leaks, with a measured test of what each catches
-│   ├── 05-where-copies-survive.md   archives, forks, re-uploads, evidence that disappears, removal requests
-│   ├── 06-scenarios.md              what changes per leak type: own repo, made public, copied, alerts, non-Git leaks
-│   ├── 07-practice-drill.md         a 45-minute team exercise, no real secrets
-│   └── 08-secrets-by-design.md      architecture: principles, control matrix, maturity model, rollout
-├── prevention/                      tested, copy-ready: hooks, CI for 4 platforms, OIDC, Docker, .env
-├── scripts/                         every script has --help
-│   ├── snapshot-evidence.sh         mirror + metadata + forks + traffic, with a checksum manifest
-│   ├── scan-secrets.sh              full-history scan, redacted summary
-│   ├── list-forks.sh                every fork, for the takedown request
-│   ├── hunt-copies.sh               15+ public sources checked, dated markdown report
-│   ├── find-commit-copies.sh        public repos containing the original commit IDs
-│   ├── make-report.sh               leadership report from hunt + scan results
-│   ├── audit.sh                     secret hygiene grade A–F
-│   └── doctor.sh                    readiness check before an incident
-├── templates/
-│   ├── incident-issue.md            team checklist to paste into a private issue
-│   ├── incident-timeline.md         fill-in timeline and decision log
-│   ├── notification-messages.md     leadership, affected customers, the person involved, reporters
-│   ├── takedown-request.md          the facts a GitHub DMCA notice needs
-│   ├── post-incident-review.md      blameless review with actions and owners
-│   └── executive-report.html        leadership report, print-ready A4
-├── leak                             one command for every script: ./leak help
-├── action.yml                       GitHub Action: scan, audit or hunt in any CI
-├── Dockerfile                       the whole toolkit as one image (amd64 + arm64)
-├── CHEATSHEET.md                    the first 15 minutes on one page
-├── tests/scripts.bats               17 offline tests; test secrets generated at runtime
-├── Makefile                         make check · make install · make image
-├── tools/render-terminal-svg.py     regenerates the README images from real output
-└── .github/                         CI, releases (SBOM + provenance), OpenSSF Scorecard, Dependabot, templates
-```
-
----
-
-## 🔒 Prevent it: secrets by design
-
-Most leaks are preventable with layers that each assume the previous one failed:
-
-```mermaid
-flowchart LR
-    A["💻 Commit<br/>pre-commit hook"] --> B["🗂️ Push<br/>push protection"] --> C["⚙️ CI<br/>full-history scan"] --> D["📦 Build<br/>no secrets in images"] --> E["☁️ Deploy<br/>OIDC, no stored keys"] --> F["🔭 Run<br/>vault + identity + alerts"]
-```
+Most leaks are preventable with layers that each assume the previous one failed: **commit** (hooks) → **push** (push protection) → **CI** (full-history scan) → **build** (no secrets in images) → **deploy** (OIDC, no stored keys) → **run** (vault, identity, alerts).
 
 ```bash
-# Grade your repository and get a fix for each gap
-./leak audit ~/code/my-service
-
-# Block .env files, keys and secrets at commit time (tested)
+leak audit ~/code/my-service                                   # grade A–F, with a fix for every gap
 cp prevention/pre-commit-config.yaml ~/code/my-service/.pre-commit-config.yaml
-cd ~/code/my-service && pre-commit install
+cd ~/code/my-service && pre-commit install                     # .env, keys and secrets now blocked at commit
 ```
 
-<p align="center"><img src="assets/demo-audit.svg" alt="Real output of ./leak audit on a repository with a tracked .env file, no hooks, no CI scan and a secret in a Dockerfile: grade F with a fix for every finding" width="88%"></p>
-
-| Read | For |
+| For | Read |
 |---|---|
-| [**08 · Secrets by design**](docs/08-secrets-by-design.md) | Architects and platform leads: principles, control matrix, maturity levels 0–4, 90-day rollout, metrics, design-review checklist |
-| [**Prevention kit**](prevention/README.md) | Engineers: copy-ready files for Git, CI (GitHub, GitLab, Azure Pipelines, Bitbucket), OIDC to AWS/Azure/Google Cloud, Docker, `.env` |
-| [04 · Prevention](docs/04-prevention.md) | The short version, with a measured test of what push protection and gitleaks catch |
+| 🏛️ **Architects and platform leads** | [**Secrets by design**](docs/08-secrets-by-design.md): principles, reference architecture, 8-layer control matrix, maturity levels 0–4, 90-day rollout, metrics, design-review checklist |
+| 🔧 **Engineers** | [**Prevention kit**](prevention/README.md): tested hooks, CI templates for GitHub, GitLab, Azure Pipelines and Bitbucket, keyless OIDC to AWS, Azure and Google Cloud, Docker and `.env` patterns |
 
 > [!TIP]
-> **This repository follows its own advice:** it uses the kit's hooks and ignore rules, scans its full history in CI, and `./leak audit .` gives it **Grade A**.
+> **This repository follows its own advice.** It uses the kit's hooks and ignore rules, scans its full history on every push, and `leak audit .` gives it **Grade A**.
 
----
-
-## 🤖 Use it in your CI (GitHub Action)
+## 🤖 Use it in your CI
 
 ```yaml
 # .github/workflows/secrets.yml
@@ -213,37 +126,60 @@ jobs:
         with: { fetch-depth: 0, persist-credentials: false }
       - uses: aboutBilal/leak-response-toolkit@v2   # pin to a commit SHA in production
         with:
-          mode: scan        # or: audit (grade A-F), hunt (public copies of `repos`)
+          mode: scan        # or: audit (grade A–F), hunt (public copies of `repos`)
 ```
 
-Results appear in the job summary; secret values are always redacted. A weekly `mode: hunt` job on your critical repositories doubles as cheap public-leak monitoring.
+Results land in the job summary, values always redacted. A weekly `mode: hunt` job on your critical repositories doubles as free public-leak monitoring.
 
----
+## 🧰 Commands
+
+| Command | What it does |
+|---|---|
+| `leak audit [path]` | Grades a repository's secret hygiene **A–F**, with a fix for every gap |
+| `leak scan <path>` | Scans **every commit** for secrets; values are always redacted |
+| `leak snapshot owner/repo` | Saves a mirror, metadata, forks and (with the owner's token) traffic, plus a checksum manifest |
+| `leak forks owner/repo` | Lists every fork, including forks of forks, for the takedown |
+| `leak hunt [--since DATE] owner/repo` | Checks **15+ public sources** for surviving copies; writes a dated report |
+| `leak commits [--exclude owner/repo] <sha>…` | Finds renamed re-uploads carrying the original commits |
+| `leak report <hunt-dir> [--scan r.json]` | Builds the **print-ready leadership report** (types only, never values) |
+| `leak doctor` | Checks a machine is ready: tools, scanner, token, API budget |
+
+## 🔏 Built to be trusted
+
+A security tool has to earn trust. Every claim below is verifiable:
+
+| | |
+|---|---|
+| ✍️ **Signed releases** | Since v2.2.0, every release archive and container image is signed with [Sigstore](https://www.sigstore.dev/) (keyless). [Verify it yourself](SECURITY.md#verifying-a-release) |
+| 📦 **SBOM and provenance** | Container images ship with a software bill of materials and SLSA build provenance |
+| 📊 **OpenSSF Scorecard** | Independent security assessment on every push: [see the report](https://scorecard.dev/viewer/?uri=github.com/aboutBilal/leak-response-toolkit) |
+| 📌 **Everything pinned** | GitHub Actions by commit SHA, container images by digest, updated by Dependabot |
+| 🔍 **Analysed and tested** | CodeQL, shellcheck, actionlint, 17 offline tests and a full-history secret scan on every push |
+| 🙈 **Never touches a secret** | No command prints, stores or tests a secret value; tests enforce it |
+| 🧾 **No secrets, ever** | Not even fake ones: test values are generated at run time and thrown away |
 
 ## 🆚 How it fits with other tools
 
-This kit is **not another secret scanner**: it uses [gitleaks](https://github.com/gitleaks/gitleaks) for detection and adds what happens **around** detection. Use it alongside the tools you already have.
+This kit is **not another secret scanner**. It uses [gitleaks](https://github.com/gitleaks/gitleaks) for detection and adds everything **around** detection.
 
 | | gitleaks | TruffleHog | GitGuardian | **This toolkit** |
 |---|:-:|:-:|:-:|:-:|
-| Find secrets in the full git history | ✅ | ✅ | ✅ | ✅ (via gitleaks) |
-| Check whether a found secret is still live | — | ✅ | ✅ | ❌ **by design**: it never touches a leaked key |
+| Find secrets in the full git history | ✅ | ✅ | ✅ | ✅ via gitleaks |
+| Check whether a found secret is still live | — | ✅ | ✅ | ❌ **by design**: never touches a leaked key |
 | Block secrets and secret files at commit | ✅ | ✅ | ✅ | ✅ tested configs, plus blocked file types |
 | Grade a repository's hygiene A–F | — | — | — | ✅ `leak audit` |
 | Incident runbook for every leak scenario | — | — | partial | ✅ |
-| Hunt for surviving public copies (forks, archives, re-uploads) | — | — | continuous monitoring (commercial) | ✅ point-in-time, free |
+| Hunt for surviving public copies | — | — | continuous (commercial) | ✅ point-in-time, free |
 | Leadership report from the evidence | — | — | dashboards | ✅ `leak report` |
-| Architecture, maturity model and rollout plan | — | — | — | ✅ |
-| Licence | MIT | AGPL-3.0 | Commercial | MIT |
-
----
+| Architecture, maturity model, rollout plan | — | — | — | ✅ |
+| Licence | MIT | AGPL-3.0 | Commercial | **MIT** |
 
 ## ❓ FAQ
 
 <details>
 <summary><b>Does it send my code or secrets anywhere?</b></summary>
 
-No. `scan` and `audit` run locally (gitleaks runs with networking disabled when used through Docker). `hunt`, `forks` and `commits` send only repository names and commit IDs to public APIs (GitHub, the Internet Archive, Software Heritage, Sourcegraph, GitLab, Codeberg).
+No. `scan` and `audit` run locally. `hunt`, `forks` and `commits` send only repository names and commit IDs to public APIs (GitHub, the Internet Archive, Software Heritage, Sourcegraph, GitLab, Codeberg).
 </details>
 
 <details>
@@ -255,7 +191,7 @@ No, on purpose. Testing a leaked credential is what attackers do, and it can tri
 <details>
 <summary><b>Does it only work with GitHub?</b></summary>
 
-`scan`, `audit`, the hooks and the CI templates work with any Git repository and GitHub, GitLab, Azure DevOps or Bitbucket. `hunt`, `forks` and `commits` look for copies on public GitHub and in public archives.
+`scan`, `audit`, the hooks and the CI templates work with any Git repository on GitHub, GitLab, Azure DevOps or Bitbucket. `hunt`, `forks` and `commits` look for copies on public GitHub and in public archives.
 </details>
 
 <details>
@@ -267,25 +203,34 @@ Yes. It is MIT-licensed: use it commercially, adapt the runbooks to your organis
 <details>
 <summary><b>How do I know the prevention configs actually work?</b></summary>
 
-Each one was tested before it was added: the results are in [`prevention/README.md`](prevention/README.md#-tested-behaviour), and the scripts have 17 offline tests that run on every push.
+Each one was tested before it was added; the results are in [`prevention/README.md`](prevention/README.md#-tested-behaviour). The scripts have 17 offline tests that run on every push.
 </details>
 
----
+<details>
+<summary><b>What is in the repository?</b></summary>
 
-## ⚖️ Scope
-
-- These scripts **only read** public data and the repository you point them at. They never use, test or print a discovered secret.
-- Commands in the docs use placeholders like `<app-id>`; nothing here is a real credential.
-- This is an engineering checklist, not legal advice. Breach-notification duties (for example GDPR's 72 hours) depend on what data leaked and where you operate.
+```
+docs/          runbook · rotation (25+ types) · investigation · prevention · where copies survive
+               scenarios · practice drill · secrets by design (architecture)
+prevention/    tested, copy-ready: hooks, gitleaks config, CI for 4 platforms, OIDC, Docker, .env
+scripts/       snapshot · scan · forks · hunt · commits · report · audit · doctor (all with --help)
+templates/     incident checklist · timeline · messages · takedown · post-incident review · executive report
+leak           one command for every script        action.yml   the GitHub Action
+Dockerfile     the toolkit as one signed image     tests/       17 offline tests
+```
+</details>
 
 ## 🤝 Contributing
 
-Improvements from real experience are welcome: a missing step, another platform, a better command. Read [CONTRIBUTING.md](CONTRIBUTING.md) first; the two hard rules are **no secrets, not even fake ones**, and **no real incidents or names**. Security problems: [SECURITY.md](SECURITY.md).
+Improvements from real experience are welcome: a missing step, another platform, a better command. Read [CONTRIBUTING.md](CONTRIBUTING.md); the two hard rules are **no secrets, not even fake ones**, and **no real incidents or names**. See the [roadmap](ROADMAP.md) for what is planned, and [SECURITY.md](SECURITY.md) to report a problem privately.
 
 ```bash
 make check   # shellcheck + offline tests + secret scan: the same as CI
 ```
 
-## 📄 License
+<sub>⚖️ The scripts only read public data and the repository you point them at. This is an engineering guide, not legal advice: breach-notification duties depend on what leaked and where you operate.</sub>
 
-[MIT](LICENSE) · [Changelog](CHANGELOG.md) · [Code of conduct](CODE_OF_CONDUCT.md)
+<p align="center">
+  <img src="assets/logo.svg" alt="" width="40"><br>
+  <sub><a href="LICENSE">MIT</a> · <a href="CHANGELOG.md">Changelog</a> · <a href="CODE_OF_CONDUCT.md">Code of conduct</a> · <a href="CITATION.cff">Cite</a></sub>
+</p>

@@ -18,7 +18,7 @@
 # Start here if you are in an incident: README.md -> "Start here: what happened?"
 set -euo pipefail
 
-VERSION="2.2.0"
+VERSION="2.3.0"
 # Resolve symlinks (make install, the Docker image) to find scripts/ next to the real file.
 here="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
 

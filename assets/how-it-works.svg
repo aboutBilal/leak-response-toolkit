@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="470" viewBox="0 0 1280 470" role="img" aria-label="How it works: Prevent with leak audit, hooks, push protection and OIDC; Detect with leak scan; Respond with rotation, leak hunt and takedowns; Report and learn with leak report, reviews and drills.">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0d1226"/><stop offset="1" stop-color="#161c3a"/></linearGradient>
+    <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse"><path d="M32 0H0V32" fill="none" stroke="#fff" stroke-opacity="0.035"/></pattern>
+    <filter id="sh" x="-10%" y="-10%" width="120%" height="140%"><feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#000" flood-opacity="0.45"/></filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#5c6488"/></marker>
+  </defs>
+  <rect width="1280" height="470" rx="20" fill="url(#bg)"/>
+  <rect width="1280" height="470" rx="20" fill="url(#grid)"/>
+  <text x="640" y="58" fill="#f4f6fb" font-family="Ubuntu,'Segoe UI',Helvetica,Arial,sans-serif" font-size="30" font-weight="700" text-anchor="middle">How it works</text>
+  <text x="640" y="90" fill="#8f98ba" font-family="Ubuntu,'Segoe UI',Helvetica,Arial,sans-serif" font-size="18" text-anchor="middle">One kit for the whole lifecycle of a secret leak: before, during and after</text>
+
+  <g font-family="Ubuntu,'Segoe UI',Helvetica,Arial,sans-serif">
+    <!-- card 1 -->
+    <g filter="url(#sh)">
+      <rect x="48" y="128" width="268" height="300" rx="16" fill="#111733" stroke="#56d364" stroke-opacity="0.35"/>
+      <rect x="48" y="128" width="268" height="6" rx="3" fill="#56d364"/>
+    </g>
+    <text x="74" y="176" fill="#56d364" font-size="14" font-weight="700" letter-spacing="2">01 · PREVENT</text>
+    <text x="74" y="210" fill="#f4f6fb" font-size="24" font-weight="700">Design it out</text>
+    <g fill="#b3bcd8" font-size="16"><text x="74" y="248">• Hooks block .env and keys</text><text x="74" y="276">• Push protection + CI scans</text><text x="74" y="304">• OIDC: no stored cloud keys</text><text x="74" y="332">• Grade every repo A–F</text></g>
+    <rect x="74" y="364" width="150" height="36" rx="8" fill="#56d364" fill-opacity="0.12"/><text x="149" y="388" fill="#7ee08a" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="16" font-weight="700" text-anchor="middle">leak audit</text>
+
+    <!-- card 2 -->
+    <g filter="url(#sh)">
+      <rect x="350" y="128" width="268" height="300" rx="16" fill="#111733" stroke="#ff7a59" stroke-opacity="0.35"/>
+      <rect x="350" y="128" width="268" height="6" rx="3" fill="#ff7a59"/>
+    </g>
+    <text x="376" y="176" fill="#ff9b80" font-size="14" font-weight="700" letter-spacing="2">02 · DETECT</text>
+    <text x="376" y="210" fill="#f4f6fb" font-size="24" font-weight="700">Find every secret</text>
+    <g fill="#b3bcd8" font-size="16"><text x="376" y="248">• Every commit, every branch</text><text x="376" y="276">• Deleted secrets still found</text><text x="376" y="304">• Values always redacted</text><text x="376" y="332">• Types to rotate, in order</text></g>
+    <rect x="376" y="364" width="150" height="36" rx="8" fill="#ff7a59" fill-opacity="0.14"/><text x="451" y="388" fill="#ff9b80" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="16" font-weight="700" text-anchor="middle">leak scan</text>
+
+    <!-- card 3 -->
+    <g filter="url(#sh)">
+      <rect x="652" y="128" width="268" height="300" rx="16" fill="#111733" stroke="#79c0ff" stroke-opacity="0.35"/>
+      <rect x="652" y="128" width="268" height="6" rx="3" fill="#79c0ff"/>
+    </g>
+    <text x="678" y="176" fill="#9ccfff" font-size="14" font-weight="700" letter-spacing="2">03 · RESPOND</text>
+    <text x="678" y="210" fill="#f4f6fb" font-size="24" font-weight="700">Contain the spread</text>
+    <g fill="#b3bcd8" font-size="16"><text x="678" y="248">• Rotate 25+ secret types</text><text x="678" y="276">• Hunt forks, archives, re-uploads</text><text x="678" y="304">• Evidence with checksums</text><text x="678" y="332">• Takedown, step by step</text></g>
+    <rect x="678" y="364" width="150" height="36" rx="8" fill="#79c0ff" fill-opacity="0.12"/><text x="753" y="388" fill="#9ccfff" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="16" font-weight="700" text-anchor="middle">leak hunt</text>
+
+    <!-- card 4 -->
+    <g filter="url(#sh)">
+      <rect x="954" y="128" width="278" height="300" rx="16" fill="#111733" stroke="#d2a8ff" stroke-opacity="0.35"/>
+      <rect x="954" y="128" width="278" height="6" rx="3" fill="#d2a8ff"/>
+    </g>
+    <text x="980" y="176" fill="#dcbcff" font-size="14" font-weight="700" letter-spacing="2">04 · REPORT &amp; LEARN</text>
+    <text x="980" y="210" fill="#f4f6fb" font-size="24" font-weight="700">Close the loop</text>
+    <g fill="#b3bcd8" font-size="16"><text x="980" y="248">• Leadership-ready report</text><text x="980" y="276">• Messages for every audience</text><text x="980" y="304">• Blameless review template</text><text x="980" y="332">• 45-minute team drill</text></g>
+    <rect x="980" y="364" width="150" height="36" rx="8" fill="#d2a8ff" fill-opacity="0.12"/><text x="1055" y="388" fill="#dcbcff" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="16" font-weight="700" text-anchor="middle">leak report</text>
+  </g>
+
+  <g stroke="#5c6488" stroke-width="2.5" fill="none" marker-end="url(#arrow)">
+    <path d="M318 278 H346"/><path d="M620 278 H648"/><path d="M922 278 H950"/>
+  </g>
+</svg>
