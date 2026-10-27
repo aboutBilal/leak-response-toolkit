@@ -4,6 +4,21 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
+## [3.1.0] - 2026-10-27
+
+### Added
+
+- **Visual language** ([`assets/DESIGN.md`](assets/DESIGN.md)): one accent colour, status colours only for status, an 8-point grid, two corner radii, one type pair. Every README image, the social card, the terminal renderer and the HTML report and dashboard now use the same tokens.
+
+### Changed
+
+- `leak audit` wording is shorter and clearer (for example "no secret files tracked by Git"), and the summary line reads `Score 100/100 · Grade A`. Scripts that parsed `Score:` should match `Score ` instead.
+- `leak scan` names the pinned gitleaks version instead of printing the full image reference.
+
+### Fixed
+
+- Tests hung on macOS: BSD `tr` keeps reading `/dev/urandom` when SIGPIPE is ignored. Random test values now come from a bounded read. The macOS CI job passes.
+
 ## [3.0.0] - 2026-10-27
 
 ### Added
@@ -120,7 +135,8 @@ Prevention becomes the second half of the kit: not only responding to leaks, but
 - Templates: incident timeline, takedown request, notification messages, post-incident review, executive report (print-ready HTML).
 - Quality: offline bats tests, shellcheck, gitleaks on full history, link and anchor checks in CI, Dependabot for pinned actions, pre-commit hook, contribution guide, issue and pull request templates, security policy.
 
-[Unreleased]: https://github.com/aboutBilal/leak-response-toolkit/compare/v3.0.0...HEAD
+[Unreleased]: https://github.com/aboutBilal/leak-response-toolkit/compare/v3.1.0...HEAD
+[3.1.0]: https://github.com/aboutBilal/leak-response-toolkit/compare/v3.0.0...v3.1.0
 [3.0.0]: https://github.com/aboutBilal/leak-response-toolkit/compare/v2.3.0...v3.0.0
 [2.3.0]: https://github.com/aboutBilal/leak-response-toolkit/compare/v2.2.0...v2.3.0
 [2.2.0]: https://github.com/aboutBilal/leak-response-toolkit/compare/v2.1.0...v2.2.0
