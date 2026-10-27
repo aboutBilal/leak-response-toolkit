@@ -5,20 +5,22 @@
 #
 # Commands (in the order you usually need them):
 #   snapshot <owner>/<repo> [dir]        save evidence before the repo is deleted
-#   scan <path> [report.json]            find secrets in the full history (values redacted)
+#   scan <path> [report.json] [--sarif f] find secrets in the full history (values redacted)
 #   forks <owner>/<repo>                 list every fork, for the takedown request
 #   hunt [--since DATE] <owner>/<repo>   check 15+ public sources for surviving copies
 #   commits [--exclude o/r] <sha> ...    find public repos containing original commits
 #   report <hunt-dir> [--scan r.json]    build the leadership report from the results
-#   audit [--no-scan] [path]             grade a repository's secret hygiene (A-F)
+#   audit [--no-scan] [--json] [path]    grade a repository's secret hygiene (A-F)
+#   audit-org <org> | --dir <folder>     grade every repository; HTML dashboard
 #   doctor [--offline]                   check this machine is ready, before an incident
+#   notify [--format f] "message"        alert Slack, Teams or Discord (URL from LEAK_WEBHOOK_URL)
 #   help [command]                       this text, or a command's own help
 #   version                              print the toolkit version
 #
 # Start here if you are in an incident: README.md -> "Start here: what happened?"
 set -euo pipefail
 
-VERSION="2.3.0"
+VERSION="3.0.0"
 # Resolve symlinks (make install, the Docker image) to find scripts/ next to the real file.
 here="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
 
@@ -32,6 +34,8 @@ script_for() {
     report) echo "make-report.sh" ;;
     doctor) echo "doctor.sh" ;;
     audit) echo "audit.sh" ;;
+    audit-org) echo "audit-org.sh" ;;
+    notify) echo "notify.sh" ;;
     *) return 1 ;;
   esac
 }

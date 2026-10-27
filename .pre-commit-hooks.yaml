@@ -1,0 +1,26 @@
+# Hooks other repositories can use directly:
+#
+#   repos:
+#     - repo: https://github.com/aboutBilal/leak-response-toolkit
+#       rev: v3.0.0
+#       hooks:
+#         - id: forbid-secret-files   # no dependencies: blocks .env, keys, state files
+#         - id: leak-guard            # file check + gitleaks on staged changes (gitleaks or Docker)
+- id: forbid-secret-files
+  name: Block files that usually hold secrets
+  description: Blocks .env files, private keys, keystores, Terraform state and kubeconfigs. Commit a .env.example instead.
+  language: fail
+  entry: >-
+    This file type usually holds secrets. Keep it out of Git (add it to .gitignore)
+    and commit a placeholder version such as .env.example instead.
+  files: '(^|/)(\.env(\.[^/]*)?|[^/]*\.(pem|key|p12|pfx|jks|keystore)|id_(rsa|dsa|ecdsa|ed25519)|[^/]*\.tfstate(\.[^/]*)?|kubeconfig|[^/]*\.kubeconfig)$'
+  exclude: '(^|/)\.env\.(example|sample|template)$'
+
+- id: leak-guard
+  name: Block secret files and secrets in staged changes
+  description: Blocks secret file types, then scans the staged changes with gitleaks (local binary or the pinned Docker image). Values are redacted.
+  language: script
+  entry: prevention/hooks/pre-commit
+  pass_filenames: false
+  always_run: true
+  stages: [pre-commit]

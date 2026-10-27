@@ -4,6 +4,30 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
+## [3.0.0] - 2026-10-27
+
+### Added
+
+- `leak audit-org`: grades every repository of a GitHub organisation or user, or every repository in a local folder, and writes an HTML dashboard, a markdown summary and JSON.
+- `leak scan --sarif`: SARIF 2.1.0 output for GitHub code scanning. Values stay redacted.
+- `leak audit --json`: machine-readable grade, score and checks.
+- `leak notify`: alerts to Slack, Microsoft Teams (Workflows webhooks) or Discord. The webhook URL is read from `LEAK_WEBHOOK_URL`, never from arguments.
+- GitHub Action: `audit-org` mode, `sarif-file`, `webhook-url` and `webhook-format` inputs, and a `report` output.
+- `.pre-commit-hooks.yaml`: `forbid-secret-files` and `leak-guard` hooks usable from any repository.
+- `leak hunt` checks public GitLab projects with the same name.
+- macOS job in CI (Homebrew bash, BSD tools).
+- Animated terminal demo (respects reduced-motion settings), and dashboard and report previews in the README.
+
+### Changed
+
+- **Breaking for automation:** `leak hunt` reports use plain words (`clean`, `**found**`, `review`, `not checked`) instead of symbols. Update any script that matched the old markers.
+- The `@v3` Action tag replaces `@v2` in examples.
+- Documentation edited for precision: plain headings without emoji, measured claims only.
+
+### Fixed
+
+- macOS compatibility: POSIX character classes instead of `\s`, no GNU-only `sed` flags, `shasum` when `sha256sum` is absent, BSD `date` fallback.
+
 ## [2.3.0] - 2026-10-27
 
 A new face: the toolkit now presents itself like the product it is.
@@ -96,7 +120,8 @@ Prevention becomes the second half of the kit: not only responding to leaks, but
 - Templates: incident timeline, takedown request, notification messages, post-incident review, executive report (print-ready HTML).
 - Quality: offline bats tests, shellcheck, gitleaks on full history, link and anchor checks in CI, Dependabot for pinned actions, pre-commit hook, contribution guide, issue and pull request templates, security policy.
 
-[Unreleased]: https://github.com/aboutBilal/leak-response-toolkit/compare/v2.3.0...HEAD
+[Unreleased]: https://github.com/aboutBilal/leak-response-toolkit/compare/v3.0.0...HEAD
+[3.0.0]: https://github.com/aboutBilal/leak-response-toolkit/compare/v2.3.0...v3.0.0
 [2.3.0]: https://github.com/aboutBilal/leak-response-toolkit/compare/v2.2.0...v2.3.0
 [2.2.0]: https://github.com/aboutBilal/leak-response-toolkit/compare/v2.1.0...v2.2.0
 [2.1.0]: https://github.com/aboutBilal/leak-response-toolkit/compare/v2.0.0...v2.1.0

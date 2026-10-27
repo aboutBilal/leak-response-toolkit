@@ -4,14 +4,15 @@
 
 | Version | Supported |
 |---|:-:|
-| 2.x (latest release) | ✅ security fixes |
-| 1.x | ❌ please upgrade |
+| 3.x (latest release) | Security fixes |
+| 2.x | Critical fixes until 2027-01-31 |
+| 1.x | No, please upgrade |
 
 ## Reporting a vulnerability
 
 **Please do not open a public issue.** Report privately through GitHub's private vulnerability reporting:
 
-👉 **[Report a vulnerability](https://github.com/aboutBilal/leak-response-toolkit/security/advisories/new)** (Security tab → *Report a vulnerability*)
+**[Report a vulnerability](https://github.com/aboutBilal/leak-response-toolkit/security/advisories/new)** (Security tab → *Report a vulnerability*)
 
 Include what you found, where (file and line, or command), how to reproduce it, and the impact you expect. If the report involves a real secret, **describe it; do not send the value**.
 
@@ -58,7 +59,8 @@ cosign verify ghcr.io/aboutbilal/leak-response-toolkit:X.Y.Z \
 
 ## Using the toolkit safely
 
-- `scan` and `audit` run locally; `hunt`, `forks` and `commits` send only repository names and commit IDs to public APIs.
+- `scan` and `audit` run locally; `hunt`, `forks`, `commits` and `audit-org` send only repository names and commit IDs to public APIs.
+- `notify` reads the webhook URL from `LEAK_WEBHOOK_URL`, so it never appears in arguments, process lists or logs; messages contain counts and types, never values.
 - Output and reports are **redacted**: secret values are never printed or written.
 - Evidence folders (`evidence/`, `hunts/`) can contain leaked code. They are git-ignored here; keep them out of any repository and share them only with the people handling the incident.
 - Releases include a source archive signed with Sigstore; container images ship with an SBOM and build provenance.

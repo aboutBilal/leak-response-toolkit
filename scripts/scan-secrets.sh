@@ -2,19 +2,27 @@
 # Scan the FULL git history of a repository for secrets, with values redacted.
 # Uses a local gitleaks if installed, otherwise the official gitleaks Docker image.
 #
-# Usage: ./scripts/scan-secrets.sh <path-to-repo-or-mirror> [report.json]
+# Usage: ./scripts/scan-secrets.sh <path-to-repo-or-mirror> [report.json] [--sarif findings.sarif]
+#   --sarif FILE   also write SARIF 2.1.0 (for GitHub code scanning); values stay redacted
+# Exit:  0 clean, 1 secrets found, 2 bad arguments, other = scanner failure
 set -euo pipefail
 
 case "${1:-}" in -h|--help) sed -n '2,/^set -/{/^#/s/^# \{0,1\}//p;}' "$0"; exit 0 ;; esac
 
 GITLEAKS_IMAGE="ghcr.io/gitleaks/gitleaks:v8.30.1@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f"
 
-src="${1:-}"
-[[ -n "$src" && -d "$src" ]] || { echo "usage: $0 <path-to-repo-or-mirror> [report.json]" >&2; exit 2; }
+src=""; report=""; sarif=""
+while (($#)); do
+  case "$1" in
+    --sarif) sarif="${2:-}"; [[ -n "$sarif" ]] || { echo "--sarif needs a file name" >&2; exit 2; }; shift 2 ;;
+    *) if [[ -z "$src" ]]; then src="$1"; elif [[ -z "$report" ]]; then report="$1"; else echo "unexpected argument: $1" >&2; exit 2; fi; shift ;;
+  esac
+done
+[[ -n "$src" && -d "$src" ]] || { echo "usage: $0 <path-to-repo-or-mirror> [report.json] [--sarif findings.sarif]" >&2; exit 2; }
 command -v jq >/dev/null || { echo "missing: jq" >&2; exit 2; }
 
 src="$(cd "$src" && pwd)"
-report="${2:-$(dirname "$src")/secrets-report.json}"
+report="${report:-$(dirname "$src")/secrets-report.json}"
 report_dir="$(cd "$(dirname "$report")" && pwd)"
 report_name="$(basename "$report")"
 
@@ -38,9 +46,39 @@ else
 fi
 set -e
 
+write_sarif() {
+  # SARIF 2.1.0 built from the redacted JSON report: rule IDs, files, lines, commits. Never values.
+  local json="$report_dir/$report_name"
+  [[ -s "$json" ]] || echo "[]" > "$json"
+  jq '{
+    "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+    version: "2.1.0",
+    runs: [{
+      tool: { driver: {
+        name: "leak-response-toolkit",
+        informationUri: "https://github.com/aboutBilal/leak-response-toolkit",
+        rules: ([.[].RuleID] | unique | map({
+          id: ., name: .,
+          shortDescription: { text: ("Secret detected: " + .) },
+          helpUri: "https://github.com/aboutBilal/leak-response-toolkit/blob/main/docs/02-rotate-secrets.md",
+          defaultConfiguration: { level: "error" }
+        }))
+      }},
+      results: map({
+        ruleId: .RuleID,
+        level: "error",
+        message: { text: ("\(.RuleID) committed in \(.Commit[0:10]) on \(.Date[0:10]). Rotate it first; removing it from Git does not un-leak it. (Value redacted.)") },
+        locations: [{ physicalLocation: { artifactLocation: { uri: .File }, region: { startLine: (.StartLine // 1) } } }],
+        partialFingerprints: { "leakToolkit/v1": .Fingerprint }
+      })
+    }]
+  }' "$json" > "$sarif"
+  echo "SARIF: $sarif"
+}
+
 case "$rc" in
-  0) echo; echo "No secrets found by gitleaks. Still check by hand: .env, *.pem, *.pfx, *.tfvars, appsettings*.json, kubeconfigs."; exit 0 ;;
-  3) ;;
+  0) [[ -n "$sarif" ]] && write_sarif; echo; echo "No secrets found by gitleaks. Still check by hand: .env, *.pem, *.pfx, *.tfvars, appsettings*.json, kubeconfigs."; exit 0 ;;
+  3) [[ -n "$sarif" ]] && write_sarif ;;
   *) echo "gitleaks failed (exit $rc)" >&2; exit "$rc" ;;
 esac
 

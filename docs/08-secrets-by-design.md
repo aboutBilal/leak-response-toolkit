@@ -7,7 +7,7 @@ The rest of this repository is about responding to a leak. This page is about ma
 
 ---
 
-## 🧭 Five principles
+## Five principles
 
 | # | Principle | What it means in practice |
 |:-:|---|---|
@@ -19,30 +19,30 @@ The rest of this repository is about responding to a leak. This page is about ma
 
 ---
 
-## 🏛️ Reference architecture
+## Reference architecture
 
 ```mermaid
 flowchart LR
-    subgraph DEV["👩‍💻 Developer machine"]
+    subgraph DEV["Developer machine"]
         D1[".gitignore / .env.example"]
         D2["pre-commit: gitleaks +<br/>blocked file types"]
         D3["secrets injected at run time<br/>(no plaintext .env)"]
     end
-    subgraph SRC["🗂️ Source platform"]
+    subgraph SRC["Source platform"]
         S1["Push protection<br/>(server-side block)"]
         S2["Org policy: no personal forks,<br/>visibility changes by admins only"]
     end
-    subgraph CI["⚙️ CI/CD"]
+    subgraph CI["CI/CD"]
         C1["Full-history scan on every PR<br/>+ weekly full scan"]
         C2["OIDC → cloud<br/>(no stored keys)"]
         C3["Artifact scan: images,<br/>packages, IaC"]
     end
-    subgraph RUN["☁️ Runtime"]
+    subgraph RUN["Runtime"]
         R1["Secret manager / vault"]
         R2["Workload identity"]
         R3["Short-lived, auto-rotated<br/>credentials"]
     end
-    subgraph OBS["🔭 Detect & respond"]
+    subgraph OBS["Detect & respond"]
         O1["Audit logs + anomaly alerts"]
         O2["Public-leak monitoring<br/>+ provider alerts"]
         O3["This toolkit"]
@@ -57,11 +57,11 @@ flowchart LR
 
 ---
 
-## 🧱 The control matrix
+## The control matrix
 
 Each layer has a job in each phase. Gaps in this table are where leaks get through.
 
-| Layer | 🚫 Prevent | 🔎 Detect | 🚑 Respond |
+| Layer | Prevent | Detect | Respond |
 |---|---|---|---|
 | **1 · Developer machine** | `.gitignore`, `.env.example`, secrets injected at run time, global ignore file | pre-commit gitleaks + blocked file types | Developer rotates immediately; reports without fear |
 | **2 · Repository** | No secrets in code or config; `.gitleaks.toml` with your own token formats | Hook output; `./leak audit` | `./leak scan` on full history |
@@ -104,7 +104,7 @@ Each layer has a job in each phase. Gaps in this table are where leaks get throu
 
 | Control | Why it matters |
 |---|---|
-| **Push protection** (GitHub; GitLab secret push protection; Azure DevOps via GitHub Advanced Security) | Blocks known formats **at the server**, so `--no-verify` does not bypass it. In our [measured test](04-prevention.md#-what-each-layer-catches-a-measured-test) it blocked 5 of 9 secret types: a backstop, not the only layer |
+| **Push protection** (GitHub; GitLab secret push protection; Azure DevOps via GitHub Advanced Security) | Blocks known formats **at the server**, so `--no-verify` does not bypass it. In our [measured test](04-prevention.md#what-each-layer-catches-a-measured-test) it blocked 5 of 9 secret types: a backstop, not the only layer |
 | **Secret scanning alerts and partner programmes** | Detect what got through, and let providers revoke their keys |
 | **Block forking private repositories to personal accounts** | Removes the most common "copied to someone else's account" path |
 | **Only admins change repository visibility** | Prevents "made public by mistake" |
@@ -138,11 +138,11 @@ Each layer has a job in each phase. Gaps in this table are where leaks get throu
 
 ```mermaid
 flowchart LR
-    W["🧩 Workload"] -->|"proves identity<br/>(managed / workload identity)"| V["🔐 Secret manager"]
+    W["Workload"] -->|"proves identity<br/>(managed / workload identity)"| V["Secret manager"]
     V -->|"short-lived secret,<br/>or none needed"| W
-    W -->|"identity-based auth"| DB["🗄️ Database / API"]
-    V -.->|"audit log"| L["📜 SIEM"]
-    R["🔁 Rotation automation"] --> V
+    W -->|"identity-based auth"| DB["Database / API"]
+    V -.->|"audit log"| L["SIEM"]
+    R["Rotation automation"] --> V
 ```
 
 - **Prefer identity-based authentication to secrets entirely** where the service supports it (cloud databases, storage, queues).
@@ -170,7 +170,7 @@ flowchart LR
 
 ---
 
-## 📈 Maturity model
+## Maturity model
 
 | Level | Name | You have | Typical leak outcome |
 |:-:|---|---|---|
@@ -182,7 +182,7 @@ flowchart LR
 
 ---
 
-## 🗓️ A 90-day rollout
+## A 90-day rollout
 
 | Phase | Days | Deliver | Done when |
 |---|---|---|---|
@@ -192,7 +192,7 @@ flowchart LR
 
 ---
 
-## 📊 Measure it
+## Measure it
 
 | Metric | Target direction | Why |
 |---|---|---|
@@ -205,7 +205,7 @@ flowchart LR
 
 ---
 
-## ✅ Design-review checklist for a new service
+## Design-review checklist for a new service
 
 - [ ] Does it authenticate to cloud services with **identity**, not keys?
 - [ ] Where a secret is unavoidable: is it in the **secret manager**, fetched at start-up, with a named **owner** and **automated rotation**?

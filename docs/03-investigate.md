@@ -6,13 +6,13 @@
 
 ---
 
-## 📬 Free early warnings
+## Free early warnings
 
 Before querying anything, check the inboxes of your cloud and SaaS admins. GitHub's **secret scanning partner programme** forwards keys found in public repos to their issuers (Microsoft, AWS, Google, Slack, Stripe and many more), and some revoke them automatically. An alert email confirms the key was seen publicly and gives you a timestamp.
 
 ---
 
-## ☁️ Azure
+## Azure
 
 ### Service principal sign-ins (Log Analytics, Entra diagnostic logs enabled)
 
@@ -68,7 +68,7 @@ StorageBlobLogs
 
 ---
 
-## 🟧 AWS
+## AWS
 
 ```bash
 # Everything the leaked key did (CloudTrail event history covers 90 days)
@@ -82,7 +82,7 @@ Also check **every region** for new EC2 instances, IAM users and access keys cre
 
 ---
 
-## 🔷 Google Cloud
+## Google Cloud
 
 ```bash
 # Everything the leaked service account did (Admin Activity audit logs are on by default)
@@ -97,7 +97,7 @@ Data reads are only logged if **Data Access audit logs** were enabled before the
 
 ---
 
-## 🗄️ Databases
+## Databases
 
 | Engine | Where logins show up |
 |---|---|
@@ -109,7 +109,7 @@ Look for client IPs outside your network and for unusually large `SELECT` volume
 
 ---
 
-## 🐙 GitHub-side facts
+## GitHub-side facts
 
 | Fact | Where |
 |---|---|
@@ -119,6 +119,6 @@ Look for client IPs outside your network and for unusually large `SELECT` volume
 
 ---
 
-## 📝 Write it down
+## Write it down
 
 For each secret: *seen used? yes/no* · *by which IPs* · *what was done* · *evidence location*. "No evidence of use" is a valid finding, but only for the logs you actually had. Say which logs were **not** available.

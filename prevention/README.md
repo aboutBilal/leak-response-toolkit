@@ -1,8 +1,8 @@
-# 🛡️ Prevention kit
+# Prevention kit
 
-Ready-to-copy files that stop secrets from being committed, pushed, built into images or stored in pipelines. **Every file here was tested** (see [Tested behaviour](#-tested-behaviour)). The reasoning behind each one is in [`docs/08-secrets-by-design.md`](../docs/08-secrets-by-design.md).
+Ready-to-copy files that stop secrets from being committed, pushed, built into images or stored in pipelines. **Every file here was tested** (see [Tested behaviour](#tested-behaviour)). The reasoning behind each one is in [`docs/08-secrets-by-design.md`](../docs/08-secrets-by-design.md).
 
-## 🗺️ Roll it out in this order
+## Roll it out in this order
 
 | Step | File | Copy to | Effort | Stops |
 |:-:|---|---|:-:|---|
@@ -17,7 +17,18 @@ Ready-to-copy files that stop secrets from being committed, pushed, built into i
 
 Then check the result: `./leak audit <repo>` gives a grade from A to F, with a fix for each gap.
 
-## 🔐 Server-side settings (no file to copy)
+Steps 3 and 3b are also available as hooks published from this repository, with nothing to copy:
+
+```yaml
+repos:
+  - repo: https://github.com/aboutBilal/leak-response-toolkit
+    rev: v3.0.0
+    hooks:
+      - id: forbid-secret-files
+      - id: leak-guard
+```
+
+## Server-side settings (no file to copy)
 
 Hooks can be skipped; these cannot:
 
@@ -26,7 +37,7 @@ Hooks can be skipped; these cannot:
 - **Repository visibility changes: admins only.**
 - **Audit log** streamed to your SIEM, with alerts on visibility changes.
 
-## 🧪 Tested behaviour
+## Tested behaviour
 
 | Test | Result |
 |---|---|
@@ -34,6 +45,7 @@ Hooks can be skipped; these cannot:
 | `hooks/pre-commit` (plain hook) | Same results, using local gitleaks or the Docker image |
 | `gitleaks.toml` | Custom token rule fires; allow-listed fixture folder is skipped |
 | `Dockerfile.build-secrets.example` pattern | Secret readable during the build step; **not present** in image history or layers |
-| This repository | Uses this kit on itself: `./leak audit .` → **Grade A** |
+| Hooks published in `.pre-commit-hooks.yaml`, used from another repository | `.env` blocked by both hooks; `.env.example` and normal changes allowed |
+| This repository | Uses this kit on itself: `./leak audit .` gives grade A |
 
 All test secrets were generated at run time and never written into this repository.

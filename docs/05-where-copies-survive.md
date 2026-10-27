@@ -4,14 +4,14 @@ Deleting a public repository removes **one** copy. This page lists where others 
 
 ---
 
-## 📡 How a leak gets noticed (by you and by others)
+## How a leak gets noticed (by you and by others)
 
 ```mermaid
 flowchart LR
-    P["📤 Public push"] --> S["🔎 GitHub secret scanning<br/>seconds"]
-    S --> PA["🤝 Partner programme<br/>key sent to its issuer"]
-    PA --> E["📧 Issuer emails the owner<br/>(Google, AWS, Microsoft, Slack, …)"]
-    P --> B["🤖 Third-party harvesters<br/>watch the same public feed"]
+    P["Public push"] --> S["GitHub secret scanning<br/>seconds"]
+    S --> PA["Partner programme<br/>key sent to its issuer"]
+    PA --> E["Issuer emails the owner<br/>(Google, AWS, Microsoft, Slack, …)"]
+    P --> B["Third-party harvesters<br/>watch the same public feed"]
     style B fill:#b42318,color:#fff
 ```
 
@@ -21,7 +21,7 @@ flowchart LR
 
 ---
 
-## 🗺️ Where a copy can survive
+## Where a copy can survive
 
 | Where | What survives | Check with | Can it be removed? |
 |---|---|---|---|
@@ -34,7 +34,7 @@ flowchart LR
 | **archive.today** | Pages someone saved | By hand in a browser | Contact the service |
 | **Software Heritage** | Full archived repositories | `hunt-copies.sh` | Takedown request form |
 | **Code search sites** (Sourcegraph, grep.app) | Indexed copies | `hunt-copies.sh` (Sourcegraph); grep.app by hand | Ask the operator |
-| **Mirror hosts** (GitLab, Codeberg) | Mirrored repositories | `hunt-copies.sh` (same-name accounts) | Their abuse or DMCA process |
+| **Mirror hosts** (GitLab, Codeberg) | Mirrored or re-uploaded repositories | `hunt-copies.sh` (same-name GitLab projects and accounts) | Their abuse or DMCA process |
 
 ```bash
 # Everything automatable, one report
@@ -48,7 +48,7 @@ flowchart LR
 
 ---
 
-## ⏳ Evidence that disappears
+## Evidence that disappears
 
 Collect these **before** the repository is deleted, or as early as possible.
 
@@ -65,7 +65,7 @@ Collect these **before** the repository is deleted, or as early as possible.
 
 ---
 
-## 🧾 Removal requests, in order of impact
+## Removal requests, in order of impact
 
 1. **Rotate secrets first.** No removal un-leaks a key.
 2. **The owner deletes** the repository (fastest).

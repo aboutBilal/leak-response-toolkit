@@ -14,9 +14,13 @@ if [[ ! "$repo" =~ ^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$ ]]; then
   echo "usage: $0 <owner>/<repo> [output-dir]" >&2
   exit 2
 fi
-for cmd in git curl jq sha256sum; do
+for cmd in git curl jq; do
   command -v "$cmd" >/dev/null || { echo "missing: $cmd" >&2; exit 2; }
 done
+# GNU coreutils on Linux, shasum on macOS.
+if command -v sha256sum >/dev/null; then SHA256=(sha256sum)
+elif command -v shasum >/dev/null; then SHA256=(shasum -a 256)
+else echo "missing: sha256sum or shasum" >&2; exit 2; fi
 
 stamp="$(date -u +%Y%m%dT%H%M%SZ)"
 out="${2:-evidence}/${repo/\//_}_${stamp}"
@@ -71,7 +75,7 @@ else
 fi
 
 echo "==> Checksum manifest"
-(cd "$out" && find . -type f ! -name MANIFEST.sha256 -print0 | sort -z | xargs -0 sha256sum > MANIFEST.sha256)
+(cd "$out" && find . -type f ! -name MANIFEST.sha256 -print0 | sort -z | xargs -0 "${SHA256[@]}" > MANIFEST.sha256)
 echo "    $(wc -l < "$out/MANIFEST.sha256") file(s) hashed"
 
 echo

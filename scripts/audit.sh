@@ -4,31 +4,44 @@
 # CI secret scanning, Docker hygiene and (unless --no-scan) the full history.
 # Read-only: changes nothing. See docs/08-secrets-by-design.md for the why.
 #
-# Usage: ./scripts/audit.sh [--no-scan] [path]   (default path: current directory)
+# Usage: ./scripts/audit.sh [--no-scan] [--json] [path]   (default path: current directory)
+#   --no-scan   skip the full-history secret scan (fast; history is reported as not checked)
+#   --json      print one JSON object (grade, score, every check) instead of text
 # Exit:  0 no critical findings, 1 critical findings, 2 bad arguments
 set -uo pipefail
 
 case "${1:-}" in -h|--help) sed -n '2,/^set -/{/^#/s/^# \{0,1\}//p;}' "$0"; exit 0 ;; esac
-scan=1
-[[ "${1:-}" == "--no-scan" ]] && { scan=0; shift; }
-repo="${1:-.}"
+scan=1; json=0; repo=""
+while (($#)); do
+  case "$1" in
+    --no-scan) scan=0 ;;
+    --json) json=1 ;;
+    -*) echo "unknown option: $1" >&2; exit 2 ;;
+    *) repo="$1" ;;
+  esac
+  shift
+done
+repo="${repo:-.}"
 git -C "$repo" rev-parse --is-inside-work-tree >/dev/null 2>&1 || { echo "not a git repository: $repo" >&2; exit 2; }
 repo="$(git -C "$repo" rev-parse --show-toplevel)"
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-if [[ -t 1 && -z "${NO_COLOR:-}" ]]; then G=$'\033[32m' Y=$'\033[33m' R=$'\033[31m' B=$'\033[1m' N=$'\033[0m'; else G="" Y="" R="" B="" N=""; fi
-points=0; max=0; critical=0
-pass() { printf '  %s✔%s %s\n' "$G" "$N" "$1"; points=$((points + $2)); max=$((max + $2)); }
-warn() { printf '  %s!%s %s\n' "$Y" "$N" "$1"; max=$((max + $2)); }
-fail() { printf '  %s✘%s %s\n' "$R" "$N" "$1"; max=$((max + $2)); critical=1; }
-tip()  { printf '      → %s\n' "$1"; }
+if [[ -t 1 && -z "${NO_COLOR:-}" && "$json" == 0 ]]; then G=$'\033[32m' Y=$'\033[33m' R=$'\033[31m' B=$'\033[1m' N=$'\033[0m'; else G="" Y="" R="" B="" N=""; fi
+points=0; max=0; critical=0; section=""; rows=()
+say() { ((json)) || printf "$@"; }
+record() { rows+=("$section"$'\t'"$1"$'\t'"$2"$'\t'"$3"$'\t'); }
+heading() { section="$1"; say '%s%s%s\n' "$B" "$1" "$N"; }
+pass() { say '  %s✔%s %s\n' "$G" "$N" "$1"; points=$((points + $2)); max=$((max + $2)); record pass "$2" "$1"; }
+warn() { say '  %s!%s %s\n' "$Y" "$N" "$1"; max=$((max + $2)); record warn "$2" "$1"; }
+fail() { say '  %s✘%s %s\n' "$R" "$N" "$1"; max=$((max + $2)); critical=1; record fail "$2" "$1"; }
+tip()  { say '      → %s\n' "$1"; local last=$(( ${#rows[@]} - 1 )); rows[last]="${rows[last]}$1"; }
 
 secret_files='(^|/)(\.env(\.[^/]*)?|[^/]*\.(pem|key|p12|pfx|jks|keystore)|id_(rsa|dsa|ecdsa|ed25519)|[^/]*\.tfstate(\.[^/]*)?|kubeconfig|[^/]*\.kubeconfig)$'
 examples='(^|/)\.env\.(example|sample|template)$'
 
-echo "${B}Secret hygiene audit:${N} $repo"
+say '%sSecret hygiene audit:%s %s\n' "$B" "$N" "$repo"
 
-echo "${B}1. Files that usually hold secrets${N}"
+heading "1. Files that usually hold secrets"
 tracked="$(git -C "$repo" ls-files | grep -E "$secret_files" | grep -vE "$examples" || true)"
 if [[ -z "$tracked" ]]; then pass "none tracked by Git" 20
 else
@@ -36,7 +49,7 @@ else
   tip "rotate anything inside them, then: git rm --cached <file> and add to .gitignore"
 fi
 
-echo "${B}2. Ignore rules${N}"
+heading "2. Ignore rules"
 missing=()
 for f in .env .env.local server.pem id_rsa terraform.tfstate; do
   git -C "$repo" check-ignore -q --no-index "$f" || missing+=("$f")
@@ -51,7 +64,7 @@ if [[ -n "$(git -C "$repo" ls-files | grep -E "$examples" || true)" ]]; then pas
 elif [[ -n "$uses_env" ]]; then warn "code reads environment variables but there is no .env.example" 5; tip "commit prevention/env/env.example, adapted"
 else pass "no environment-based settings detected" 5; fi
 
-echo "${B}3. Commit-time blocking${N}"
+heading "3. Commit-time blocking"
 hooksdir="$(git -C "$repo" rev-parse --git-path hooks)"; [[ "$hooksdir" = /* ]] || hooksdir="$repo/$hooksdir"
 cfg="$repo/.pre-commit-config.yaml"
 if [[ -f "$cfg" ]] && grep -qiE 'gitleaks|trufflehog|detect-secrets' "$cfg"; then pass "pre-commit config includes a secret scanner" 10
@@ -59,29 +72,29 @@ else warn "no pre-commit secret scanner configured" 10; tip "copy prevention/pre
 if [[ -x "$hooksdir/pre-commit" ]] || [[ -n "$(git -C "$repo" config core.hooksPath)" ]]; then pass "a pre-commit hook is installed in this clone" 5
 else warn "no pre-commit hook installed in this clone" 5; tip "pre-commit install   (or copy prevention/hooks/pre-commit)"; fi
 
-echo "${B}4. CI secret scanning${N}"
+heading "4. CI secret scanning"
 ci_files="$(cd "$repo" && ls .github/workflows/*.y*ml .gitlab-ci.yml azure-pipelines.yml bitbucket-pipelines.yml 2>/dev/null || true)"
 if [[ -n "$ci_files" ]] && (cd "$repo" && grep -qliE 'gitleaks|trufflehog|secret[-_ ]?(scan|detection)|detect-secrets' $ci_files 2>/dev/null); then
   pass "CI runs a secret scan" 15
 elif [[ -n "$ci_files" ]]; then warn "CI exists but runs no secret scan" 15; tip "add a job from prevention/ci/"
 else warn "no CI configuration found" 15; tip "add a job from prevention/ci/"; fi
 
-echo "${B}5. Container hygiene${N}"
+heading "5. Container hygiene"
 # Files ending in .example or kept under examples/ are documentation, not builds.
 dockerfiles="$(git -C "$repo" ls-files | grep -E '(^|/)(Dockerfile[^/]*|[^/]*\.Dockerfile)$' | grep -vE '(\.example$|(^|/)examples?/)' || true)"
 if [[ -z "$dockerfiles" ]]; then pass "no Dockerfiles" 10
 else
-  bad_lines="$(cd "$repo" && grep -nHiE '^\s*(ARG|ENV)\s+[A-Z0-9_]*(SECRET|PASSWORD|PASSWD|TOKEN|API_KEY|PRIVATE_KEY)[A-Z0-9_]*\s*=\s*[^$[:space:]]' $dockerfiles 2>/dev/null | head -3 || true)"
+  bad_lines="$(cd "$repo" && grep -nHiE '^[[:space:]]*(ARG|ENV)[[:space:]]+[A-Z0-9_]*(SECRET|PASSWORD|PASSWD|TOKEN|API_KEY|PRIVATE_KEY)[A-Z0-9_]*[[:space:]]*=[[:space:]]*[^$[:space:]]' $dockerfiles 2>/dev/null | head -3 || true)"
   if [[ -f "$repo/.dockerignore" ]] && grep -qE '^\.env' "$repo/.dockerignore" && [[ -z "$bad_lines" ]]; then pass ".dockerignore excludes .env; no secret values in ARG/ENV" 10
   else
     # Show where, never the value: file:line and the variable name only.
-    where="$(echo "$bad_lines" | head -1 | sed -E 's/^([^:]+:[0-9]+):\s*(ARG|ENV)\s+([A-Za-z0-9_]+).*/\1 (\2 \3=<redacted>)/I')"
+    where="$(echo "$bad_lines" | head -1 | sed -E 's/^([^:]+:[0-9]+):[[:space:]]*([Aa][Rr][Gg]|[Ee][Nn][Vv])[[:space:]]+([A-Za-z0-9_]+).*/\1 (\2 \3=<redacted>)/')"
     [[ -n "$bad_lines" ]] && { fail "secret-looking value baked into an image: $where" 10; tip "use BuildKit secret mounts: prevention/docker/Dockerfile.build-secrets.example"; }
     [[ -z "$bad_lines" ]] && { warn ".dockerignore missing or does not exclude .env" 10; tip "copy prevention/docker/dockerignore to .dockerignore"; }
   fi
 fi
 
-echo "${B}6. Full history${N}"
+heading "6. Full history"
 if ((scan)); then
   report="$(mktemp -t audit-scan-XXXXXX.json)"
   out="$("$here/scan-secrets.sh" "$repo" "$report" 2>&1)"; rc=$?
@@ -103,6 +116,15 @@ elif ((pct >= 75)); then grade=B
 elif ((pct >= 60)); then grade=C
 elif ((pct >= 40)); then grade=D
 else grade=F; fi
-echo
-echo "${B}Score: $points/$max ($pct%) · Grade $grade${N}$( ((critical)) && echo "  (critical findings cap the grade at F)")"
+if ((json)); then
+  printf '%s\n' "${rows[@]}" | jq -R -s --arg repo "$repo" --argjson points "$points" --argjson max "$max" \
+    --argjson pct "$pct" --arg grade "$grade" --argjson critical "$critical" '{
+      repository: $repo, grade: $grade, score: $points, max: $max, percent: $pct, critical: ($critical == 1),
+      checks: (split("\n") | map(select(length > 0) | split("\t")
+        | {section: .[0], status: .[1], weight: (.[2] | tonumber), message: .[3], fix: (.[4] // "")}))
+    }'
+else
+  echo
+  echo "${B}Score: $points/$max ($pct%) · Grade $grade${N}$( ((critical)) && echo "  (critical findings cap the grade at F)")"
+fi
 exit "$critical"

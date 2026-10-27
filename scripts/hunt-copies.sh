@@ -10,7 +10,8 @@
 # Read-only: every request is an anonymous (or token-authenticated) public query.
 set -uo pipefail
 
-since="$(date -u -d '60 days ago' +%F 2>/dev/null || date -u +%F)"
+# GNU date (Linux), then BSD date (macOS).
+since="$(date -u -d '60 days ago' +%F 2>/dev/null || date -u -v-60d +%F 2>/dev/null || date -u +%F)"
 outroot="hunts"
 repos=()
 while (($#)); do
@@ -26,6 +27,7 @@ for r in "${repos[@]}"; do
   [[ "$r" =~ ^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$ ]] || { echo "not owner/repo: $r" >&2; exit 2; }
 done
 for cmd in curl jq; do command -v "$cmd" >/dev/null || { echo "missing: $cmd" >&2; exit 2; }; done
+if command -v sha256sum >/dev/null; then SHA256=(sha256sum); else SHA256=(shasum -a 256); fi
 
 stamp="$(date -u +%Y%m%dT%H%M%SZ)"
 out="$outroot/hunt_$stamp"
@@ -44,7 +46,7 @@ gh() { # gh <path> <outfile> -> http code
 search_pause() { [[ -n "${GITHUB_TOKEN:-}" ]] && sleep 2 || sleep 7; } # search API: 10/min anonymous
 fetch() { curl -s --max-time 90 -o "$2" -w '%{http_code}' -A "leak-response-toolkit" "$1"; }
 safe() { echo "$1" | tr '/*:?&=' '______'; }
-CLEAN="✅ clean"; FOUND="⚠️ **found**"; UNKNOWN="❔ not checked"
+CLEAN="clean"; FOUND="**found**"; UNKNOWN="not checked"; REVIEW="review"
 row() {
   printf '| %s | %s | %s |\n' "$1" "$2" "$3" >> "$report"
   local status=info
@@ -61,7 +63,7 @@ row() {
   echo "- **Same-name copies searched since:** $since"
   echo "- **Method:** read-only public queries; raw responses in \`raw/\`"
   echo
-  echo "Legend: $CLEAN nothing found · $FOUND needs follow-up · $UNKNOWN source unavailable or rate-limited (check by hand)"
+  echo "Results: **found** needs follow-up; review means a match worth a look; not checked means the source was unavailable or rate-limited (check it by hand)."
 } > "$report"
 
 jq -cn --arg run "$stamp" --arg since "$since" --args '{run: $run, since: $since, repos: $ARGS.positional}' "${repos[@]}" > "$out/meta.json"
@@ -133,6 +135,13 @@ for r in "${repos[@]}"; do
     hits="$(awk '/^event: matches/{getline; sub(/^data: /,""); print}' "$raw/sourcegraph_$s.txt" | jq -r '.[].repository' 2>/dev/null | sort -u)"
     if [[ -n "$hits" ]]; then row "Sourcegraph code search" "$FOUND" "Referenced in: $(echo "$hits" | paste -sd, -)"; else row "Sourcegraph code search" "$CLEAN" "0 matches"; fi
   else row "Sourcegraph code search" "$UNKNOWN" "Request failed"; fi
+  # Same-name public projects on GitLab created since the date: re-uploads often keep the name.
+  code="$(fetch "https://gitlab.com/api/v4/projects?search=$(printf %s "$name" | jq -sRr @uri)&created_after=${since}T00:00:00Z&order_by=created_at&sort=desc&per_page=100&simple=true" "$raw/gitlab-projects_$s.json")"
+  if [[ "$code" == 200 ]]; then
+    exact="$(jq -r --arg n "$name" '[.[] | select((.path | ascii_downcase) == ($n | ascii_downcase)) | .web_url] | join(", ")' "$raw/gitlab-projects_$s.json")"
+    if [[ -n "$exact" ]]; then row "GitLab projects named \`$name\` since $since" "$REVIEW" "$exact"
+    else row "GitLab projects named \`$name\` since $since" "$CLEAN" "None with this exact name"; fi
+  else row "GitLab projects named \`$name\` since $since" "$UNKNOWN" "HTTP $code"; fi
 done
 
 # --- per owner ---------------------------------------------------------------
@@ -146,7 +155,7 @@ for o in "${owners[@]}"; do
   if [[ "$code" == 200 ]]; then
     gh "/users/$o/repos?per_page=100&type=all" "$raw/user-repos_$s.json" >/dev/null
     gh "/users/$o/gists?per_page=100" "$raw/user-gists_$s.json" >/dev/null
-    row "Other public repositories" "ℹ️ review" "$(jq -r 'length' "$raw/user-repos_$s.json"): $(jq -r '[.[] | "\(.name) (pushed \(.pushed_at[:10]))"] | join(", ")' "$raw/user-repos_$s.json")"
+    row "Other public repositories" "$REVIEW" "$(jq -r 'length' "$raw/user-repos_$s.json"): $(jq -r '[.[] | "\(.name) (pushed \(.pushed_at[:10]))"] | join(", ")' "$raw/user-repos_$s.json")"
     g="$(jq 'length' "$raw/user-gists_$s.json" 2>/dev/null || echo 0)"
     if ((g > 0)); then row "Public gists" "$FOUND" "$g gist(s); review for pasted code"; else row "Public gists" "$CLEAN" "None"; fi
   else
@@ -170,18 +179,18 @@ for o in "${owners[@]}"; do
   sql="SELECT created_at, event_type, actor_login, repo_name FROM github_events WHERE lower(actor_login)=lower('$o') AND created_at >= '$since' ORDER BY created_at FORMAT TSVWithNames"
   if curl -s --max-time 120 "https://play.clickhouse.com/?user=play" --data-binary "$sql" > "$raw/clickhouse_$s.tsv"; then
     n=$(( $(wc -l < "$raw/clickhouse_$s.tsv") - 1 )); ((n < 0)) && n=0
-    if ((n > 0)); then row "Public event archive (ClickHouse, since $since)" "ℹ️ review" "$n event(s); see raw file. Dataset has gaps."
+    if ((n > 0)); then row "Public event archive (ClickHouse, since $since)" "$REVIEW" "$n event(s); see raw file. Dataset has gaps."
     else row "Public event archive (ClickHouse, since $since)" "$CLEAN" "No events (dataset has gaps: supporting evidence only)"; fi
   else row "Public event archive (ClickHouse)" "$UNKNOWN" "Request failed"; fi
 
   code="$(fetch "https://gitlab.com/api/v4/users?username=$o" "$raw/gitlab_$s.json")"
-  if [[ "$code" == 200 && "$(jq 'length' "$raw/gitlab_$s.json")" -gt 0 ]]; then row "GitLab account of the same name" "ℹ️ review" "$(jq -r '.[0].web_url' "$raw/gitlab_$s.json")"
+  if [[ "$code" == 200 && "$(jq 'length' "$raw/gitlab_$s.json")" -gt 0 ]]; then row "GitLab account of the same name" "$REVIEW" "$(jq -r '.[0].web_url' "$raw/gitlab_$s.json")"
   elif [[ "$code" == 200 ]]; then row "GitLab account of the same name" "$CLEAN" "None"
   else row "GitLab account of the same name" "$UNKNOWN" "HTTP $code"; fi
 
   code="$(fetch "https://codeberg.org/api/v1/users/$o" "$raw/codeberg_$s.json")"
   case "$code" in
-    200) row "Codeberg account of the same name" "ℹ️ review" "https://codeberg.org/$o" ;;
+    200) row "Codeberg account of the same name" "$REVIEW" "https://codeberg.org/$o" ;;
     404) row "Codeberg account of the same name" "$CLEAN" "None" ;;
     *)   row "Codeberg account of the same name" "$UNKNOWN" "HTTP $code" ;;
   esac
@@ -197,7 +206,7 @@ cat >> "$report" <<'EOF'
 - **GH Archive** (permanent push log: commit IDs, messages, author emails, not code): query it for the exposure hours once they are known.
 EOF
 
-(cd "$out" && find . -type f ! -name MANIFEST.sha256 -print0 | sort -z | xargs -0 sha256sum > MANIFEST.sha256)
+(cd "$out" && find . -type f ! -name MANIFEST.sha256 -print0 | sort -z | xargs -0 "${SHA256[@]}" > MANIFEST.sha256)
 echo
 echo "Report: $report"
-echo "Findings needing follow-up: $(grep -c '^| .*| ⚠️ \*\*found\*\* |' "$report")"
+echo "Findings needing follow-up: $(grep -c '^| .*| \*\*found\*\* |' "$report")"

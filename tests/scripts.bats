@@ -37,7 +37,7 @@ commit_all() {
 }
 
 @test "every script exits 2 when required arguments are missing" {
-  for s in snapshot-evidence list-forks hunt-copies find-commit-copies scan-secrets make-report; do
+  for s in snapshot-evidence list-forks hunt-copies find-commit-copies scan-secrets make-report notify; do
     run "$ROOT/scripts/$s.sh"
     [ "$status" -eq 2 ] || { echo "$s exited $status"; false; }
   done
@@ -189,4 +189,85 @@ commit_all() {
   run "$TMP/bin/leak" help scan
   [ "$status" -eq 0 ]
   [[ "$output" == *"FULL git history"* ]]
+}
+
+@test "scan: --sarif writes valid SARIF 2.1.0 without secret values" {
+  scanner_available || skip "needs gitleaks or docker"
+  new_repo "$TMP/s"
+  fake="AKIA$(LC_ALL=C tr -dc 'A-Z2-7' </dev/urandom | head -c 16)"
+  echo "key = $fake" > "$TMP/s/app.ini"
+  commit_all "$TMP/s" "add"
+  run "$ROOT/scripts/scan-secrets.sh" "$TMP/s" "$TMP/s.json" --sarif "$TMP/s.sarif"
+  [ "$status" -eq 1 ]
+  run jq -r '.version, .runs[0].tool.driver.name, .runs[0].results[0].ruleId, .runs[0].results[0].locations[0].physicalLocation.artifactLocation.uri' "$TMP/s.sarif"
+  [ "${lines[0]}" = "2.1.0" ]
+  [ "${lines[1]}" = "leak-response-toolkit" ]
+  [ "${lines[2]}" = "aws-access-token" ]
+  [ "${lines[3]}" = "app.ini" ]
+  run grep -c "$fake" "$TMP/s.sarif"
+  [ "$output" = "0" ]
+}
+
+@test "audit: --json prints one object with grade and checks" {
+  new_repo "$TMP/j"
+  echo "hello" > "$TMP/j/README.md"
+  commit_all "$TMP/j" "init"
+  run "$ROOT/scripts/audit.sh" --no-scan --json "$TMP/j"
+  [ "$status" -eq 0 ]
+  echo "$output" | jq -e '.grade and (.checks | length) > 5 and (.checks[0] | has("fix"))'
+}
+
+@test "audit: an unknown option exits 2" {
+  run "$ROOT/scripts/audit.sh" --nope
+  [ "$status" -eq 2 ]
+}
+
+@test "audit-org: grades a folder of repositories and writes the dashboard" {
+  mkdir -p "$TMP/org"
+  new_repo "$TMP/org/good"
+  cp "$ROOT/prevention/gitignore-secrets" "$TMP/org/good/.gitignore"
+  echo "ok" > "$TMP/org/good/README.md"
+  commit_all "$TMP/org/good" "init"
+  new_repo "$TMP/org/bad"
+  value="$(LC_ALL=C tr -dc 'a-z0-9' </dev/urandom | head -c 16)"
+  echo "DB_PASSWORD=$value" > "$TMP/org/bad/.env"
+  commit_all "$TMP/org/bad" "init"
+  run "$ROOT/scripts/audit-org.sh" --no-scan --out "$TMP/out" --dir "$TMP/org"
+  [ "$status" -eq 1 ]
+  [ -f "$TMP/out/dashboard.html" ] && [ -f "$TMP/out/README.md" ]
+  run jq -r '.repositories, .critical, .results[0].repository, .results[0].grade' "$TMP/out/audit-org.json"
+  [ "${lines[0]}" = "2" ] && [ "${lines[1]}" = "1" ] && [ "${lines[2]}" = "bad" ] && [ "${lines[3]}" = "F" ]
+  run grep -rc "$value" "$TMP/out"
+  [[ "$output" != *":1"* ]]
+}
+
+@test "audit-org: rejects a missing folder and a bad owner name" {
+  run "$ROOT/scripts/audit-org.sh" --dir "$TMP/does-not-exist"
+  [ "$status" -eq 2 ]
+  run "$ROOT/scripts/audit-org.sh" "not a valid/owner"
+  [ "$status" -eq 2 ]
+}
+
+@test "notify: needs LEAK_WEBHOOK_URL, refuses plain http and unknown formats" {
+  LEAK_WEBHOOK_URL="" run "$ROOT/scripts/notify.sh" "hello"
+  [ "$status" -eq 2 ]
+  LEAK_WEBHOOK_URL="http://example.com/hook" run "$ROOT/scripts/notify.sh" "hello"
+  [ "$status" -eq 2 ]
+  LEAK_WEBHOOK_URL="https://example.invalid/hook" run "$ROOT/scripts/notify.sh" --format nope "hello"
+  [ "$status" -eq 2 ]
+}
+
+@test "leak: help lists audit-org and notify" {
+  run "$ROOT/leak" help
+  [[ "$output" == *"audit-org"* ]]
+  [[ "$output" == *"notify"* ]]
+}
+
+@test "terminal renderer: animated SVG respects reduced motion" {
+  command -v python3 >/dev/null || skip "needs python3"
+  printf '  ✔ ok\nScore: 100/100 (100%%) · Grade A\n' > "$TMP/in.txt"
+  run python3 -I "$ROOT/tools/render-terminal-svg.py" "$TMP/in.txt" "$TMP/out.svg" --command "leak audit ." --animate
+  [ "$status" -eq 0 ]
+  grep -q 'prefers-reduced-motion' "$TMP/out.svg"
+  grep -q 'class="ln"' "$TMP/out.svg"
 }

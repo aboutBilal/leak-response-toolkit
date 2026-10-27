@@ -66,7 +66,7 @@ Providers (cloud, payments, chat, source hosting) receive keys found in public c
 | **Container image** on a public registry | Delete the tag and rebuild without the secret | Anyone who pulled has every layer; a secret removed in a later layer is still in the earlier one |
 | **Published package** (npm, PyPI, NuGet, …) | Unpublish or yank where the registry allows it, then publish a fixed version | Registries limit removal (time windows, dependants), and mirrors keep copies: rotation is what matters |
 | **Chat, tickets, wikis, screenshots** | Delete the message or attachment | Exposure depends on who can read the space; rotate if it was wide or external |
-| **Front-end bundle or mobile app** | Ship a version without it | Anything shipped to clients is public by design: only keys meant to be public belong there ([02](02-rotate-secrets.md#-keys-that-are-meant-to-be-public)) |
+| **Front-end bundle or mobile app** | Ship a version without it | Anything shipped to clients is public by design: only keys meant to be public belong there ([02](02-rotate-secrets.md#keys-that-are-meant-to-be-public)) |
 
 Then: rotate ([02](02-rotate-secrets.md)), investigate ([03](03-investigate.md)), prevent ([04](04-prevention.md)).
 

@@ -7,14 +7,14 @@ Teams that have practised respond in minutes; teams that have not lose the first
 
 ---
 
-## 🎯 Goals
+## Goals
 
 - Everyone knows where this toolkit is and which page to open first.
 - The roles (lead, rotator, investigator, communicator) are filled within 5 minutes.
 - Each person has run the scripts once, so tooling problems surface now, not during an incident.
 - The team knows who can rotate each kind of secret, and where that is still unclear.
 
-## 🧰 Setup (facilitator, 10 minutes before)
+## Setup (facilitator, 10 minutes before)
 
 ```bash
 # A private throwaway repository with a fake secret deep in its history
@@ -27,7 +27,7 @@ git rm -q settings.ini && git commit -qm "remove settings"
 
 Keep it local, or push it to a **private** repository only. The key is random and works nowhere.
 
-## ⏱️ The drill
+## The drill
 
 | Minute | Prompt from the facilitator | Expected response |
 |---|---|---|
@@ -40,7 +40,7 @@ Keep it local, or push it to a **private** repository only. The key is random an
 | 35 | "Leadership wants an update in 10 minutes." | First message from `templates/notification-messages.md` |
 | 40 | Debrief | What was slow, unclear or missing? |
 
-## 📝 Debrief questions
+## Debrief questions
 
 1. Which step took longest, and why?
 2. Was there any secret type nobody knew how to rotate?
@@ -49,6 +49,6 @@ Keep it local, or push it to a **private** repository only. The key is random an
 
 Record the answers in `templates/post-incident-review.md` (yes, for a drill too) and turn them into actions with owners.
 
-## 🧹 Clean up
+## Clean up
 
 Delete the drill repository locally and, if you pushed it, on the server.

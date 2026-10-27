@@ -11,7 +11,7 @@ This is the full response. For what changes in your specific case (your own repo
 
 ---
 
-## 👥 Roles (even a team of two)
+## Roles (even a team of two)
 
 | Role | Owns |
 |---|---|
@@ -24,9 +24,9 @@ One person can hold several roles. Write down who holds which.
 
 ---
 
-## ⏱️ First hour
+## First hour
 
-### 1. 📸 Snapshot evidence (5 minutes)
+### 1. Snapshot evidence (5 minutes)
 
 Do this **before** the repo is deleted: once it is gone, you lose the exact contents, the commit times and GitHub's traffic numbers.
 
@@ -36,9 +36,9 @@ Do this **before** the repo is deleted: once it is gone, you lose the exact cont
 
 It saves a full mirror, repo metadata (`created_at`, `pushed_at`, fork count), the fork list and, when your token belongs to the owner, **clones and unique visitors for the last 14 days**. Take screenshots too.
 
-Ask the owner for screenshots of **Insights → Traffic** and their **account security log** now: traffic is gone once the repository is deleted, and the security log gives the exact exposure window ([what disappears](05-where-copies-survive.md#-evidence-that-disappears)).
+Ask the owner for screenshots of **Insights → Traffic** and their **account security log** now: traffic is gone once the repository is deleted, and the security log gives the exact exposure window ([what disappears](05-where-copies-survive.md#evidence-that-disappears)).
 
-### 2. 🔎 Find every secret, in the full history
+### 2. Find every secret, in the full history
 
 ```bash
 ./scripts/scan-secrets.sh evidence/<snapshot>/repo.git
@@ -47,7 +47,7 @@ Ask the owner for screenshots of **Insights → Traffic** and their **account se
 - A secret "removed in a later commit" is **still leaked**: every old commit was public.
 - Scanners miss things. Also search by hand for `.env`, `*.pem`, `*.pfx`, `*.tfvars`, `appsettings*.json`, `docker-compose*.yml`, kubeconfigs and connection strings.
 
-### 3. 🔁 Rotate and revoke, most powerful first
+### 3. Rotate and revoke, most powerful first
 
 | Priority | Secret type | Why first |
 |:-:|---|---|
@@ -61,7 +61,7 @@ Ask the owner for screenshots of **Insights → Traffic** and their **account se
 
 Record the **exact time** each secret was revoked. The investigation window ends there.
 
-### 4. 🗑️ Take it down
+### 4. Take it down
 
 1. **Ask the owner to delete it.** This is the fastest route: *Settings → Danger zone → Delete this repository*.
 2. **If they cannot or will not:** the company owns the copyright, so file a **GitHub DMCA takedown** at <https://github.com/contact/dmca>. List the repo **and every fork** ([`list-forks.sh`](../scripts/list-forks.sh)). The facts you need are in [`takedown-request.md`](../templates/takedown-request.md).
@@ -76,9 +76,9 @@ Record the **exact time** each secret was revoked. The investigation window ends
 
 ---
 
-## 📅 Same day
+## Same day
 
-### 5. 🕵️ Was anything used?
+### 5. Was anything used?
 
 Search from **the first public push** until **the moment each secret was revoked**, not until the repo was deleted. Queries for Azure, AWS and databases: [`03-investigate.md`](03-investigate.md).
 
@@ -86,7 +86,7 @@ Signs of abuse: logins from unfamiliar IPs or countries, new compute (crypto-min
 
 **If you find misuse, this is now a breach, not a leak:** widen the scope and bring in security and legal.
 
-### 6. 📦 What else was exposed?
+### 6. What else was exposed?
 
 | Exposed | Risk |
 |---|---|
@@ -95,7 +95,7 @@ Signs of abuse: logins from unfamiliar IPs or countries, new compute (crypto-min
 | **Personal or customer data** (seed files, dumps, test fixtures) | Possible legal notification duty (GDPR: 72 hours) |
 | Third-party or client code | Contractual notification to that party |
 
-### 7. 📣 Tell the right people
+### 7. Tell the right people
 
 - Manager, security and legal.
 - **The owner of the code or data**, if it is not yours (a customer, partner or employer). Contracts usually require prompt notice.
@@ -103,7 +103,7 @@ Signs of abuse: logins from unfamiliar IPs or countries, new compute (crypto-min
 - Ready-to-adapt messages for each audience: [`notification-messages.md`](../templates/notification-messages.md).
 - For leadership, use [`executive-report.html`](../templates/executive-report.html): one page of summary, then the evidence.
 
-### 8. 👤 The person involved
+### 8. The person involved
 
 - Review or suspend their access to repositories, cloud and CI while the facts are gathered.
 - Separate *what happened* (often a well-meaning backup or portfolio upload) from *what to do about it*; HR and legal own the second part.
@@ -111,14 +111,14 @@ Signs of abuse: logins from unfamiliar IPs or countries, new compute (crypto-min
 
 ---
 
-## 🧹 Afterwards
+## Afterwards
 
 - **Do not rely on rewriting history** (`git filter-repo`, BFG) to "un-leak" anything. It is useful for cleaning your *own* repo later; it does nothing about copies already taken.
 - Run a short blameless review with [`post-incident-review.md`](../templates/post-incident-review.md): how did the code leave, why was a secret in the repo, what would have caught it sooner?
 - Practise before the next one: [`07-practice-drill.md`](07-practice-drill.md).
 - Pick at least two changes from [`08-secrets-by-design.md`](08-secrets-by-design.md) (the [prevention kit](../prevention/README.md) has tested files) and give each an owner and a date.
 
-## ✅ Done when
+## Done when
 
 - [ ] Every secret found is revoked, with the time recorded
 - [ ] Repo and all forks are gone (or a takedown is filed and tracked)

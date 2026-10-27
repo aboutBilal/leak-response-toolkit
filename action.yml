@@ -1,5 +1,5 @@
 name: Leak Response Toolkit
-description: Scan the full git history for secrets, grade a repository's secret hygiene, or hunt for public copies of a leaked repository.
+description: Scan the full git history for secrets, grade one repository or a whole organisation A-F, or hunt for public copies of a leaked repository.
 author: aboutBilal
 branding:
   icon: shield
@@ -7,7 +7,7 @@ branding:
 
 inputs:
   mode:
-    description: "scan (secrets in full history), audit (hygiene grade A-F), or hunt (public copies of a repository)"
+    description: "scan (secrets in full history), audit (grade A-F), audit-org (grade every repository of `owner`), or hunt (public copies of `repos`)"
     required: false
     default: scan
   path:
@@ -22,6 +22,22 @@ inputs:
     description: "For hunt: look for same-name copies created on or after this date (YYYY-MM-DD)"
     required: false
     default: ""
+  owner:
+    description: "For audit-org: the organisation or user whose repositories are graded"
+    required: false
+    default: ""
+  sarif-file:
+    description: "For scan: also write SARIF to this path (upload it with github/codeql-action/upload-sarif)"
+    required: false
+    default: ""
+  webhook-url:
+    description: "Optional Slack, Teams or Discord incoming webhook (pass it from a secret). Alerts only when there are findings; never includes secret values"
+    required: false
+    default: ""
+  webhook-format:
+    description: "slack (default), teams or discord"
+    required: false
+    default: slack
   fail-on-findings:
     description: Fail the step when secrets, critical audit findings or copies are found
     required: false
@@ -29,8 +45,11 @@ inputs:
 
 outputs:
   findings:
-    description: "Number of findings (scan: secrets; audit: 1 if critical; hunt: items needing follow-up)"
+    description: "Number of findings (scan: secrets; audit: 1 if critical; audit-org: repositories with critical findings; hunt: items needing follow-up)"
     value: ${{ steps.run.outputs.findings }}
+  report:
+    description: "Path of the main report written by this run (JSON, markdown or HTML, depending on the mode)"
+    value: ${{ steps.run.outputs.report }}
 
 runs:
   using: composite
@@ -42,22 +61,31 @@ runs:
         TARGET: ${{ inputs.path }}
         REPOS: ${{ inputs.repos }}
         SINCE: ${{ inputs.since }}
+        OWNER: ${{ inputs.owner }}
+        SARIF: ${{ inputs.sarif-file }}
+        LEAK_WEBHOOK_URL: ${{ inputs.webhook-url }}
+        WEBHOOK_FORMAT: ${{ inputs.webhook-format }}
         FAIL: ${{ inputs.fail-on-findings }}
         TOOLKIT: ${{ github.action_path }}
+        REPOSITORY: ${{ github.repository }}
+        RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
       run: |
         set -uo pipefail
         out="${RUNNER_TEMP}/leak-toolkit"; mkdir -p "$out"
-        findings=0
+        findings=0; report=""; summary=""
         case "$MODE" in
           scan)
-            "$TOOLKIT/leak" scan "$TARGET" "$out/secrets-report.json" | tee "$out/log.txt"; rc=${PIPESTATUS[0]}
+            sarif_args=(); [[ -n "$SARIF" ]] && sarif_args=(--sarif "$SARIF")
+            "$TOOLKIT/leak" scan "$TARGET" "$out/secrets-report.json" "${sarif_args[@]}" | tee "$out/log.txt"; rc=${PIPESTATUS[0]}
             [[ "$rc" -gt 1 ]] && exit "$rc"
+            report="$out/secrets-report.json"
             if [[ -f "$out/secrets-report.json" ]]; then findings="$(jq 'length' "$out/secrets-report.json")"; fi
+            summary="$findings secret finding(s) in the history of $REPOSITORY (types: $(jq -r '[.[].RuleID]|unique|join(", ")' "$out/secrets-report.json" 2>/dev/null)). Values are redacted."
             {
-              echo "## 🔎 Secret scan (full history)"
-              if [[ "$findings" -eq 0 ]]; then echo "✅ No secrets found in any commit."
+              echo "## Secret scan (full history)"
+              if [[ "$findings" -eq 0 ]]; then echo "No secrets found in any commit."
               else
-                echo "⚠️ **$findings finding(s).** Values are redacted. Rotate each secret first, then clean history."
+                echo "**$findings finding(s).** Values are redacted. Rotate each secret first, then clean history."
                 echo; echo "| Type | Findings | Files |"; echo "|---|---|---|"
                 jq -r 'group_by(.RuleID)[] | "| \(.[0].RuleID) | \(length) | \([.[].File]|unique|length) |"' "$out/secrets-report.json"
               fi
@@ -65,18 +93,33 @@ runs:
           audit)
             NO_COLOR=1 "$TOOLKIT/leak" audit "$TARGET" | tee "$out/audit.txt"; findings=${PIPESTATUS[0]}
             [[ "$findings" -gt 1 ]] && exit "$findings"
-            { echo "## 🛡️ Secret hygiene audit"; echo; echo '```'; cat "$out/audit.txt"; echo '```'; } >> "$GITHUB_STEP_SUMMARY" ;;
+            report="$out/audit.txt"
+            summary="Secret hygiene audit of $REPOSITORY: $(tail -1 "$out/audit.txt")"
+            { echo "## Secret hygiene audit"; echo; echo '```'; cat "$out/audit.txt"; echo '```'; } >> "$GITHUB_STEP_SUMMARY" ;;
+          audit-org)
+            [[ -n "$OWNER" ]] || { echo "::error::mode audit-org needs the owner input"; exit 2; }
+            "$TOOLKIT/leak" audit-org --out "$out/audit-org" "$OWNER"; rc=$?
+            [[ "$rc" -gt 1 ]] && exit "$rc"
+            report="$out/audit-org/dashboard.html"
+            findings="$(jq .critical "$out/audit-org/audit-org.json")"
+            summary="Secret hygiene across $OWNER: $(jq -r '"\(.repositories) repositories, average \(.average_percent)%, \(.critical) with critical findings"' "$out/audit-org/audit-org.json")."
+            cat "$out/audit-org/README.md" >> "$GITHUB_STEP_SUMMARY" ;;
           hunt)
             [[ -n "$REPOS" ]] || { echo "::error::mode hunt needs the repos input"; exit 2; }
             args=(--out "$out/hunts"); [[ -n "$SINCE" ]] && args+=(--since "$SINCE")
             # shellcheck disable=SC2086
             "$TOOLKIT/leak" hunt "${args[@]}" $REPOS
             report="$(ls -d "$out"/hunts/hunt_*/REPORT.md | head -1)"
-            findings="$(grep -c '^| .*| ⚠️ \*\*found\*\* |' "$report" || true)"
+            findings="$(grep -c '^| .*| \*\*found\*\* |' "$report" || true)"
+            summary="Copy hunt for $REPOS: $findings item(s) need follow-up."
             cat "$report" >> "$GITHUB_STEP_SUMMARY" ;;
-          *) echo "::error::unknown mode: $MODE (use scan, audit or hunt)"; exit 2 ;;
+          *) echo "::error::unknown mode: $MODE (use scan, audit, audit-org or hunt)"; exit 2 ;;
         esac
         echo "findings=$findings" >> "$GITHUB_OUTPUT"
+        echo "report=$report" >> "$GITHUB_OUTPUT"
+        if [[ -n "$LEAK_WEBHOOK_URL" && "$findings" -gt 0 ]]; then
+          "$TOOLKIT/leak" notify --format "$WEBHOOK_FORMAT" "leak-response-toolkit: $summary Details: $RUN_URL" || echo "::warning::notification failed"
+        fi
         if [[ "$FAIL" == "true" && "$findings" -gt 0 ]]; then
           echo "::error::$findings finding(s) - see the job summary"
           exit 1

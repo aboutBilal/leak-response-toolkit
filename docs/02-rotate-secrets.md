@@ -8,7 +8,7 @@ Everything in `<angle brackets>` is a placeholder.
 
 ---
 
-## ☁️ Azure
+## Azure
 
 ### Service principal / app registration secret
 
@@ -57,7 +57,7 @@ az sql server update -g <rg> -n <server> --admin-password '<new-password>'
 
 ---
 
-## 🟧 AWS
+## AWS
 
 ```bash
 # When was the key last used, and for what service?
@@ -73,7 +73,7 @@ If AWS has already attached the `AWSCompromisedKeyQuarantine` policy to the user
 
 ---
 
-## 🔷 Google Cloud
+## Google Cloud
 
 ```bash
 # Service account key (JSON file with a private key): disable at once, delete after consumers move
@@ -90,7 +90,7 @@ Google can disable an exposed service account key automatically; the audit log t
 
 ---
 
-## 🌐 Keys that are meant to be public
+## Keys that are meant to be public
 
 Some keys are designed to ship inside web and mobile apps, so anyone using the app can read them. Scanners still flag them, and providers may still send exposure emails.
 
@@ -102,7 +102,7 @@ The danger is never the key itself but **what it can reach without further check
 
 ---
 
-## 🐙 GitHub
+## GitHub
 
 | Secret | Revoke at |
 |---|---|
@@ -113,7 +113,7 @@ The danger is never the key itself but **what it can reach without further check
 
 ---
 
-## 🗄️ Databases
+## Databases
 
 ```sql
 -- PostgreSQL
@@ -130,7 +130,7 @@ Then check for logins or roles you do not recognise, and narrow firewall rules t
 
 ---
 
-## 🔑 SSH keys and certificates
+## SSH keys and certificates
 
 ```bash
 # New key pair
@@ -144,7 +144,7 @@ TLS private keys (`.pem`, `.pfx`, `.key`): **revoke the certificate** with the i
 
 ---
 
-## 🧾 Application secrets
+## Application secrets
 
 | Secret | Rotation | Side effect |
 |---|---|---|
@@ -156,7 +156,7 @@ TLS private keys (`.pem`, `.pfx`, `.key`): **revoke the certificate** with the i
 
 ---
 
-## 🗂️ More secret types: where to revoke
+## More secret types: where to revoke
 
 The pattern is the same everywhere: **create the replacement → deploy it → revoke the old one → check the provider's usage or audit page** for the exposure window.
 
@@ -174,7 +174,7 @@ The pattern is the same everywhere: **create the replacement → deploy it → r
 
 ---
 
-## 🧭 Order of operations, when there are many
+## Order of operations, when there are many
 
 1. Anything that can **create resources or read customer data**.
 2. Anything with **billing** attached.

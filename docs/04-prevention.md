@@ -7,13 +7,13 @@ Two layers: **make a leak less likely**, and **make a leak worth less**. The sec
 
 ```mermaid
 flowchart TB
-    subgraph LESS_LIKELY["🚧 Make leaks less likely"]
+    subgraph LESS_LIKELY["Make leaks less likely"]
         P1["Pre-commit secret scan"]
         P2["Push protection"]
         P3["CI secret scan"]
         P4["Access controls on source"]
     end
-    subgraph WORTH_LESS["📉 Make leaks worth less"]
+    subgraph WORTH_LESS["Make leaks worth less"]
         W1["No secrets in repos<br/>(vault + references)"]
         W2["Short-lived credentials<br/>(OIDC, managed identity)"]
         W3["Least privilege + network limits"]
@@ -24,7 +24,7 @@ flowchart TB
 
 ---
 
-## 📉 Make a leak worth less (do these first)
+## Make a leak worth less (do these first)
 
 | Change | Effect |
 |---|---|
@@ -37,7 +37,7 @@ flowchart TB
 
 ---
 
-## 🚧 Make a leak less likely
+## Make a leak less likely
 
 ### Before the commit: pre-commit hook
 
@@ -58,21 +58,21 @@ gitleaks then blocks any commit that contains a secret. It runs locally, so it i
 
 [`.github/workflows/secret-scan.yml`](../.github/workflows/secret-scan.yml) runs gitleaks on every push and pull request, over the full history. A finding fails the check.
 
-### 📊 What each layer catches: a measured test
+### What each layer catches: a measured test
 
 A test branch with one **fake** credential of each type was pushed to a public repository on 26 October 2026 (the values were random and the branch was never accepted, so no secret exists in this repository):
 
 | Secret type | GitHub push protection | gitleaks (pre-commit / CI) |
 |---|:-:|:-:|
-| AWS access key ID | ✅ blocked | ✅ |
-| AWS secret access key | ✅ blocked | ✅ |
-| Azure storage account key | ✅ blocked | ✅ |
-| Slack bot token | ✅ blocked | ✅ |
-| Stripe API key | ✅ blocked | ✅ |
-| GitHub personal access token | ❌ passed (invalid checksum, recognised as fake) | ✅ |
-| Google API key | ❌ passed | ✅ |
-| Private key (PEM) | ❌ passed | ✅ |
-| Database password in a connection string | ❌ passed | ✅ |
+| AWS access key ID | blocked | |
+| AWS secret access key | blocked | |
+| Azure storage account key | blocked | |
+| Slack bot token | blocked | |
+| Stripe API key | blocked | |
+| GitHub personal access token | passed (invalid checksum, recognised as fake) | |
+| Google API key | passed | |
+| Private key (PEM) | passed | |
+| Database password in a connection string | passed | |
 
 **Push protection blocked 5 of 9 types; gitleaks caught all 9.** Push protection only blocks high-confidence provider formats at push time, so it is a backstop, not the main control. Run a scanner before the commit and in CI as well.
 
@@ -92,7 +92,7 @@ Services such as **GitGuardian public monitoring** watch public GitHub for your 
 
 ---
 
-## 👥 People and policy
+## People and policy
 
 - A one-page rule: **company code never goes to personal accounts or public places, including "just as a backup" or "for my portfolio"**. Say what to do instead (for a portfolio: describe the work, write a fresh sample).
 - Explain *why*: most leaks are well-meant. People follow rules they understand.
@@ -100,7 +100,7 @@ Services such as **GitGuardian public monitoring** watch public GitHub for your 
 
 ---
 
-## ✅ Starter checklist
+## Starter checklist
 
 - [ ] Pre-commit gitleaks hook in every active repo
 - [ ] Push protection on for every GitHub repo and org

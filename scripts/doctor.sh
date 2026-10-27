@@ -46,9 +46,9 @@ else
 fi
 
 echo "Optional"
-for cmd in sha256sum column; do
-  if command -v "$cmd" >/dev/null; then ok "$cmd" "found"; else warn "$cmd" "missing: some output is less tidy"; fi
-done
+if command -v sha256sum >/dev/null || command -v shasum >/dev/null; then ok "sha256" "found (evidence checksums)"
+else warn "sha256" "missing sha256sum/shasum: evidence manifests cannot be written"; fi
+if command -v column >/dev/null; then ok "column" "found"; else warn "column" "missing: tables are less tidy"; fi
 if [[ -n "${GITHUB_TOKEN:-}" ]]; then
   ok "GITHUB_TOKEN" "set (5,000 API requests/hour)"
 else

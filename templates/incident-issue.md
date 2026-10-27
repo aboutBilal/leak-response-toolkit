@@ -3,7 +3,7 @@ Incident tracking checklist. Copy everything below this comment into a new issue
 (GitHub, GitLab, Jira, Azure Boards) in a PRIVATE project, so the team can tick
 items off together. Never paste secret values into it.
 -->
-## 🚨 Leak incident: `<short name>`
+## Leak incident: `<short name>`
 
 **Lead:** @`<name>` · **Rotator:** @`<name>` · **Investigator:** @`<name>` · **Comms:** @`<name>`
 **Detected:** `<time UTC>` · **Exposure window:** `<start>` → `<end>` (source: `<security log / alert email>`)
