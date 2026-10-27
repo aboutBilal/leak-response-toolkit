@@ -75,14 +75,6 @@
 /* The stage: a stopwatch that fills toward five minutes in real time, a leaked file, the scan. */
 .stage { position: relative; width: 100%; max-width: 560px; aspect-ratio: 1 / 0.94; margin-left: auto; }
 .stage .watch { position: absolute; top: 0; right: 0; width: 60%; filter: drop-shadow(0 24px 30px rgba(29, 19, 54, 0.18)); }
-.ill .o { fill: none; stroke: #1D1336; stroke-width: 2.4; stroke-linejoin: round; stroke-linecap: round; }
-.ill .fw { fill: #FFFFFF; } .ill .fv { fill: #8F74F7; } .ill .fe { fill: #FF7A4D; } .ill .fp { fill: #FFC7B0; }
-.ill .fk { fill: #B9D4FF; } .ill .fs { fill: #F3DDBF; } .ill .fi { fill: #1D1336; } .ill .fr { fill: #E5372B; }
-.ill .w { fill: none; stroke: #FFFFFF; stroke-width: 3.2; stroke-linecap: round; stroke-linejoin: round; }
-.ill .dashed { stroke-dasharray: 4 4; }
-.ill .thick { stroke-width: 9; }
-.ill .thin { stroke-width: 1.6; opacity: 0.55; }
-.ill .arc { fill: none; stroke: #FF7A4D; stroke-width: 7; stroke-linecap: round; }
 .ill .wedge { fill: none; stroke: #FFB59A; stroke-width: 114; stroke-dasharray: 0 358.1; opacity: 0.9; }
 .ill .tk { stroke: #C9C1E3; stroke-width: 2; } .ill .tk-major { stroke: #1D1336; stroke-width: 3.5; stroke-linecap: round; }
 .ill .dial { fill: #1D1336; font: 600 21px var(--sans); text-anchor: middle; }

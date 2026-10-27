@@ -1,4 +1,4 @@
-name: Leak Response Toolkit
+name: Spillkit
 description: Scan the full git history for secrets, grade one repository or a whole organisation A-F, or hunt for public copies of a leaked repository.
 author: aboutBilal
 branding:
@@ -131,7 +131,7 @@ runs:
         echo "findings=$findings" >> "$GITHUB_OUTPUT"
         echo "report=$report" >> "$GITHUB_OUTPUT"
         if [[ -n "$LEAK_WEBHOOK_URL" && "$findings" -gt 0 ]]; then
-          "$TOOLKIT/leak" notify --format "$WEBHOOK_FORMAT" "leak-response-toolkit: $summary Details: $RUN_URL" || echo "::warning::notification failed"
+          "$TOOLKIT/leak" notify --format "$WEBHOOK_FORMAT" "spillkit: $summary Details: $RUN_URL" || echo "::warning::notification failed"
         fi
         if [[ "$FAIL" == "true" && "$findings" -gt 0 ]]; then
           echo "::error::$findings finding(s) - see the job summary"

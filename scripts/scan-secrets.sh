@@ -66,12 +66,12 @@ write_sarif() {
     version: "2.1.0",
     runs: [{
       tool: { driver: {
-        name: "leak-response-toolkit",
-        informationUri: "https://github.com/aboutBilal/leak-response-toolkit",
+        name: "spillkit",
+        informationUri: "https://github.com/aboutBilal/spillkit",
         rules: ([.[].RuleID] | unique | map({
           id: ., name: .,
           shortDescription: { text: ("Secret detected: " + .) },
-          helpUri: "https://github.com/aboutBilal/leak-response-toolkit/blob/main/docs/02-rotate-secrets.md",
+          helpUri: "https://github.com/aboutBilal/spillkit/blob/main/docs/02-rotate-secrets.md",
           defaultConfiguration: { level: "error" }
         }))
       }},

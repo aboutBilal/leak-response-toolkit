@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# leak - one entry point for the Leak Response Toolkit.
+# leak - one entry point for Spillkit.
 #
 # Usage: leak <command> [arguments]        (every command also takes --help)
 #
@@ -22,7 +22,7 @@
 # In an incident: README.md, section "Responding to a leak", or docs/01-runbook.md
 set -euo pipefail
 
-VERSION="3.2.0"
+VERSION="3.3.0"
 
 # Follow symlinks (make install, the container image) to find scripts/ next to the
 # real file. Portable: does not rely on `readlink -f` (missing on older macOS).
@@ -62,7 +62,7 @@ case "$cmd" in
     if [[ -n "${1:-}" ]] && s="$(script_for "$1")"; then exec "$here/scripts/$s" --help; fi
     usage ;;
   version|-v|--version)
-    echo "leak-response-toolkit $VERSION" ;;
+    echo "spillkit $VERSION" ;;
   *)
     if s="$(script_for "$cmd")"; then
       exec "$here/scripts/$s" "$@"

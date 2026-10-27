@@ -26,7 +26,7 @@
   <link rel="stylesheet" href="{{ site.baseurl }}/assets/tokens.css">
   <link rel="stylesheet" href="{{ site.baseurl }}/assets/docs.css">
 </head>
-<body class="docs" data-base="{{ site.baseurl }}" data-repo="{{ site.repository }}">
+<body class="docs{% if page.url == "/CHANGELOG.html" %} page-changelog{% endif %}" data-base="{{ site.baseurl }}" data-repo="{{ site.repository }}">
   <a class="skip" href="#content">Skip to content</a>
   {% include header.html docs=true %}
   <div class="docs-shell">
@@ -46,8 +46,9 @@
     <div class="drawer-backdrop" data-drawer-close hidden></div>
     <main id="content" class="docs-main">
       <div class="doc">
-        <article class="doc-body">
-          {% if section %}<p class="crumb">{{ section }}</p>{% endif %}
+        <article class="doc-body{% if section %} has-art{% endif %}">
+          {% if section %}<div class="doc-art" aria-hidden="true">{% include art.html section=section %}</div>
+          <p class="crumb">{{ section }}</p>{% endif %}
           {% unless content contains "<h1" %}<h1>{{ navtitle | default: page.title }}</h1>{% endunless %}
           {{ content }}
           <div class="doc-meta">

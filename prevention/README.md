@@ -21,8 +21,8 @@ Steps 3 and 3b are also available as hooks published from this repository, with 
 
 ```yaml
 repos:
-  - repo: https://github.com/aboutBilal/leak-response-toolkit
-    rev: v3.2.0
+  - repo: https://github.com/aboutBilal/spillkit
+    rev: v3.3.0
     hooks:
       - id: forbid-secret-files
       - id: leak-guard

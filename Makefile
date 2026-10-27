@@ -19,7 +19,7 @@ test: ## Offline bats tests (install: apt install bats / brew install bats-core)
 	@BATS_TEST_TIMEOUT=60 bats tests
 
 scan: ## Secret scan of this repository's full history
-	@./scripts/scan-secrets.sh . "$${TMPDIR:-/tmp}/leak-response-toolkit-self-scan.json"
+	@./scripts/scan-secrets.sh . "$${TMPDIR:-/tmp}/spillkit-self-scan.json"
 
 audit: ## Grade this repository's own secret hygiene
 	@./leak audit .
@@ -32,4 +32,4 @@ uninstall: ## Remove the `leak` symlink
 	@rm -f "$(PREFIX)/bin/leak" && echo "removed: $(PREFIX)/bin/leak"
 
 image: ## Build the container image locally
-	@docker build -t leak-response-toolkit:local .
+	@docker build -t spillkit:local .

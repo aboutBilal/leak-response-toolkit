@@ -1,8 +1,8 @@
 # Hooks other repositories can use directly:
 #
 #   repos:
-#     - repo: https://github.com/aboutBilal/leak-response-toolkit
-#       rev: v3.2.0
+#     - repo: https://github.com/aboutBilal/spillkit
+#       rev: v3.3.0
 #       hooks:
 #         - id: forbid-secret-files   # no dependencies: blocks .env, keys, state files
 #         - id: leak-guard            # file check + gitleaks on staged changes (gitleaks or Docker)

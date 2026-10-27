@@ -1,17 +1,17 @@
 <p align="center">
-  <img src="assets/banner.svg" alt="Leak Response Toolkit: prevent secret leaks, respond in minutes" width="100%">
+  <img src="assets/banner.svg" alt="Spillkit: prevent secret leaks, respond in minutes" width="100%">
 </p>
 
 <p align="center">
-  <a href="https://github.com/aboutBilal/leak-response-toolkit/actions/workflows/secret-scan.yml"><img src="https://github.com/aboutBilal/leak-response-toolkit/actions/workflows/secret-scan.yml/badge.svg" alt="checks"></a>
-  <a href="https://scorecard.dev/viewer/?uri=github.com/aboutBilal/leak-response-toolkit"><img src="https://img.shields.io/ossf-scorecard/github.com/aboutBilal/leak-response-toolkit?label=openssf%20scorecard&style=flat" alt="OpenSSF Scorecard"></a>
-  <a href="https://github.com/aboutBilal/leak-response-toolkit/releases/latest"><img src="https://img.shields.io/github/v/release/aboutBilal/leak-response-toolkit?label=release&color=ff7a59" alt="latest release"></a>
+  <a href="https://github.com/aboutBilal/spillkit/actions/workflows/secret-scan.yml"><img src="https://github.com/aboutBilal/spillkit/actions/workflows/secret-scan.yml/badge.svg" alt="checks"></a>
+  <a href="https://scorecard.dev/viewer/?uri=github.com/aboutBilal/spillkit"><img src="https://img.shields.io/ossf-scorecard/github.com/aboutBilal/spillkit?label=openssf%20scorecard&style=flat" alt="OpenSSF Scorecard"></a>
+  <a href="https://github.com/aboutBilal/spillkit/releases/latest"><img src="https://img.shields.io/github/v/release/aboutBilal/spillkit?label=release&color=ff7a59" alt="latest release"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT license"></a>
 </p>
 
-<p align="center"><a href="https://aboutbilal.github.io/leak-response-toolkit/"><b>Documentation site</b></a> · <a href="docs/01-runbook.md">Incident runbook</a> · <a href="CHEATSHEET.md">Cheat sheet</a></p>
+<p align="center"><a href="https://aboutbilal.github.io/spillkit/"><b>Documentation site</b></a> · <a href="docs/01-runbook.md">Incident runbook</a> · <a href="CHEATSHEET.md">Cheat sheet</a></p>
 
-Leak Response Toolkit helps engineering teams keep secrets out of source control, and respond quickly when one gets out.
+Spillkit helps engineering teams keep secrets out of source control, and respond quickly when one gets out.
 
 It pairs a reference architecture and a set of tested prevention configs with one command-line tool, `leak`, that grades repositories, scans their full Git history, searches public sources for surviving copies of leaked code, and turns the evidence into a report leadership can act on. Detection is done by [gitleaks](https://github.com/gitleaks/gitleaks); this project covers what has to happen around it.
 
@@ -32,14 +32,14 @@ Deleting a repository does not revoke a credential. Rotation does. Everything el
 **Docker** (no local dependencies; signed image for amd64 and arm64):
 
 ```bash
-docker run --rm -v "$PWD:/repo" ghcr.io/aboutbilal/leak-response-toolkit audit /repo
+docker run --rm -v "$PWD:/repo" ghcr.io/aboutbilal/spillkit audit /repo
 ```
 
 **From source** (bash 4.4+, git, curl, jq, and gitleaks or Docker):
 
 ```bash
-git clone https://github.com/aboutBilal/leak-response-toolkit.git
-cd leak-response-toolkit && make install      # puts `leak` in ~/.local/bin
+git clone https://github.com/aboutBilal/spillkit.git
+cd spillkit && make install      # puts `leak` in ~/.local/bin
 leak doctor                                   # confirms the machine is ready
 ```
 
@@ -100,8 +100,8 @@ Or use the hooks directly from this repository:
 ```yaml
 # .pre-commit-config.yaml
 repos:
-  - repo: https://github.com/aboutBilal/leak-response-toolkit
-    rev: v3.2.0
+  - repo: https://github.com/aboutBilal/spillkit
+    rev: v3.3.0
     hooks:
       - id: forbid-secret-files    # no dependencies
       - id: leak-guard             # also scans staged changes with gitleaks
@@ -143,7 +143,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with: { fetch-depth: 0, persist-credentials: false }
-      - uses: aboutBilal/leak-response-toolkit@v3   # pin to a commit SHA in production
+      - uses: aboutBilal/spillkit@v3   # pin to a commit SHA in production
         with:
           mode: scan                                # scan, audit, audit-org or hunt
           sarif-file: leak.sarif
@@ -178,7 +178,7 @@ A tool that handles leak investigations has to be trustworthy itself. Each of th
 
 - Release archives and container images are signed with [Sigstore](https://www.sigstore.dev/) (since v2.2.0). [How to verify](SECURITY.md#verifying-a-release).
 - Container images ship with an SBOM and SLSA build provenance.
-- [OpenSSF Scorecard](https://scorecard.dev/viewer/?uri=github.com/aboutBilal/leak-response-toolkit) runs on every push to `main`.
+- [OpenSSF Scorecard](https://scorecard.dev/viewer/?uri=github.com/aboutBilal/spillkit) runs on every push to `main`.
 - GitHub Actions are pinned to commit SHAs and container images to digests; Dependabot keeps them current.
 - Every push runs shellcheck, actionlint, 34 offline tests on Linux and macOS, and a full-history secret scan; CodeQL analyses every change to `main` and every pull request.
 - No command prints or tests a secret value, and tests enforce this. `leak snapshot` keeps a copy of a leaked repository as evidence, so evidence folders are git-ignored and must be handled as sensitive. The repository itself contains no secrets, not even fake ones.
@@ -191,7 +191,7 @@ Report vulnerabilities privately; see [SECURITY.md](SECURITY.md).
 
 This is not another secret scanner. It uses gitleaks and adds prevention, response and reporting around it, so it works alongside the tools you may already use.
 
-| Capability | gitleaks | TruffleHog | GitGuardian | Leak Response Toolkit |
+| Capability | gitleaks | TruffleHog | GitGuardian | Spillkit |
 |---|---|---|---|---|
 | Scan full Git history | Yes | Yes | Yes | Yes (gitleaks) |
 | Check whether a found secret is still live | No | Yes | Yes | No, by design |

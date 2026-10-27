@@ -4,39 +4,44 @@
    setting until they choose a theme with the header switch. */
 
 :root {
+  /* Spillkit brand: deep violet ink, lavender surfaces, violet accent, ember for the mark. */
   --bg: #FFFFFF;
-  --bg-2: #F6F7F9;
+  --bg-2: #F7F5FC;
   --surface: #FFFFFF;
-  --surface-2: #F1F3F6;
-  --line: #E3E7EE;
-  --line-2: #D2D8E2;
-  --text: #111827;
-  --text-body: #2F3747;
-  --text-2: #4B5565;
-  --muted: #667183;
-  --accent: #C2410C;          /* ember-700: accent text and links on light */
-  --accent-solid: #FF6B3D;    /* ember-500: filled buttons, the mark */
-  --accent-hover: #FF8A5C;
-  --accent-tint: rgba(255, 107, 61, 0.10);
-  --on-accent: #0B0F1A;
+  --surface-2: #F1EEF9;
+  --line: #E7E2F3;
+  --line-2: #D6CFEA;
+  --text: #1D1336;
+  --text-body: #3B3354;
+  --text-2: #4F4768;
+  --muted: #625A7C;
+  --accent: #5B3FD6;          /* violet: links, current page, focus */
+  --accent-solid: #5B3FD6;    /* filled buttons */
+  --accent-hover: #4A2FC4;
+  --accent-tint: rgba(91, 63, 214, 0.08);
+  --on-accent: #FFFFFF;
+  --ember: #B5370F;
+  --lav: #EEE8FF;
+  --brand-gradient: linear-gradient(90deg, #5B3FD6, #B14BD9 35%, #F2557E 65%, #FF8A4C);
   --pass: #1A7F37; --pass-tint: #DAFBE1;
   --warn: #9A6700; --warn-tint: #FFF8C5;
-  --fail: #CF222E; --fail-tint: #FFEBE9;
-  --info: #0969DA; --info-tint: #DDF4FF;
+  --fail: #C8261B; --fail-tint: #FDE7E4;
+  --info: #5B3FD6; --info-tint: #F1EDFF;
   --header-bg: #FFFFFF;
-  --code-bg: #0E131F;
-  --code-head: #151B29;
-  --code-line: rgba(230, 234, 242, 0.08);
-  --code-text: #E6EAF2;
-  --shadow-1: 0 1px 2px rgba(16, 24, 40, 0.06);
-  --shadow-2: 0 16px 40px -16px rgba(16, 24, 40, 0.22);
-  --shadow-3: 0 32px 80px -24px rgba(16, 24, 40, 0.35);
+  --code-bg: #17112B;
+  --code-head: #1F1838;
+  --code-line: rgba(237, 233, 255, 0.08);
+  --code-text: #EDE9FF;
+  --shadow-1: 0 1px 2px rgba(29, 19, 54, 0.06);
+  --shadow-2: 0 1px 2px rgba(29, 19, 54, 0.06), 0 12px 32px -12px rgba(29, 19, 54, 0.18);
+  --shadow-3: 0 2px 4px rgba(29, 19, 54, 0.06), 0 30px 60px -20px rgba(29, 19, 54, 0.35);
 
   --sans: "IBM Plex Sans", "Segoe UI", system-ui, -apple-system, Helvetica, Arial, sans-serif;
+  --display: "IBM Plex Sans Condensed", "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
   --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   --r-s: 8px;
-  --r: 12px;
-  --r-l: 16px;
+  --r: 14px;
+  --r-l: 18px;
   --header-h: 64px;
   --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
   --fast: 150ms;
@@ -44,25 +49,30 @@
 }
 
 :root[data-theme="dark"] {
-  --bg: #0B0F1A;
-  --bg-2: #0E1320;
-  --surface: #111827;
-  --surface-2: #1C2433;
-  --line: rgba(230, 234, 242, 0.09);
-  --line-2: rgba(230, 234, 242, 0.16);
-  --text: #E6EAF2;
-  --text-body: #C6CDD9;
-  --text-2: #A3ADBF;
-  --muted: #828D9F;
-  --accent: #FF8A5C;
-  --accent-tint: rgba(255, 107, 61, 0.12);
+  --bg: #120E22;
+  --bg-2: #17122B;
+  --surface: #1B1530;
+  --surface-2: #261E42;
+  --line: rgba(237, 233, 255, 0.10);
+  --line-2: rgba(237, 233, 255, 0.18);
+  --text: #F1EDFF;
+  --text-body: #D3CCEB;
+  --text-2: #BDB4DA;
+  --muted: #9C93BC;
+  --accent: #B3A1FF;
+  --accent-solid: #8F74F7;
+  --accent-hover: #A08AFA;
+  --accent-tint: rgba(143, 116, 247, 0.16);
+  --on-accent: #120E22;
+  --ember: #FF8A73;
+  --lav: #2A2150;
   --pass: #3FB950; --pass-tint: rgba(63, 185, 80, 0.12);
   --warn: #D29922; --warn-tint: rgba(210, 153, 34, 0.12);
-  --fail: #F85149; --fail-tint: rgba(248, 81, 73, 0.12);
-  --info: #58A6FF; --info-tint: rgba(88, 166, 255, 0.10);
-  --header-bg: #0B0F1A;
-  --code-bg: #0E131F;
-  --code-head: #121826;
+  --fail: #FF6B5E; --fail-tint: rgba(248, 81, 73, 0.14);
+  --info: #B3A1FF; --info-tint: rgba(143, 116, 247, 0.14);
+  --header-bg: #120E22;
+  --code-bg: #0D0A1A;
+  --code-head: #15112A;
   --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
   --shadow-2: 0 16px 40px -16px rgba(0, 0, 0, 0.6);
   --shadow-3: 0 40px 100px -30px rgba(0, 0, 0, 0.8);
@@ -95,7 +105,18 @@ kbd { display: inline-flex; align-items: center; justify-content: center; min-wi
 .icon { width: 16px; height: 16px; flex: none; }
 .wrap { max-width: 1200px; margin: 0 auto; padding: 0 32px; }
 
+/* ---------- Illustrations (flat shapes, ink outline; see assets/DESIGN.md) ---------- */
+.ill .o { fill: none; stroke: #1D1336; stroke-width: 2.4; stroke-linejoin: round; stroke-linecap: round; }
+.ill .fw { fill: #FFFFFF; } .ill .fv { fill: #8F74F7; } .ill .fe { fill: #FF7A4D; } .ill .fp { fill: #FFC7B0; }
+.ill .fk { fill: #B9D4FF; } .ill .fs { fill: #F3DDBF; } .ill .fi { fill: #1D1336; } .ill .fr { fill: #E5372B; }
+.ill .w { fill: none; stroke: #FFFFFF; stroke-width: 3.2; stroke-linecap: round; stroke-linejoin: round; }
+.ill .dashed { stroke-dasharray: 4 4; }
+.ill .thick { stroke-width: 9; }
+.ill .thin { stroke-width: 1.6; opacity: 0.55; }
+.ill .arc { fill: none; stroke: #FF7A4D; stroke-width: 7; stroke-linecap: round; }
+
 /* ---------- Header ---------- */
+.docs .site-header::after { content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; background: var(--brand-gradient); }
 .site-header {
   position: sticky; top: 0; z-index: 50;
   height: var(--header-h);
@@ -141,8 +162,8 @@ kbd { display: inline-flex; align-items: center; justify-content: center; min-wi
   transition: transform var(--fast) var(--ease), background-color var(--fast), border-color var(--fast), box-shadow var(--fast);
 }
 .btn:hover { border-color: var(--muted); background: var(--surface-2); }
-.btn.primary { background: var(--text); border-color: var(--text); color: var(--bg); }
-.btn.primary:hover { background: color-mix(in srgb, var(--text) 86%, var(--bg)); }
+.btn.primary { background: var(--accent-solid); border-color: var(--accent-solid); color: var(--on-accent); }
+.btn.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
 .btn .arrow { transition: transform var(--fast) var(--ease); }
 .btn:hover .arrow, .link-arrow:hover .arrow { transform: translateX(3px); }
 .link-arrow { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; text-decoration: none; }

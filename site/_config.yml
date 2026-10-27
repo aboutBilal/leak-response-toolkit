@@ -1,10 +1,10 @@
 # Documentation site (GitHub Pages). Assembled by tools/build-site.sh; do not edit the copies in _site_src.
 # tools/build-site.sh appends `version:` from the leak script, so the site always shows the released version.
-title: Leak Response Toolkit
+title: Spillkit
 description: Prevent secret leaks. Respond in minutes.
 url: https://aboutbilal.github.io
-baseurl: /leak-response-toolkit
-repository: aboutBilal/leak-response-toolkit
+baseurl: /spillkit
+repository: aboutBilal/spillkit
 
 markdown: kramdown
 kramdown:

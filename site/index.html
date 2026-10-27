@@ -9,7 +9,7 @@ layout: home
     <div class="hero-copy">
       <p class="ticker"><span class="alert-dot" aria-hidden="true"></span><span class="clock-digits" data-clock role="timer" aria-label="Time since you opened this page">00:00</span><span class="ticker-label">since you opened this page</span></p>
       <h1>A leaked key can be in use within 5&nbsp;minutes. <span class="kicker">Be faster.</span></h1>
-      <p class="lede">Leak Response Toolkit is a free, open-source kit for engineering teams. It blocks secrets at the commit, finds every one already in your Git history, tracks down copies that survive deletion and writes the report your leadership needs.</p>
+      <p class="lede">Spillkit is a free, open-source kit for engineering teams. It blocks secrets at the commit, finds every one already in your Git history, tracks down copies that survive deletion and writes the report your leadership needs.</p>
       <div class="actions">
         <a class="btn primary" href="#install">Install free {{ arrow }}</a>
         <a class="btn" href="{{ site.baseurl }}/CHEATSHEET.html">Get the 15-minute plan</a>
@@ -259,13 +259,13 @@ layout: home
       </div>
       <div class="panel" role="tabpanel" id="panel-docker" aria-labelledby="tab-docker">
 <pre><code><span class="c"># No local dependencies. Signed image for amd64 and arm64.</span>
-docker run --rm -v "$PWD:/repo" ghcr.io/aboutbilal/leak-response-toolkit audit /repo
-docker run --rm -v "$PWD:/repo" ghcr.io/aboutbilal/leak-response-toolkit scan /repo</code></pre>
+docker run --rm -v "$PWD:/repo" ghcr.io/aboutbilal/spillkit audit /repo
+docker run --rm -v "$PWD:/repo" ghcr.io/aboutbilal/spillkit scan /repo</code></pre>
       </div>
       <div class="panel" role="tabpanel" id="panel-source" aria-labelledby="tab-source" hidden>
 <pre><code><span class="c"># Needs bash 4.4+, git, curl, jq, and gitleaks or Docker.</span>
 git clone https://github.com/{{ site.repository }}.git
-cd leak-response-toolkit &amp;&amp; make install
+cd spillkit &amp;&amp; make install
 leak doctor
 leak audit .</code></pre>
       </div>

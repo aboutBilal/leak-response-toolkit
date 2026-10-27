@@ -13,8 +13,8 @@ Thank you for helping make leak response faster for everyone. Improvements from 
 ## Making a change
 
 ```bash
-git clone https://github.com/aboutBilal/leak-response-toolkit.git
-cd leak-response-toolkit
+git clone https://github.com/aboutBilal/spillkit.git
+cd spillkit
 pre-commit install   # gitleaks before every commit
 make check           # shellcheck + bats tests + secret scan (what CI runs)
 ```

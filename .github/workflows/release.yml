@@ -68,7 +68,7 @@ jobs:
           TAG: ${{ github.ref_name }}
         run: |
           set -euo pipefail
-          name="leak-response-toolkit-${TAG}"
+          name="spillkit-${TAG}"
           git archive --format=tar.gz --prefix="${name}/" -o "${name}.tar.gz" "$TAG"
           sha256sum "${name}.tar.gz" > "${name}.tar.gz.sha256"
           cosign sign-blob --yes --bundle "${name}.tar.gz.sigstore.json" "${name}.tar.gz"

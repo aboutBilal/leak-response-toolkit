@@ -41,7 +41,7 @@ gh_get() {
 
 # http_get <url> <outfile>: anonymous GET; prints the HTTP status code.
 http_get() {
-  curl -s --max-time 90 -A "leak-response-toolkit" -o "$2" -w '%{http_code}' "$1" || echo "000"
+  curl -s --max-time 90 -A "spillkit" -o "$2" -w '%{http_code}' "$1" || echo "000"
 }
 
 # table: align tab-separated input when `column` exists, otherwise pass it through.

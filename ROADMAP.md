@@ -1,6 +1,6 @@
 # Roadmap
 
-What is planned next. Ideas and help are welcome: open an [improvement issue](https://github.com/aboutBilal/leak-response-toolkit/issues/new/choose) or see [CONTRIBUTING.md](CONTRIBUTING.md).
+What is planned next. Ideas and help are welcome: open an [improvement issue](https://github.com/aboutBilal/spillkit/issues/new/choose) or see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Done in 3.0
 

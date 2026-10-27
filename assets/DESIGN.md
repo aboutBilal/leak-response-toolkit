@@ -7,7 +7,7 @@ The images, reports and dashboards in this repository share one small design sys
 People open this toolkit during an incident. The visuals should be quiet, legible and honest, so that what matters stands out without effort.
 
 - **Colour carries meaning.** Status colours appear only where something passed, needs attention or failed. Nothing is coloured for decoration.
-- **One accent.** Ember is the only brand colour. Use it for the mark, step numbers, the command prompt and at most one call to action per image.
+- **Two brand colours, each with one job.** The kit's red-orange is the mark. Violet (`#5B3FD6`) is the interface colour on the website: links, buttons, the current page. In README images, ember stays the single accent for the prompt and step numbers.
 - **Neutrals do the work.** Roughly 60% background, 30% surfaces and text, 10% accent and status.
 - **Hierarchy through type, not effects.** In images, reports and dashboards: no glows, textures, gradients (except the mark's highlight) or drop shadows beyond the single elevation below. The website has a small, documented allowance for depth; see [Website](#website).
 - **Flush left, on a grid.** 8-point spacing. Text aligns to a common left edge.
@@ -67,6 +67,10 @@ Weights: 400 for text, 600 for labels, 700 for titles. Labels above titles ("eye
 | Border | 1 px hairline in `ink-700` (dark) or `line` (light) |
 | Elevation | One shadow for floating windows: `0 24 48 rgba(0,0,0,0.45)` |
 
+## Logo
+
+An emergency spill kit with a key on the front: the product is the kit you keep ready before a secret leaks. Case `#F04A2E` with a lighter lid `#FF6A45`, handle and lid seam `#B8301A`, key in white. It reads at 16 px and on light, dark and violet backgrounds. Source: [`logo.svg`](logo.svg). Wordmark: "Spillkit" in IBM Plex Sans 600 (website) or the system sans (images), never stretched or recoloured.
+
 ## Components
 
 | Component | Specification |
@@ -113,10 +117,20 @@ The look takes Stripe's clarity and colour and Fly.io's warmth: deep violet ink,
 
 ### Colour in the documentation
 
-- **Ink does the work.** Primary buttons are ink on paper (`#111827` on white; inverted in dark mode).
-- **Ember marks links and the current page**, never large surfaces.
-- **Red means urgency**: the "Leaked a secret?" dot and caution callouts.
-- **Depth comes from hairlines** (`#E3E7EE` light, `rgba(230, 234, 242, 0.09)` dark). The header is solid.
+The documentation uses the home page's family, tuned for long reading.
+
+| Token | Light | Dark |
+|---|---|---|
+| Page / alternate surface | `#FFFFFF` / `#F7F5FC` | `#120E22` / `#17122B` |
+| Ink / body text | `#1D1336` / `#3B3354` | `#F1EDFF` / `#D3CCEB` |
+| Secondary / muted text | `#4F4768` / `#625A7C` | `#BDB4DA` / `#9C93BC` |
+| Accent (links, current page, buttons) | `#5B3FD6` | `#B3A1FF` text, `#8F74F7` fills |
+| Hairlines | `#E7E2F3` | `rgba(237, 233, 255, 0.10)` |
+| Code surface | `#17112B` | `#0D0A1A` |
+
+- **Red means urgency**: the "Leaked a secret?" dot and caution callouts. "Important" callouts use ember (`#B5370F` light, `#FF8A73` dark).
+- **The brand gradient** (violet to ember) appears as a 2 px line under the documentation header and nowhere else in the docs.
+- **Each section has its illustration** (Start, Respond, Prevent, Templates, Project) in a lavender tile beside the page title.
 
 ### Illustrations
 

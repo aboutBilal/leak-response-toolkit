@@ -92,7 +92,7 @@ commit_all() {
   for c in snapshot scan forks hunt commits; do [[ "$output" == *"$c"* ]]; done
   run "$ROOT/leak" version
   [ "$status" -eq 0 ]
-  [[ "$output" == leak-response-toolkit* ]]
+  [[ "$output" == spillkit* ]]
 }
 
 @test "leak: unknown command exits 2; commands reach their script" {
@@ -202,7 +202,7 @@ commit_all() {
   [ "$status" -eq 1 ]
   run jq -r '.version, .runs[0].tool.driver.name, .runs[0].results[0].ruleId, .runs[0].results[0].locations[0].physicalLocation.artifactLocation.uri' "$TMP/s.sarif"
   [ "${lines[0]}" = "2.1.0" ]
-  [ "${lines[1]}" = "leak-response-toolkit" ]
+  [ "${lines[1]}" = "spillkit" ]
   [ "${lines[2]}" = "aws-access-token" ]
   [ "${lines[3]}" = "app.ini" ]
   run grep -c "$fake" "$TMP/s.sarif"

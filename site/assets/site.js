@@ -123,8 +123,8 @@
       startOnLoad: false, securityLevel: "strict", theme: "base",
       fontFamily: "IBM Plex Sans, system-ui, sans-serif",
       themeVariables: dark
-        ? { fontSize: "15px", background: "#0E1320", primaryColor: "#1C2433", primaryTextColor: "#E6EAF2", primaryBorderColor: "#3A4558", secondaryColor: "#111827", tertiaryColor: "#0E1320", lineColor: "#828D9F", textColor: "#E6EAF2", clusterBkg: "#111827", clusterBorder: "#2B3445", edgeLabelBackground: "#0E1320", noteBkgColor: "#2A2112", noteTextColor: "#E6EAF2", noteBorderColor: "#D29922" }
-        : { fontSize: "15px", background: "#F6F7F9", primaryColor: "#FFFFFF", primaryTextColor: "#111827", primaryBorderColor: "#C9D0DC", secondaryColor: "#F1F3F6", tertiaryColor: "#FFFFFF", lineColor: "#667183", textColor: "#111827", clusterBkg: "#FFFFFF", clusterBorder: "#E3E7EE", edgeLabelBackground: "#F6F7F9", noteBkgColor: "#FFF8C5", noteTextColor: "#111827", noteBorderColor: "#9A6700" }
+        ? { fontSize: "15px", background: "#17122B", primaryColor: "#261E42", primaryTextColor: "#F1EDFF", primaryBorderColor: "#4A3F70", secondaryColor: "#1B1530", tertiaryColor: "#17122B", lineColor: "#9C93BC", textColor: "#F1EDFF", clusterBkg: "#1B1530", clusterBorder: "#3A3060", edgeLabelBackground: "#17122B", noteBkgColor: "#2A2112", noteTextColor: "#F1EDFF", noteBorderColor: "#D29922" }
+        : { fontSize: "15px", background: "#F7F5FC", primaryColor: "#FFFFFF", primaryTextColor: "#1D1336", primaryBorderColor: "#D6CFEA", secondaryColor: "#F1EEF9", tertiaryColor: "#FFFFFF", lineColor: "#625A7C", textColor: "#1D1336", clusterBkg: "#FFFFFF", clusterBorder: "#E7E2F3", edgeLabelBackground: "#F7F5FC", noteBkgColor: "#FFF8C5", noteTextColor: "#1D1336", noteBorderColor: "#9A6700" }
     };
   }
   function renderDiagrams() {
@@ -197,7 +197,9 @@
 
   // "On this page", built before the heading anchors are added.
   var toc = document.querySelector(".toc");
-  var heads = article ? Array.prototype.slice.call(article.querySelectorAll("h2[id], h3[id]")) : [];
+  var isChangelog = body.classList.contains("page-changelog");
+  // The changelog's contents list releases only; other pages list sections and subsections.
+  var heads = article ? Array.prototype.slice.call(article.querySelectorAll(isChangelog ? "h2[id]" : "h2[id], h3[id]")) : [];
   var tocLinks = [];
   if (toc && heads.length >= 3) {
     toc.appendChild(el("p", "toc-title", "On this page"));
@@ -225,6 +227,40 @@
       requestAnimationFrame(function () { spy(); ticking = false; });
     }, { passive: true });
     spy();
+  }
+
+  // Numbered steps ("3. Rotate and revoke") get a number badge.
+  heads.forEach(function (h) {
+    var first = h.firstChild;
+    if (!first || first.nodeType !== 3) return;
+    var m = first.nodeValue.match(/^\s*(\d+)\.\s+/);
+    if (!m) return;
+    first.nodeValue = first.nodeValue.slice(m[0].length);
+    h.insertBefore(el("span", "step-num", m[1]), first);
+  });
+
+  // Changelog: each release heading becomes a version chip and a date; change types become labels.
+  if (isChangelog) {
+    heads.forEach(function (h, i) {
+      if (h.tagName !== "H2") return;
+      var m = h.textContent.match(/^\s*\[?([^\]\s]+)\]?\s*(?:-\s*(\d{4}-\d{2}-\d{2}))?/);
+      if (!m) return;
+      var link = h.querySelector("a");
+      var chip = el(link ? "a" : "span", "ver", m[1] === "Unreleased" ? "Unreleased" : "v" + m[1]);
+      if (link) chip.href = link.href;
+      h.textContent = "";
+      h.appendChild(chip);
+      if (m[2]) {
+        var t = el("time", "ver-date", new Date(m[2] + "T00:00:00Z").toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }));
+        t.dateTime = m[2];
+        h.appendChild(t);
+      }
+      if (tocLinks[i]) tocLinks[i].textContent = h.textContent.replace(/(\d{4})$/, "$1").replace(/^(v\S+|Unreleased)/, "$1 · ").replace(/ · $/, "");
+    });
+    each(".doc-body h3", function (h) {
+      var kind = h.textContent.trim().toLowerCase();
+      if (/^(added|fixed|changed|security|removed|deprecated)$/.test(kind)) h.classList.add("kind", "kind-" + kind);
+    });
   }
 
   // Heading anchors.

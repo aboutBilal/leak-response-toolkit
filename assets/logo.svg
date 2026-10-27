@@ -1,7 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" role="img" aria-label="Leak Response Toolkit logo">
-  <!-- ember-500 shield, ink-950 keyhole. See assets/DESIGN.md -->
-  <path d="M64 8 L110 25 V62 C110 93 90 112 64 122 C38 112 18 93 18 62 V25 Z" fill="#FF6B3D"/>
-  <path d="M64 8 L110 25 V38 C88 31 40 31 18 38 V25 Z" fill="#FFFFFF" fill-opacity="0.16"/>
-  <circle cx="64" cy="56" r="13" fill="#0B0F1A"/>
-  <path d="M57 64 H71 L75 92 H53 Z" fill="#0B0F1A"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" role="img" aria-label="Spillkit logo">
+  <!-- An emergency spill kit with a key on the front. Colours: see assets/DESIGN.md -->
+  <path d="M44 40 V28 a10 10 0 0 1 10 -10 h20 a10 10 0 0 1 10 10 V40" fill="none" stroke="#B8301A" stroke-width="10" stroke-linecap="round"/>
+  <rect x="10" y="38" width="108" height="78" rx="18" fill="#F04A2E"/>
+  <path d="M28 38 h72 a18 18 0 0 1 18 18 v4 H10 v-4 a18 18 0 0 1 18 -18 Z" fill="#FF6A45"/>
+  <rect x="10" y="58" width="108" height="5" fill="#B8301A"/>
+  <circle cx="44" cy="88" r="12" fill="none" stroke="#FFFFFF" stroke-width="8"/>
+  <path d="M56 88 H96 M84 88 V99 M95 88 V97" fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round"/>
 </svg>

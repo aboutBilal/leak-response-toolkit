@@ -4,6 +4,13 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
+## [3.3.0] - 2026-10-27
+
+### Changed
+
+- **Renamed to Spillkit.** The project is now Spillkit: the emergency kit you keep ready for leaked secrets. The command is still `leak`. The repository moves to `aboutBilal/spillkit` (GitHub redirects the old address), the container image to `ghcr.io/aboutbilal/spillkit` (images for 3.2.0 and earlier stay at `ghcr.io/aboutbilal/leak-response-toolkit`), and the documentation to `aboutbilal.github.io/spillkit`. Update `uses:` lines and pre-commit `repo:` entries to the new name.
+- New logo: an emergency case with a key, in place of the shield.
+
 ### Added
 
 - **Redesigned documentation site and home page.** The home page is built around one idea: a leaked key can be in use within five minutes. A clock starts when the page opens and a stopwatch fills toward five minutes in real time, next to the product's own output, four verified numbers, illustrated stages, a map of where copies survive, product screenshots, the first-15-minutes plan, release verification and installation. The documentation has light and dark themes with a switch, IBM Plex Sans, dark code blocks with copy buttons, callouts with icons, heading links, an "On this page" rail, a mobile drawer, print styles for runbooks, and a 404 page.
@@ -181,13 +188,14 @@ Prevention becomes the second half of the kit: not only responding to leaks, but
 - Templates: incident timeline, takedown request, notification messages, post-incident review, executive report (print-ready HTML).
 - Quality: offline bats tests, shellcheck, gitleaks on full history, link and anchor checks in CI, Dependabot for pinned actions, pre-commit hook, contribution guide, issue and pull request templates, security policy.
 
-[Unreleased]: https://github.com/aboutBilal/leak-response-toolkit/compare/v3.2.0...HEAD
-[3.2.0]: https://github.com/aboutBilal/leak-response-toolkit/compare/v3.1.0...v3.2.0
-[3.1.0]: https://github.com/aboutBilal/leak-response-toolkit/compare/v3.0.0...v3.1.0
-[3.0.0]: https://github.com/aboutBilal/leak-response-toolkit/compare/v2.3.0...v3.0.0
-[2.3.0]: https://github.com/aboutBilal/leak-response-toolkit/compare/v2.2.0...v2.3.0
-[2.2.0]: https://github.com/aboutBilal/leak-response-toolkit/compare/v2.1.0...v2.2.0
-[2.1.0]: https://github.com/aboutBilal/leak-response-toolkit/compare/v2.0.0...v2.1.0
-[2.0.0]: https://github.com/aboutBilal/leak-response-toolkit/compare/v1.1.0...v2.0.0
-[1.1.0]: https://github.com/aboutBilal/leak-response-toolkit/compare/v1.0.0...v1.1.0
-[1.0.0]: https://github.com/aboutBilal/leak-response-toolkit/releases/tag/v1.0.0
+[Unreleased]: https://github.com/aboutBilal/spillkit/compare/v3.3.0...HEAD
+[3.3.0]: https://github.com/aboutBilal/spillkit/compare/v3.2.0...v3.3.0
+[3.2.0]: https://github.com/aboutBilal/spillkit/compare/v3.1.0...v3.2.0
+[3.1.0]: https://github.com/aboutBilal/spillkit/compare/v3.0.0...v3.1.0
+[3.0.0]: https://github.com/aboutBilal/spillkit/compare/v2.3.0...v3.0.0
+[2.3.0]: https://github.com/aboutBilal/spillkit/compare/v2.2.0...v2.3.0
+[2.2.0]: https://github.com/aboutBilal/spillkit/compare/v2.1.0...v2.2.0
+[2.1.0]: https://github.com/aboutBilal/spillkit/compare/v2.0.0...v2.1.0
+[2.0.0]: https://github.com/aboutBilal/spillkit/compare/v1.1.0...v2.0.0
+[1.1.0]: https://github.com/aboutBilal/spillkit/compare/v1.0.0...v1.1.0
+[1.0.0]: https://github.com/aboutBilal/spillkit/releases/tag/v1.0.0

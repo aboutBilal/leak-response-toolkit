@@ -1,5 +1,5 @@
 blank_issues_enabled: false
 contact_links:
   - name: Report a security problem privately
-    url: https://github.com/aboutBilal/leak-response-toolkit/security/advisories/new
+    url: https://github.com/aboutBilal/spillkit/security/advisories/new
     about: For anything that could leak data or make an incident worse. Please do not open a public issue.

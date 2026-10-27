@@ -10,7 +10,7 @@
 Links to scripts and config files are rewritten to GitHub by site.js at run
 time, so they are skipped here (lychee checks them in the Markdown sources).
 
-Usage: tools/check-site.py <built-site-dir> [--base /leak-response-toolkit]
+Usage: tools/check-site.py <built-site-dir> [--base /spillkit]
 Exit:  0 all checks passed, 1 problems found, 2 bad arguments
 """
 import json
@@ -70,7 +70,7 @@ class Page(HTMLParser):
 
 def main(argv):
     args = [a for a in argv[1:]]
-    base = "/leak-response-toolkit"
+    base = "/spillkit"
     if "--base" in args:
         i = args.index("--base")
         if i + 1 >= len(args):

@@ -11,7 +11,7 @@
 
 **Please do not open a public issue.** Report privately through GitHub's private vulnerability reporting:
 
-**[Report a vulnerability](https://github.com/aboutBilal/leak-response-toolkit/security/advisories/new)** (Security tab → *Report a vulnerability*)
+**[Report a vulnerability](https://github.com/aboutBilal/spillkit/security/advisories/new)** (Security tab → *Report a vulnerability*)
 
 Include what you found, where (file and line, or command), how to reproduce it, and the impact you expect. If the report involves a real secret, **describe it; do not send the value**.
 
@@ -42,17 +42,17 @@ Every command uses placeholders such as `<app-id>`, test secrets are generated a
 Release archives are signed with [Sigstore](https://www.sigstore.dev/) by this repository's release workflow, with no long-lived key. To verify one:
 
 ```bash
-cosign verify-blob leak-response-toolkit-vX.Y.Z.tar.gz \
-  --bundle leak-response-toolkit-vX.Y.Z.tar.gz.sigstore.json \
-  --certificate-identity-regexp '^https://github.com/aboutBilal/leak-response-toolkit/\.github/workflows/release\.yml@refs/tags/v' \
+cosign verify-blob spillkit-vX.Y.Z.tar.gz \
+  --bundle spillkit-vX.Y.Z.tar.gz.sigstore.json \
+  --certificate-identity-regexp '^https://github.com/aboutBilal/spillkit/\.github/workflows/release\.yml@refs/tags/v' \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com
 ```
 
 Container images are signed the same way:
 
 ```bash
-cosign verify ghcr.io/aboutbilal/leak-response-toolkit:X.Y.Z \
-  --certificate-identity-regexp '^https://github.com/aboutBilal/leak-response-toolkit/\.github/workflows/release\.yml@refs/tags/v' \
+cosign verify ghcr.io/aboutbilal/spillkit:X.Y.Z \
+  --certificate-identity-regexp '^https://github.com/aboutBilal/spillkit/\.github/workflows/release\.yml@refs/tags/v' \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com
 ```
 
