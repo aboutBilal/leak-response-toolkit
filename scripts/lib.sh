@@ -56,6 +56,19 @@ sha256_files() {
   find . -type f ! -name MANIFEST.sha256 -print0 | sort -z | xargs -0 "${cmd[@]}" > MANIFEST.sha256
 }
 
+# tlp_info <name>: handling label for reports, per FIRST TLP 2.0. Prints
+# "LABEL|RULE|CSS-CLASS"; returns 1 for an unknown name.
+tlp_info() {
+  case "${1,,}" in
+    clear) echo "TLP:CLEAR|Disclosure is not limited.|tlp-clear" ;;
+    green) echo "TLP:GREEN|Recipients may share within their community, not publicly.|tlp-green" ;;
+    amber) echo "TLP:AMBER|Recipients may share on a need-to-know basis within their organisation and its clients.|tlp-amber" ;;
+    amber+strict) echo "TLP:AMBER+STRICT|Recipients may share on a need-to-know basis within their organisation only.|tlp-amber-strict" ;;
+    red) echo "TLP:RED|For the named recipients only. No further disclosure.|tlp-red" ;;
+    *) return 1 ;;
+  esac
+}
+
 # git_auth_env: let `git clone` use GITHUB_TOKEN without putting it in argv,
 # and never prompt for credentials.
 git_auth_env() {

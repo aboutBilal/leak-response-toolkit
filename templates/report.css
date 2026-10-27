@@ -1,0 +1,95 @@
+  /* Spillkit report styles: the leadership report and the organisation dashboard.
+     Inlined into each generated file so a report is one file you can email, archive or print.
+     Print-first: A4, 10.5 pt text, running header and page numbers (Chrome and Edge).
+     Status colours appear only for status. TLP labels follow FIRST TLP 2.0. */
+  :root {
+    --ink: #1D1336; --ink-2: #4A4363; --muted: #625A7C;
+    --paper: #FFFFFF; --wash: #F6F4FA; --line: #E2DEEC; --rule: #1D1336;
+    --accent: #5B3FD6;
+    --ok: #1A7F37; --ok-soft: #E6F6EA; --ok-line: #A9DDB5;
+    --warn: #8A5A00; --warn-soft: #FFF6D6; --warn-line: #EBD38A;
+    --bad: #B42318; --bad-soft: #FDECEA; --bad-line: #F4B4AE;
+    --tbc: #FFF1A8;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { margin: 0; background: #ECEAF2; color: var(--ink);
+         font: 14px/1.55 "IBM Plex Sans", "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
+         font-variant-numeric: tabular-nums; }
+  .page { max-width: 210mm; margin: 28px auto; padding: 18mm 18mm 16mm; background: var(--paper);
+          box-shadow: 0 1px 3px rgba(29, 19, 54, .08), 0 12px 40px -12px rgba(29, 19, 54, .25); }
+  h1 { margin: 0; font-size: 25px; line-height: 1.2; font-weight: 650; letter-spacing: -0.01em; }
+  h2 { display: flex; gap: 10px; align-items: baseline; margin: 30px 0 12px; padding-top: 10px;
+       border-top: 1.5px solid var(--rule); font-size: 16px; font-weight: 650; break-after: avoid; }
+  h2 .no { min-width: 22px; color: var(--accent); font-weight: 700; }
+  h3 { margin: 18px 0 6px; font-size: 13.5px; font-weight: 650; break-after: avoid; }
+  p { margin: 0 0 8px; }
+  ul, ol { margin: 0 0 8px; padding-left: 20px; } li { margin: 2px 0; }
+  a { color: var(--accent); }
+  code { font: 12.5px "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace; overflow-wrap: anywhere; }
+  .note { color: var(--muted); font-size: 12.5px; }
+
+  /* Document header */
+  .doc-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 14px; }
+  .doc-type { margin: 0 0 6px; color: var(--muted); font-size: 12.5px; font-weight: 600; letter-spacing: .02em; }
+  .subtitle { margin: 6px 0 0; color: var(--ink-2); }
+  .tlp { display: inline-block; padding: 3px 8px; background: #000000; font: 700 12.5px/1.2 "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace; letter-spacing: .02em; white-space: nowrap; }
+  .tlp-red { color: #FF2B2B; } .tlp-amber, .tlp-amber-strict { color: #FFC000; } .tlp-green { color: #33FF00; } .tlp-clear { color: #FFFFFF; }
+  .control { display: grid; grid-template-columns: repeat(4, 1fr); margin: 14px 0 6px; border: 1px solid var(--line); }
+  .control div { padding: 7px 10px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  .control div:nth-child(4n) { border-right: 0; }
+  .control div:nth-last-child(-n+4) { border-bottom: 0; }
+  .control b { display: block; color: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: .03em; }
+  .control span { font-size: 13px; font-weight: 600; }
+
+  /* Bottom line up front */
+  .bluf { margin: 6px 0 10px; padding: 12px 16px; background: var(--wash); border-left: 3px solid var(--accent); }
+  .bluf p { margin: 0 0 6px; } .bluf p:last-child { margin: 0; }
+  .status { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 12px 0 4px; }
+  .stat { padding: 10px 12px; border: 1px solid var(--line); break-inside: avoid; }
+  .stat .k { color: var(--muted); font-size: 11.5px; font-weight: 600; }
+  .stat .v { margin: 2px 0; font-size: 17px; font-weight: 700; }
+  .stat p { margin: 0; color: var(--ink-2); font-size: 12.5px; }
+  .stat.ok { background: var(--ok-soft); border-color: var(--ok-line); } .stat.ok .v { color: var(--ok); }
+  .stat.warn { background: var(--warn-soft); border-color: var(--warn-line); } .stat.warn .v { color: var(--warn); }
+  .stat.bad { background: var(--bad-soft); border-color: var(--bad-line); } .stat.bad .v { color: var(--bad); }
+
+  /* Tables */
+  table { width: 100%; margin: 6px 0 10px; border-collapse: collapse; font-size: 12.5px; }
+  th, td { padding: 6px 8px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }
+  th { background: var(--wash); color: var(--ink); font-size: 11.5px; font-weight: 650; border-bottom-color: #CFC9DD; }
+  thead { display: table-header-group; }
+  tr { break-inside: avoid; }
+  td.n { width: 28px; color: var(--muted); }
+  td.t { white-space: nowrap; }
+  .label { display: inline-block; padding: 1px 7px; border: 1px solid; border-radius: 3px; font-size: 11.5px; font-weight: 650; white-space: nowrap; }
+  .label.ok { color: var(--ok); background: var(--ok-soft); border-color: var(--ok-line); }
+  .label.warn { color: var(--warn); background: var(--warn-soft); border-color: var(--warn-line); }
+  .label.bad { color: var(--bad); background: var(--bad-soft); border-color: var(--bad-line); }
+  .label.na { color: var(--ink-2); background: var(--wash); border-color: var(--line); }
+  mark.tbc { padding: 0 3px; background: var(--tbc); color: var(--ink); box-shadow: inset 0 -1px 0 #D9C35C; }
+
+  /* Instructions shown on screen only */
+  .howto { max-width: 210mm; margin: 28px auto -12px; padding: 12px 16px; border: 1px dashed #B79B2E; background: #FFFBE8; color: #4A3B00; font-size: 13px; }
+  .howto b { color: #3D3000; }
+
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .box { padding: 10px 12px; border: 1px solid var(--line); break-inside: avoid; }
+  .box h3 { margin-top: 0; }
+  .doc-foot { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 26px; padding-top: 8px; border-top: 1px solid var(--line); color: var(--muted); font-size: 11.5px; }
+
+  @media screen and (max-width: 760px) {
+    .page { margin: 0; padding: 22px 16px; box-shadow: none; }
+    .howto { margin: 0; }
+    .control, .status, .two { grid-template-columns: 1fr; }
+    .control div { border-right: 0; }
+    table { display: block; overflow-x: auto; }
+  }
+  @page { size: A4; margin: 16mm 15mm 16mm; }
+  @media print {
+    body { background: #FFFFFF; font-size: 10.5pt; }
+    .page { max-width: none; margin: 0; padding: 0; box-shadow: none; }
+    .howto { display: none; }
+    .pagebreak { break-before: page; }
+    a { color: inherit; text-decoration: none; }
+  }

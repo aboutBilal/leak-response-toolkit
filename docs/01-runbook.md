@@ -101,7 +101,7 @@ Signs of abuse: logins from unfamiliar IPs or countries, new compute (crypto-min
 - **The owner of the code or data**, if it is not yours (a customer, partner or employer). Contracts usually require prompt notice.
 - Keep a written timeline from the start: [`incident-timeline.md`](../templates/incident-timeline.md).
 - Ready-to-adapt messages for each audience: [`notification-messages.md`](../templates/notification-messages.md).
-- For leadership, use [`executive-report.html`](../templates/executive-report.html): one page of summary, then the evidence.
+- For leadership, use [`incident-report.html`](../templates/incident-report.html): one page of summary, then the evidence.
 
 ### 8. The person involved
 

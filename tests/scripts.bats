@@ -384,3 +384,36 @@ MOCK
   [ "$status" -eq 0 ]
   [[ "$output" == *"Usage: leak audit"* ]]
 }
+
+# ---------- Reports: handling labels and the published template ----------
+
+@test "report: shows the TLP label and incident ID, and rejects unknown labels" {
+  mkdir -p "$TMP/ht"
+  echo '{"run":"20260101T000000Z","since":"2025-12-01","repos":["someone/example"]}' > "$TMP/ht/meta.json"
+  echo '{"section":"someone/example","check":"Wayback","status":"clean","detail":"0"}' > "$TMP/ht/results.jsonl"
+  run "$ROOT/scripts/make-report.sh" "$TMP/ht" --id INC-2026-001 --tlp red --out "$TMP/r.html"
+  [ "$status" -eq 0 ]
+  grep -q 'class="tlp tlp-red">TLP:RED<' "$TMP/r.html"
+  grep -q "INC-2026-001" "$TMP/r.html"
+  run "$ROOT/scripts/make-report.sh" "$TMP/ht" --tlp purple
+  [ "$status" -eq 2 ]
+}
+
+@test "report: templates/incident-report.html is the current --blank output" {
+  run "$ROOT/scripts/make-report.sh" --blank --out "$TMP/blank.html"
+  [ "$status" -eq 0 ]
+  diff -u "$ROOT/templates/incident-report.html" "$TMP/blank.html" \
+    || { echo "regenerate it: ./scripts/make-report.sh --blank --out templates/incident-report.html"; false; }
+}
+
+@test "audit-org: the dashboard carries a handling label and the method" {
+  mkdir -p "$TMP/o2"
+  new_repo "$TMP/o2/one"
+  echo "ok" > "$TMP/o2/one/README.md"
+  commit_all "$TMP/o2/one" "init"
+  run "$ROOT/scripts/audit-org.sh" --no-scan --tlp green --out "$TMP/o2out" --dir "$TMP/o2"
+  grep -q 'TLP:GREEN' "$TMP/o2out/dashboard.html"
+  grep -q 'Method' "$TMP/o2out/dashboard.html"
+  run "$ROOT/scripts/audit-org.sh" --no-scan --tlp purple --dir "$TMP/o2"
+  [ "$status" -eq 2 ]
+}

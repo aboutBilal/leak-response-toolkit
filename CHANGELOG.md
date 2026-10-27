@@ -8,6 +8,9 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 
 ### Changed
 
+- **Reports rebuilt as standard incident documents.** `leak report` now follows the structure of NIST SP 800-61r3: document control (incident ID, severity, version, author, approver, distribution), a bottom-line summary with the decisions needed, incident details, a UTC timeline filled in from the tool runs, the investigation, secrets to rotate, impact, a notification assessment (for example GDPR Articles 33 and 34), actions with owners and due dates, root cause, and appendices for evidence checksums, method and limitations, a severity scale and document history. Every page carries a FIRST TLP 2.0 handling label, the incident ID and "Page X of Y" when printed. New options: `--id`, `--tlp` and `--blank`. The default file name is now `incident-report.html`, and the hand-fill template is `templates/incident-report.html`.
+- **The organisation dashboard** (`leak audit-org`) uses the same document style: colours follow the data, every finding is labelled Critical or Fix with its remedy, and a method section states the weights and grade thresholds. New option: `--tlp`.
+
 - **Renamed to Spillkit.** The project is now Spillkit: the emergency kit you keep ready for leaked secrets. The command is still `leak`. The repository moves to `aboutBilal/spillkit` (GitHub redirects the old address), the container image to `ghcr.io/aboutbilal/spillkit` (images for 3.2.0 and earlier stay at `ghcr.io/aboutbilal/leak-response-toolkit`), and the documentation to `aboutbilal.github.io/spillkit`. Update `uses:` lines and pre-commit `repo:` entries to the new name.
 - New logo: an emergency case with a key, in place of the shield.
 
