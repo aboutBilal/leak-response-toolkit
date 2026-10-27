@@ -1,5 +1,9 @@
 # 🔐 Leak Response Toolkit
 
+[![checks](https://github.com/aboutBilal/leak-response-toolkit/actions/workflows/secret-scan.yml/badge.svg)](https://github.com/aboutBilal/leak-response-toolkit/actions/workflows/secret-scan.yml)
+[![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![changelog](https://img.shields.io/badge/version-1.0.0-informational.svg)](CHANGELOG.md)
+
 **A free, step-by-step kit for anyone whose code or secrets ended up somewhere public: what to do in the first hours, how to check where copies survive, and how to stop it happening again.**
 
 It covers the common cases: a key committed to a public repo, a private repo made public by mistake, code copied to someone else's account, a "your key was exposed" email from a provider, and secrets leaked through gists, logs, images or packages. Even a few minutes of exposure means the secrets must be treated as stolen.
@@ -81,25 +85,28 @@ Optional: set `GITHUB_TOKEN` for higher API limits; if the token belongs to the 
 ```
 leak-response-toolkit/
 ├── docs/
-│   ├── 01-runbook.md            the full response, step by step
-│   ├── 02-rotate-secrets.md     rotation per secret type (Azure, AWS, Google Cloud, GitHub, DBs, SSH, app secrets)
-│   ├── 03-investigate.md        log queries: was the key used?
-│   ├── 04-prevention.md         layers that stop leaks, with a measured test of what each catches
+│   ├── 01-runbook.md                the full response, step by step
+│   ├── 02-rotate-secrets.md         rotation per secret type (Azure, AWS, Google Cloud, GitHub, DBs, SSH, app secrets)
+│   ├── 03-investigate.md            log queries: was the key used?
+│   ├── 04-prevention.md             layers that stop leaks, with a measured test of what each catches
 │   ├── 05-where-copies-survive.md   archives, forks, re-uploads, evidence that disappears, removal requests
-│   └── 06-scenarios.md          what changes per leak type: own repo, made public, copied, alerts, non-Git leaks
-├── scripts/
-│   ├── snapshot-evidence.sh     mirror + metadata + forks + traffic, with a checksum manifest
-│   ├── scan-secrets.sh          full-history scan, redacted summary
-│   ├── list-forks.sh            every fork, for the takedown request
-│   ├── hunt-copies.sh           15+ public sources checked, dated markdown report
-│   └── find-commit-copies.sh    public repos containing the original commit IDs
+│   ├── 06-scenarios.md              what changes per leak type: own repo, made public, copied, alerts, non-Git leaks
+│   └── 07-practice-drill.md         a 45-minute team exercise, no real secrets
+├── scripts/                         every script has --help
+│   ├── snapshot-evidence.sh         mirror + metadata + forks + traffic, with a checksum manifest
+│   ├── scan-secrets.sh              full-history scan, redacted summary
+│   ├── list-forks.sh                every fork, for the takedown request
+│   ├── hunt-copies.sh               15+ public sources checked, dated markdown report
+│   └── find-commit-copies.sh        public repos containing the original commit IDs
 ├── templates/
-│   ├── incident-timeline.md     fill-in timeline and decision log
-│   ├── takedown-request.md      the facts a GitHub DMCA notice needs
-│   └── executive-report.html    leadership report, print-ready A4
-├── .pre-commit-config.yaml      gitleaks before every commit
-├── .github/workflows/secret-scan.yml   gitleaks + shellcheck on every push and PR
-└── SECURITY.md                  how to report a problem privately
+│   ├── incident-timeline.md         fill-in timeline and decision log
+│   ├── notification-messages.md     leadership, affected customers, the person involved, reporters
+│   ├── takedown-request.md          the facts a GitHub DMCA notice needs
+│   ├── post-incident-review.md      blameless review with actions and owners
+│   └── executive-report.html        leadership report, print-ready A4
+├── tests/scripts.bats               offline tests; test secrets generated at runtime
+├── Makefile                         make check = shellcheck + tests + secret scan
+└── .github/                         CI (secrets, shellcheck, tests, links), Dependabot, issue and PR templates
 ```
 
 ---
@@ -126,6 +133,14 @@ And CI runs the same scan on every push ([`secret-scan.yml`](.github/workflows/s
 - Commands in the docs use placeholders like `<app-id>`; nothing here is a real credential.
 - This is an engineering checklist, not legal advice. Breach-notification duties (for example GDPR's 72 hours) depend on what data leaked and where you operate.
 
+## 🤝 Contributing
+
+Improvements from real experience are welcome: a missing step, another platform, a better command. Read [CONTRIBUTING.md](CONTRIBUTING.md) first; the two hard rules are **no secrets, not even fake ones**, and **no real incidents or names**. Security problems: [SECURITY.md](SECURITY.md).
+
+```bash
+make check   # shellcheck + offline tests + secret scan: the same as CI
+```
+
 ## 📄 License
 
-[MIT](LICENSE)
+[MIT](LICENSE) · [Changelog](CHANGELOG.md) · [Code of conduct](CODE_OF_CONDUCT.md)

@@ -9,6 +9,8 @@
 # Note:  GitHub's commit search indexes default branches of public repositories.
 set -euo pipefail
 
+case "${1:-}" in -h|--help) sed -n '2,/^set -/{/^#/s/^# \{0,1\}//p;}' "$0"; exit 0 ;; esac
+
 exclude=""
 shas=()
 while (($#)); do

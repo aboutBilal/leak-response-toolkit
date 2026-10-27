@@ -5,6 +5,8 @@
 # Usage: ./scripts/scan-secrets.sh <path-to-repo-or-mirror> [report.json]
 set -euo pipefail
 
+case "${1:-}" in -h|--help) sed -n '2,/^set -/{/^#/s/^# \{0,1\}//p;}' "$0"; exit 0 ;; esac
+
 GITLEAKS_IMAGE="ghcr.io/gitleaks/gitleaks:v8.30.1"
 
 src="${1:-}"

@@ -17,7 +17,7 @@ while (($#)); do
   case "$1" in
     --since) since="$2"; shift 2 ;;
     --out) outroot="$2"; shift 2 ;;
-    -h|--help) sed -n '2,10p' "$0"; exit 0 ;;
+    -h|--help) sed -n '2,/^set -/{/^#/s/^# \{0,1\}//p;}' "$0"; exit 0 ;;
     *) repos+=("$1"); shift ;;
   esac
 done

@@ -1,0 +1,26 @@
+name: Improvement or new scenario
+description: A missing step, platform, secret type, scenario or source of copies
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Ideas from real experience are the most useful. Please keep examples general: **no real incidents, names or secrets**.
+  - type: textarea
+    id: gap
+    attributes:
+      label: What is missing or could be better?
+      description: For example "no steps for rotating a GitLab deploy token", or "hunt-copies could also check <source>".
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Suggested change
+      description: Steps, commands (with placeholders) or the source to add, with links to vendor documentation.
+  - type: checkboxes
+    id: help
+    attributes:
+      label: Contribution
+      options:
+        - label: I would like to open a pull request for this

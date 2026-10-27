@@ -6,6 +6,8 @@
 # Env:   GITHUB_TOKEN (optional) - higher rate limits.
 set -euo pipefail
 
+case "${1:-}" in -h|--help) sed -n '2,/^set -/{/^#/s/^# \{0,1\}//p;}' "$0"; exit 0 ;; esac
+
 root="${1:-}"
 [[ "$root" =~ ^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$ ]] || { echo "usage: $0 <owner>/<repo>" >&2; exit 2; }
 command -v jq >/dev/null || { echo "missing: jq" >&2; exit 2; }

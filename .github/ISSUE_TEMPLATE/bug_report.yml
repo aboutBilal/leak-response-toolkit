@@ -1,0 +1,42 @@
+name: Bug or wrong step
+description: A script fails, or a step in the docs is wrong or out of date
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Never paste a secret, a leaked file or private URLs here**, even if revoked. Describe the problem with placeholders.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Where is the problem?
+      options:
+        - A script
+        - The runbook or a guide (docs/)
+        - A template
+        - CI or repository setup
+    validations:
+      required: true
+  - type: input
+    id: location
+    attributes:
+      label: File, and section or command
+      placeholder: scripts/hunt-copies.sh, or docs/02-rotate-secrets.md → AWS
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what you expected
+    validations:
+      required: true
+  - type: textarea
+    id: env
+    attributes:
+      label: Environment (for scripts)
+      placeholder: OS, bash version, gitleaks or Docker version, output of the script with --help
+  - type: input
+    id: source
+    attributes:
+      label: Source for the correct behaviour (if a doc is wrong)
+      placeholder: Link to the vendor documentation

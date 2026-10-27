@@ -100,6 +100,7 @@ Signs of abuse: logins from unfamiliar IPs or countries, new compute (crypto-min
 - Manager, security and legal.
 - **The owner of the code or data**, if it is not yours (a customer, partner or employer). Contracts usually require prompt notice.
 - Keep a written timeline from the start: [`incident-timeline.md`](../templates/incident-timeline.md).
+- Ready-to-adapt messages for each audience: [`notification-messages.md`](../templates/notification-messages.md).
 - For leadership, use [`executive-report.html`](../templates/executive-report.html): one page of summary, then the evidence.
 
 ### 8. 👤 The person involved
@@ -113,7 +114,8 @@ Signs of abuse: logins from unfamiliar IPs or countries, new compute (crypto-min
 ## 🧹 Afterwards
 
 - **Do not rely on rewriting history** (`git filter-repo`, BFG) to "un-leak" anything. It is useful for cleaning your *own* repo later; it does nothing about copies already taken.
-- Run a short blameless review: how did the code leave, why was a secret in the repo, what would have caught it sooner?
+- Run a short blameless review with [`post-incident-review.md`](../templates/post-incident-review.md): how did the code leave, why was a secret in the repo, what would have caught it sooner?
+- Practise before the next one: [`07-practice-drill.md`](07-practice-drill.md).
 - Pick at least two changes from [`04-prevention.md`](04-prevention.md) and give each an owner and a date.
 
 ## ✅ Done when
