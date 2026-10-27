@@ -34,7 +34,8 @@ if command -v gitleaks >/dev/null; then
     --report-format json --report-path "$report_dir/$report_name"
   rc=$?
 elif command -v docker >/dev/null; then
-  echo "==> gitleaks (Docker: $GITLEAKS_IMAGE) on $src"
+  version="${GITLEAKS_IMAGE#*:}"; version="${version%%@*}"
+  echo "==> gitleaks $version (Docker image, pinned by digest) on $src"
   docker run --rm --network none --user "$(id -u):$(id -g)" \
     -v "$src:/repo:ro" -v "$report_dir:/out" \
     "$GITLEAKS_IMAGE" git /repo --redact --no-banner --exit-code 3 \

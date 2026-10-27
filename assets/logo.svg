@@ -1,17 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" role="img" aria-label="Leak Response Toolkit logo">
-  <defs>
-    <linearGradient id="lrt-shield" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#ff7a59"/>
-      <stop offset="1" stop-color="#ffb347"/>
-    </linearGradient>
-    <linearGradient id="lrt-shine" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#ffffff" stop-opacity="0.35"/>
-      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
-    </linearGradient>
-  </defs>
-  <path d="M64 8 L110 25 V62 C110 93 90 112 64 122 C38 112 18 93 18 62 V25 Z" fill="url(#lrt-shield)"/>
-  <path d="M64 8 L110 25 V40 C88 32 40 32 18 40 V25 Z" fill="url(#lrt-shine)"/>
-  <circle cx="64" cy="56" r="13" fill="#0b1020"/>
-  <path d="M57 64 H71 L75 92 H53 Z" fill="#0b1020"/>
-  <path d="M30 98 Q64 78 98 98" fill="none" stroke="#0b1020" stroke-opacity="0.18" stroke-width="4" stroke-linecap="round"/>
+  <!-- ember-500 shield, ink-950 keyhole. See assets/DESIGN.md -->
+  <path d="M64 8 L110 25 V62 C110 93 90 112 64 122 C38 112 18 93 18 62 V25 Z" fill="#FF6B3D"/>
+  <path d="M64 8 L110 25 V38 C88 31 40 31 18 38 V25 Z" fill="#FFFFFF" fill-opacity="0.16"/>
+  <circle cx="64" cy="56" r="13" fill="#0B0F1A"/>
+  <path d="M57 64 H71 L75 92 H53 Z" fill="#0B0F1A"/>
 </svg>

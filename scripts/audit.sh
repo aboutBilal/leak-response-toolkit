@@ -43,7 +43,7 @@ say '%sSecret hygiene audit:%s %s\n' "$B" "$N" "$repo"
 
 heading "1. Files that usually hold secrets"
 tracked="$(git -C "$repo" ls-files | grep -E "$secret_files" | grep -vE "$examples" || true)"
-if [[ -z "$tracked" ]]; then pass "none tracked by Git" 20
+if [[ -z "$tracked" ]]; then pass "no secret files tracked by Git" 20
 else
   fail "tracked by Git: $(echo "$tracked" | head -5 | paste -sd' ' -)$( (( $(echo "$tracked" | wc -l) > 5 )) && echo ' …')" 20
   tip "rotate anything inside them, then: git rm --cached <file> and add to .gitignore"
@@ -67,9 +67,9 @@ else pass "no environment-based settings detected" 5; fi
 heading "3. Commit-time blocking"
 hooksdir="$(git -C "$repo" rev-parse --git-path hooks)"; [[ "$hooksdir" = /* ]] || hooksdir="$repo/$hooksdir"
 cfg="$repo/.pre-commit-config.yaml"
-if [[ -f "$cfg" ]] && grep -qiE 'gitleaks|trufflehog|detect-secrets' "$cfg"; then pass "pre-commit config includes a secret scanner" 10
+if [[ -f "$cfg" ]] && grep -qiE 'gitleaks|trufflehog|detect-secrets' "$cfg"; then pass "pre-commit secret scanner configured" 10
 else warn "no pre-commit secret scanner configured" 10; tip "copy prevention/pre-commit-config.yaml to .pre-commit-config.yaml"; fi
-if [[ -x "$hooksdir/pre-commit" ]] || [[ -n "$(git -C "$repo" config core.hooksPath)" ]]; then pass "a pre-commit hook is installed in this clone" 5
+if [[ -x "$hooksdir/pre-commit" ]] || [[ -n "$(git -C "$repo" config core.hooksPath)" ]]; then pass "pre-commit hook installed in this clone" 5
 else warn "no pre-commit hook installed in this clone" 5; tip "pre-commit install   (or copy prevention/hooks/pre-commit)"; fi
 
 heading "4. CI secret scanning"
@@ -85,7 +85,7 @@ dockerfiles="$(git -C "$repo" ls-files | grep -E '(^|/)(Dockerfile[^/]*|[^/]*\.D
 if [[ -z "$dockerfiles" ]]; then pass "no Dockerfiles" 10
 else
   bad_lines="$(cd "$repo" && grep -nHiE '^[[:space:]]*(ARG|ENV)[[:space:]]+[A-Z0-9_]*(SECRET|PASSWORD|PASSWD|TOKEN|API_KEY|PRIVATE_KEY)[A-Z0-9_]*[[:space:]]*=[[:space:]]*[^$[:space:]]' $dockerfiles 2>/dev/null | head -3 || true)"
-  if [[ -f "$repo/.dockerignore" ]] && grep -qE '^\.env' "$repo/.dockerignore" && [[ -z "$bad_lines" ]]; then pass ".dockerignore excludes .env; no secret values in ARG/ENV" 10
+  if [[ -f "$repo/.dockerignore" ]] && grep -qE '^\.env' "$repo/.dockerignore" && [[ -z "$bad_lines" ]]; then pass ".env excluded from builds; no secrets in ARG/ENV" 10
   else
     # Show where, never the value: file:line and the variable name only.
     where="$(echo "$bad_lines" | head -1 | sed -E 's/^([^:]+:[0-9]+):[[:space:]]*([Aa][Rr][Gg]|[Ee][Nn][Vv])[[:space:]]+([A-Za-z0-9_]+).*/\1 (\2 \3=<redacted>)/')"
@@ -125,6 +125,6 @@ if ((json)); then
     }'
 else
   echo
-  echo "${B}Score: $points/$max ($pct%) · Grade $grade${N}$( ((critical)) && echo "  (critical findings cap the grade at F)")"
+  echo "${B}Score $points/$max · Grade $grade${N}$( ((critical)) && echo "  (critical findings cap the grade at F)")"
 fi
 exit "$critical"

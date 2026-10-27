@@ -122,7 +122,7 @@ $style
 <style>
   .bar{display:flex;align-items:center;gap:10px;margin:6px 0}.bar .g{width:18px;font-weight:700}.bar .c{width:30px;text-align:right;color:var(--muted)}
   .track{flex:1;height:14px;background:var(--wash);border-radius:7px;overflow:hidden}.fill{display:block;height:100%}
-  .gA,.gB{background:#2f9e5b}.gC,.gD{background:#d08a1a}.gF{background:#c0392b}
+  .gA,.gB{background:#1A7F37}.gC,.gD{background:#9A6700}.gF{background:#CF222E}
   td .f{color:var(--bad)} td .w{color:var(--warn)} td .f::before{content:"✘ "} td .w::before{content:"! "}
 </style></head>
 <body><main>

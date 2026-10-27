@@ -5,67 +5,68 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Exposure Report Template</title>
 <style>
+  /* Light-surface tokens from assets/DESIGN.md. Status colours are used only for status. */
   :root {
-    --ink: #172033; --ink-2: #3c4a63; --muted: #5d6b82;
-    --paper: #ffffff; --wash: #f4f6fa; --line: #dde3ec;
-    --brand: #23407a; --brand-soft: #e7edf8;
-    --ok: #17663a; --ok-soft: #e4f4ea;
-    --warn: #8a5300; --warn-soft: #fdf1dc;
-    --bad: #a3231b; --bad-soft: #fbe7e5;
-    --tbc: #fff3a8;
+    --ink: #111827; --ink-2: #4B5565; --muted: #6B7689;
+    --paper: #FFFFFF; --wash: #F6F7F9; --line: #E3E7EE;
+    --brand: #111827; --brand-soft: #F6F7F9; --accent: #C2410C;
+    --ok: #1A7F37; --ok-soft: #DAFBE1;
+    --warn: #9A6700; --warn-soft: #FFF8C5;
+    --bad: #CF222E; --bad-soft: #FFEBE9;
+    --tbc: #FFF8C5;
   }
   * { box-sizing: border-box; }
   html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   body { margin: 0; background: var(--wash); color: var(--ink);
-         font: 15px/1.55 "Ubuntu", "Segoe UI", system-ui, -apple-system, Arial, sans-serif; }
+         font: 15px/1.55 Inter, "Segoe UI", system-ui, -apple-system, Helvetica, Arial, sans-serif; }
   main { max-width: 900px; margin: 24px auto; background: var(--paper); padding: 48px 56px;
-         border: 1px solid var(--line); border-radius: 6px; }
+         border: 1px solid var(--line); border-radius: 12px; }
   h1 { font-size: 28px; line-height: 1.2; margin: 0 0 6px; letter-spacing: -0.01em; }
-  h2 { font-size: 19px; margin: 36px 0 12px; padding-bottom: 6px; border-bottom: 2px solid var(--brand);
-       color: var(--brand); break-after: avoid; }
+  h2 { font-size: 20px; margin: 40px 0 16px; padding-bottom: 8px; border-bottom: 1px solid var(--line);
+       color: var(--ink); break-after: avoid; }
   h3 { font-size: 15px; margin: 18px 0 6px; break-after: avoid; }
   p { margin: 0 0 10px; }
   ul, ol { margin: 0 0 10px; padding-left: 22px; } li { margin: 3px 0; }
-  .eyebrow { text-transform: uppercase; letter-spacing: .12em; font-size: 12px; font-weight: 700; color: var(--brand); margin-bottom: 8px; }
+  .eyebrow { font: 600 12px/1 "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace; text-transform: uppercase; letter-spacing: .12em; color: var(--accent); margin-bottom: 12px; }
   .meta { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; margin: 20px 0 8px;
-          border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+          border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
   .meta div { padding: 10px 14px; border-right: 1px solid var(--line); }
   .meta div:last-child { border-right: 0; }
   .meta b { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; }
   .meta span { font-size: 14px; font-weight: 600; }
-  .summary { background: var(--brand-soft); border-left: 5px solid var(--brand); padding: 18px 22px; border-radius: 4px; margin: 18px 0; }
+  .summary { background: var(--wash); border-left: 3px solid var(--ink); padding: 16px 24px; border-radius: 0 8px 8px 0; margin: 16px 0; }
   .summary p:last-child { margin: 0; }
   .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 14px 0 6px; }
-  .card { border: 1px solid var(--line); border-radius: 6px; padding: 14px 16px; break-inside: avoid; }
+  .card { border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; break-inside: avoid; }
   .card .k { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; }
   .card .v { font-size: 20px; font-weight: 700; margin: 4px 0 2px; }
   .card p { font-size: 13.5px; color: var(--ink-2); margin: 0; }
-  .card.ok { background: var(--ok-soft); border-color: #b9dfc7; } .card.ok .v { color: var(--ok); }
-  .card.warn { background: var(--warn-soft); border-color: #f0d29a; } .card.warn .v { color: var(--warn); }
-  .card.bad { background: var(--bad-soft); border-color: #efbdb8; } .card.bad .v { color: var(--bad); }
+  .card.ok { background: var(--ok-soft); border-color: #ACEEBB; } .card.ok .v { color: var(--ok); }
+  .card.warn { background: var(--warn-soft); border-color: #EAD98B; } .card.warn .v { color: var(--warn); }
+  .card.bad { background: var(--bad-soft); border-color: #FFC1BA; } .card.bad .v { color: var(--bad); }
   table { width: 100%; border-collapse: collapse; margin: 8px 0 12px; font-size: 14px; }
   th, td { text-align: left; vertical-align: top; padding: 8px 10px; border-bottom: 1px solid var(--line); }
   th { background: var(--wash); font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-2); }
   tr { break-inside: avoid; }
   td.n { width: 34px; color: var(--muted); font-variant-numeric: tabular-nums; }
-  .pill { display: inline-block; font-size: 12px; font-weight: 700; padding: 2px 9px; border-radius: 99px; white-space: nowrap; }
+  .pill { display: inline-block; font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 8px; white-space: nowrap; }
   .pill.ok { background: var(--ok-soft); color: var(--ok); }
   .pill.warn { background: var(--warn-soft); color: var(--warn); }
   .pill.bad { background: var(--bad-soft); color: var(--bad); }
   .pill.na { background: var(--wash); color: var(--ink-2); border: 1px solid var(--line); }
   mark.tbc { background: var(--tbc); padding: 0 4px; border-radius: 3px; color: var(--ink); }
-  .draft { border: 2px dashed #d4b100; background: #fffbe0; padding: 12px 16px; border-radius: 6px; margin: 0 0 22px; font-size: 13.5px; }
-  .draft b { color: #6b5600; }
+  .draft { border: 1px dashed var(--warn); background: var(--warn-soft); padding: 12px 16px; border-radius: 6px; margin: 0 0 22px; font-size: 13.5px; }
+  .draft b { color: var(--warn); }
   .note { font-size: 13px; color: var(--muted); }
   .two { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
   .box { border: 1px solid var(--line); border-radius: 6px; padding: 14px 16px; break-inside: avoid; }
   .box h3 { margin-top: 0; }
-  code { font-family: "Ubuntu Mono", "Fira Code", monospace; font-size: 13px; background: var(--wash); padding: 1px 5px; border-radius: 3px; }
+  code { font-family: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace; font-size: 13px; background: var(--wash); padding: 1px 5px; border-radius: 3px; }
   footer { margin-top: 36px; padding-top: 12px; border-top: 1px solid var(--line); font-size: 12px; color: var(--muted); display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
   .flow { display: flex; align-items: stretch; gap: 0; margin: 10px 0 14px; }
   .flow div { flex: 1; background: var(--wash); border: 1px solid var(--line); padding: 10px 12px; font-size: 13px; position: relative; }
   .flow div + div { border-left: 0; }
-  .flow b { display: block; font-size: 13.5px; color: var(--brand); }
+  .flow b { display: block; font-size: 13.5px; color: var(--accent); }
   @media (max-width: 720px) {
     main { margin: 0; padding: 24px 16px; border: 0; border-radius: 0; }
     .meta, .cards, .two { grid-template-columns: 1fr; }

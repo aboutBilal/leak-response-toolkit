@@ -1,22 +1,22 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="414" viewBox="0 0 1000 414" role="img" aria-label="Terminal: ./leak scan finds two secrets removed from git history, with values redacted">
-<rect width="100%" height="100%" rx="12" fill="#0d1117"/>
-<rect width="100%" height="38" rx="12" fill="#161b22"/><rect y="26" width="100%" height="12" fill="#161b22"/>
-<circle cx="22" cy="19" r="6" fill="#ff5f56"/><circle cx="42" cy="19" r="6" fill="#ffbd2e"/><circle cx="62" cy="19" r="6" fill="#27c93f"/>
-<text x="500.0" y="24" fill="#8b949e" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="13" text-anchor="middle">leak-response-toolkit · real output · values redacted by gitleaks</text>
-<g font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,'Liberation Mono',monospace" font-size="14.5" xml:space="preserve">
-<text style="white-space:pre" x="24" y="56" fill="#e6edf3" font-weight="700">$ ./leak scan payments-api</text>
-<text style="white-space:pre" x="24" y="78" fill="#79c0ff" font-weight="700">==&gt; gitleaks (Docker: ghcr.io/gitleaks/gitleaks:v8.30.1) on ./payments-api</text>
-<text style="white-space:pre" x="24" y="100" fill="#f0b72f" font-weight="400">WRN leaks found: 2</text>
-<text style="white-space:pre" x="24" y="122" fill="#c9d1d9" font-weight="400"></text>
-<text style="white-space:pre" x="24" y="144" fill="#79c0ff" font-weight="700">==&gt; 2 finding(s), secret values redacted. Full report: ./report.json</text>
-<text style="white-space:pre" x="24" y="166" fill="#c9d1d9" font-weight="400">    Oldest first (when each secret entered the history); first 50 shown:</text>
-<text style="white-space:pre" x="24" y="188" fill="#8b949e" font-weight="700">RULE              FILE          LINE  COMMIT      DATE</text>
-<text style="white-space:pre" x="24" y="210" fill="#ffa657" font-weight="400">slack-bot-token   settings.ini  2     b52022d6c5  2026-10-27T10:53:30Z</text>
-<text style="white-space:pre" x="24" y="232" fill="#ffa657" font-weight="400">aws-access-token  settings.ini  1     b52022d6c5  2026-10-27T10:53:30Z</text>
-<text style="white-space:pre" x="24" y="254" fill="#c9d1d9" font-weight="400"></text>
-<text style="white-space:pre" x="24" y="276" fill="#79c0ff" font-weight="700">==&gt; Distinct secret types to rotate</text>
-<text style="white-space:pre" x="24" y="298" fill="#ffa657" font-weight="400">  aws-access-token: 1 finding(s) in 1 file(s)</text>
-<text style="white-space:pre" x="24" y="320" fill="#ffa657" font-weight="400">  slack-bot-token: 1 finding(s) in 1 file(s)</text>
-<text style="white-space:pre" x="24" y="342" fill="#c9d1d9" font-weight="400"></text>
-<text style="white-space:pre" x="24" y="364" fill="#56d364" font-weight="700">Next: rotate every one of these - docs/02-rotate-secrets.md</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="448" viewBox="0 0 1000 448" role="img" aria-label="Terminal: leak scan payments-api">
+<rect x="0.5" y="0.5" width="999" height="447" rx="12" fill="#111827" stroke="#2B3445"/>
+<path d="M12.5 0.5 H987.5 A12 12 0 0 1 999.5 12.5 V40 H0.5 V12.5 A12 12 0 0 1 12.5 0.5 Z" fill="#1C2433"/>
+<circle cx="24" cy="20" r="5" fill="#2B3445"/><circle cx="42" cy="20" r="5" fill="#2B3445"/><circle cx="60" cy="20" r="5" fill="#2B3445"/>
+<text x="500.0" y="25" fill="#6B7689" font-family="'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,'Liberation Mono',monospace" font-size="13" text-anchor="middle">leak scan · real output, values redacted by gitleaks</text>
+<g font-family="'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,'Liberation Mono',monospace" font-size="14.5" style="font-variant-ligatures:none">
+<text style="white-space:pre" x="24" y="72" font-weight="600"><tspan fill="#FF8A5C">$</tspan><tspan fill="#E6EAF2"> leak scan payments-api</tspan></text>
+<text style="white-space:pre" x="24" y="96" fill="#E6EAF2" font-weight="600">==&gt; gitleaks v8.30.1 (Docker image, pinned by digest) on ./payments-api</text>
+<text style="white-space:pre" x="24" y="120" fill="#D29922" font-weight="400">WRN leaks found: 2</text>
+<text style="white-space:pre" x="24" y="144" fill="#A3ADBF" font-weight="400"></text>
+<text style="white-space:pre" x="24" y="168" fill="#E6EAF2" font-weight="600">==&gt; 2 finding(s), secret values redacted. Full report: ./report.json</text>
+<text style="white-space:pre" x="24" y="192" fill="#A3ADBF" font-weight="400">    Oldest first (when each secret entered the history); first 50 shown:</text>
+<text style="white-space:pre" x="24" y="216" fill="#6B7689" font-weight="600">RULE              FILE          LINE  COMMIT      DATE</text>
+<text style="white-space:pre" x="24" y="240" fill="#F85149" font-weight="400">aws-access-token  settings.ini  1     b52022d6c5  2026-10-27T10:53:30Z</text>
+<text style="white-space:pre" x="24" y="264" fill="#F85149" font-weight="400">slack-bot-token   settings.ini  2     b52022d6c5  2026-10-27T10:53:30Z</text>
+<text style="white-space:pre" x="24" y="288" fill="#A3ADBF" font-weight="400"></text>
+<text style="white-space:pre" x="24" y="312" fill="#E6EAF2" font-weight="600">==&gt; Distinct secret types to rotate</text>
+<text style="white-space:pre" x="24" y="336" fill="#F85149" font-weight="400">  aws-access-token: 1 finding(s) in 1 file(s)</text>
+<text style="white-space:pre" x="24" y="360" fill="#F85149" font-weight="400">  slack-bot-token: 1 finding(s) in 1 file(s)</text>
+<text style="white-space:pre" x="24" y="384" fill="#A3ADBF" font-weight="400"></text>
+<text style="white-space:pre" x="24" y="408" fill="#E6EAF2" font-weight="600">Next: rotate every one of these - docs/02-rotate-secrets.md</text>
 </g></svg>
