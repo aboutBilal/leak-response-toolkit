@@ -22,6 +22,7 @@
     - { title: Incident timeline, url: /templates/incident-timeline.html }
     - { title: Takedown request, url: /templates/takedown-request.html }
     - { title: Post-incident review, url: /templates/post-incident-review.html }
+    - { title: Incident report (HTML), url: /templates/incident-report.html }
 - section: Project
   pages:
     - { title: Security, url: /SECURITY.html }

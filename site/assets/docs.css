@@ -75,7 +75,7 @@
 
 /* README blocks written for GitHub: the banner repeats the page header, badges sit left. */
 .doc-body p[align="center"]:has(> img[src$="banner.svg"]),
-.doc-body p[align="center"]:has(> a[href^="https://aboutbilal.github.io/"]) { display: none; }
+.doc-body p[align="center"]:has(a[href^="https://aboutbilal.github.io/"]) { display: none; }
 .doc-body p[align] { text-align: left; }
 .doc-body p[align] img { display: inline-block; vertical-align: middle; border-radius: 0; }
 /* Reserve space for images before they load, so the text does not jump (layout shift). */

@@ -9,23 +9,38 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT license"></a>
 </p>
 
-<p align="center"><a href="https://aboutbilal.github.io/spillkit/"><b>Documentation site</b></a> · <a href="docs/01-runbook.md">Incident runbook</a> · <a href="CHEATSHEET.md">Cheat sheet</a></p>
+<p align="center"><b><a href="https://aboutbilal.github.io/spillkit/">Website</a></b> · <a href="#quick-start">Quick start</a> · <a href="docs/01-runbook.md">Incident runbook</a> · <a href="CHEATSHEET.md">15-minute cheat sheet</a></p>
 
-Spillkit helps engineering teams keep secrets out of source control, and respond quickly when one gets out.
+> [!CAUTION]
+> **Leaked a secret right now?** Rotate it first. Deleting the commit or the repository does not revoke it. Then follow the [15-minute cheat sheet](CHEATSHEET.md).
 
-It pairs a reference architecture and a set of tested prevention configs with one command-line tool, `leak`, that grades repositories, scans their full Git history, searches public sources for surviving copies of leaked code, and turns the evidence into a report leadership can act on. Detection is done by [gitleaks](https://github.com/gitleaks/gitleaks); this project covers what has to happen around it.
+**Spillkit is the emergency kit for leaked secrets.** It blocks secrets before they are committed, finds every one already in your Git history, tracks down copies that survive deletion, and turns the evidence into an incident report your leadership can act on. It is free, open source and runs on your machine.
+
+## Why minutes matter
+
+A `.env` file reaches a public repository at 14:02. Attackers watch public pushes continuously and have used exposed AWS keys [within five minutes](https://unit42.paloaltonetworks.com/malicious-operations-of-exposed-iam-keys-cryptojacking/). Deleting the repository at 14:30 changes little: forks, web archives and private clones keep the code, and the key keeps working until someone revokes it.
+
+Spillkit covers both sides of that timeline: the controls that stop the file at 14:01, and the runbook, commands and report you need from 14:03.
+
+- 28.6 million new hard-coded secrets reached public GitHub in 2025, 34% more than the year before, and 64% of the secrets leaked in 2022 were still exploitable four years later ([GitGuardian, 2026](https://www.gitguardian.com/state-of-secrets-sprawl-report-2026)).
+- In our [measured test](docs/04-prevention.md#what-each-layer-catches-a-measured-test), GitHub push protection blocked 5 of 9 secret types. A pre-commit scan blocked all 9.
+
+## What's in the kit
 
 <p align="center">
   <img src="assets/how-it-works.svg" alt="How it works: prevent with leak audit, detect with leak scan, respond with leak hunt, report and learn with leak report" width="100%">
 </p>
 
-## Why it matters
+| Stage | What you get | Start with |
+|---|---|---|
+| **Prevent** | Hooks that block `.env` files, keys and secrets at commit; CI templates for GitHub Actions, GitLab, Azure Pipelines and Bitbucket; keyless (OIDC) deployments | [Prevention kit](prevention/README.md) |
+| **Grade** | An A to F hygiene score for one repository or a whole organisation, with the exact fix for each gap | `leak audit`, `leak audit-org` |
+| **Detect** | Every commit on every branch scanned for secrets, including ones deleted later; values always redacted; SARIF for code scanning | `leak scan` |
+| **Respond** | A runbook for each kind of leak, rotation steps for more than 25 secret types, and evidence preserved before it disappears | [Runbook](docs/01-runbook.md), `leak snapshot` |
+| **Hunt** | Eleven checks for surviving copies: forks, re-uploads on GitHub and GitLab, the Wayback Machine, Software Heritage and code search | `leak hunt` |
+| **Report** | An incident report built from the evidence, structured like NIST SP 800-61r3, with FIRST TLP 2.0 handling labels | `leak report` |
 
-- Attackers have found and used AWS keys within [five minutes](https://unit42.paloaltonetworks.com/malicious-operations-of-exposed-iam-keys-cryptojacking/) of their exposure on public GitHub (Unit 42, 2023).
-- 28.6 million new hard-coded secrets reached public GitHub in 2025, 34% more than the year before, and 64% of the secrets leaked in 2022 were still exploitable four years later ([GitGuardian, 2026](https://www.gitguardian.com/state-of-secrets-sprawl-report-2026)).
-- In our own [measured test](docs/04-prevention.md#what-each-layer-catches-a-measured-test), GitHub push protection blocked 5 of 9 secret types; a pre-commit scan caught all 9. One layer is not enough.
-
-Deleting a repository does not revoke a credential. Rotation does. Everything else limits the spread and establishes what happened.
+Detection uses [gitleaks](https://github.com/gitleaks/gitleaks). Spillkit adds everything that has to happen before and after a scan.
 
 ## Install
 
@@ -114,20 +129,31 @@ This repository uses the kit on itself, and `leak audit .` grades it A.
 
 ## Organisation dashboard
 
-`leak audit-org` grades every repository in a GitHub organisation (or a local folder of repositories) and writes an HTML dashboard, a markdown summary and JSON. Repositories are listed worst first, each with the fixes it needs.
+`leak audit-org` grades every repository in a GitHub organisation, or a local folder of repositories, and writes an HTML report, a Markdown summary and JSON for automation. Repositories are listed worst first; every finding is labelled Critical or Fix and comes with its remedy, and the method section states exactly how grades are given.
 
 ```bash
 leak audit-org my-org                 # GITHUB_TOKEN includes private repositories you can read
 leak audit-org --no-scan my-org       # faster: skips full-history scans
 ```
 
-<p align="center"><img src="assets/dashboard-preview.png" alt="The audit-org dashboard: five repositories with grades from A to F, a grade distribution, and the fixes each repository needs" width="100%"></p>
+<p align="center"><img src="assets/dashboard-preview.png" alt="The secret hygiene report from leak audit-org: summary of average score, critical findings and repositories not audited, then a grade distribution" width="100%"></p>
 
 ## Reports for leadership
 
-`leak report` builds a print-ready incident report from the results of `leak hunt` and `leak scan`: an executive summary, the state of every public source that was checked, the secret types to rotate, and the open actions. Secret values are never included. Facts the tools cannot know, such as the exposure window, are left highlighted for you to fill in.
+`leak report` turns the results of `leak hunt` and `leak scan` into an incident report that reads like one a security team would write by hand:
 
-<p align="center"><img src="assets/report-preview.png" alt="A report generated by leak report: executive summary, status cards, key facts and the investigation table" width="100%"></p>
+- **Structure from NIST SP 800-61r3:** document control, a bottom-line summary with the decisions needed, a UTC timeline filled in from the tool runs, the investigation, the secrets to rotate, impact, a notification assessment, actions with owners and due dates, and root cause.
+- **Evidence you can defend:** an appendix ties the report to the saved results with SHA-256 checksums.
+- **Ready to circulate:** a [FIRST TLP 2.0](https://www.first.org/tlp/) handling label, the incident ID and "Page X of Y" on every printed page.
+- **No secrets, ever:** secret types and counts only.
+
+Facts only people know, such as the exposure window and severity, stay highlighted for you to complete. Use `leak report --blank` for a report to fill in by hand.
+
+```bash
+leak report hunts/hunt_20261027T142000Z --scan secrets-report.json --id INC-2026-014 --tlp amber+strict
+```
+
+<p align="center"><img src="assets/report-preview.png" alt="An incident report generated by leak report: TLP:AMBER+STRICT label, document control table, and a summary of what happened, what was found and the secrets to rotate" width="100%"></p>
 
 ## CI integration
 
@@ -160,13 +186,13 @@ Findings appear in the job summary and, with SARIF, in the repository's Security
 | Command | Purpose |
 |---|---|
 | `leak audit [--json] [path]` | Grade a repository's secret hygiene from A to F, with a fix for each gap |
-| `leak audit-org [--no-scan] <org>` | Grade every repository in an organisation (or `--dir` a folder of repositories); HTML dashboard, markdown and JSON |
+| `leak audit-org [--no-scan] <org>` | Grade every repository in an organisation (or `--dir` a folder of repositories); HTML report, Markdown and JSON |
 | `leak scan <path> [--sarif file]` | Scan every commit for secrets; values are always redacted |
 | `leak snapshot owner/repo` | Preserve a leaked repository: mirror, metadata, forks, traffic and a checksum manifest |
 | `leak forks owner/repo` | List every fork, including forks of forks, for a takedown request |
 | `leak hunt [--since date] owner/repo` | Check GitHub, GitLab, web archives and code search for surviving copies |
 | `leak commits <sha>…` | Find public repositories that contain the original commits |
-| `leak report <hunt-dir> [--scan file]` | Build the leadership report from the results |
+| `leak report <hunt-dir> [--scan file] [--id ID] [--tlp label]` | Build the incident report from the results (`--blank` for an empty one) |
 | `leak notify "message"` | Send an alert to Slack, Teams or Discord (URL from `LEAK_WEBHOOK_URL`) |
 | `leak doctor` | Check that a machine has everything it needs, before an incident |
 
@@ -180,7 +206,7 @@ A tool that handles leak investigations has to be trustworthy itself. Each of th
 - Container images ship with an SBOM and SLSA build provenance.
 - [OpenSSF Scorecard](https://scorecard.dev/viewer/?uri=github.com/aboutBilal/spillkit) runs on every push to `main`.
 - GitHub Actions are pinned to commit SHAs and container images to digests; Dependabot keeps them current.
-- Every push runs shellcheck, actionlint, 34 offline tests on Linux and macOS, and a full-history secret scan; CodeQL analyses every change to `main` and every pull request.
+- Every push runs shellcheck, actionlint, 37 offline tests on Linux and macOS, and a full-history secret scan; CodeQL analyses every change to `main` and every pull request.
 - No command prints or tests a secret value, and tests enforce this. `leak snapshot` keeps a copy of a leaked repository as evidence, so evidence folders are git-ignored and must be handled as sensitive. The repository itself contains no secrets, not even fake ones.
 - Tokens and webhook URLs are passed to `curl` on standard input, never as command-line arguments, so they do not appear in process lists.
 - A source that fails or is rate-limited is reported as "not checked", never as clean.
@@ -236,7 +262,7 @@ Yes. It is MIT-licensed. Adapt the runbooks to your organisation and ship the pr
 | `docs/` | Runbook, scenarios, rotation, investigation, where copies survive, prevention, secrets by design, practice drill |
 | `prevention/` | Tested hooks, gitleaks configuration, CI templates, OIDC examples, Docker and `.env` patterns |
 | `scripts/` | The commands behind `leak` |
-| `templates/` | Incident checklist, timeline, messages, takedown request, post-incident review, executive report |
+| `templates/` | Incident checklist, timeline, messages, takedown request, post-incident review, incident report |
 | `action.yml`, `Dockerfile`, `.pre-commit-hooks.yaml` | GitHub Action, container image, pre-commit hooks |
 | `tests/` | Offline test suite (bats) |
 </details>
