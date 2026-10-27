@@ -1,5 +1,5 @@
 SHELL := /bin/bash
-SCRIPTS := $(wildcard scripts/*.sh)
+SCRIPTS := $(wildcard scripts/*.sh) leak
 
 .PHONY: help check lint test scan
 

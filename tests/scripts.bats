@@ -29,7 +29,7 @@ commit_all() {
 }
 
 @test "every script prints its help and exits 0" {
-  for s in "$ROOT"/scripts/*.sh; do
+  for s in "$ROOT"/scripts/*.sh "$ROOT"/leak; do
     run "$s" --help
     [ "$status" -eq 0 ] || { echo "$s exited $status"; false; }
     [[ "$output" == *"Usage:"* ]] || { echo "$s help has no Usage line"; false; }
@@ -83,4 +83,23 @@ commit_all() {
   [[ "$output" != *"$fake"* ]]
   run grep -c "$fake" "$TMP/leaky-report.json"
   [ "$output" = "0" ]
+}
+
+@test "leak: help lists every command and version prints" {
+  run "$ROOT/leak" help
+  [ "$status" -eq 0 ]
+  for c in snapshot scan forks hunt commits; do [[ "$output" == *"$c"* ]]; done
+  run "$ROOT/leak" version
+  [ "$status" -eq 0 ]
+  [[ "$output" == leak-response-toolkit* ]]
+}
+
+@test "leak: unknown command exits 2; commands reach their script" {
+  run "$ROOT/leak" no-such-command
+  [ "$status" -eq 2 ]
+  run "$ROOT/leak" help scan
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"FULL git history"* ]]
+  run "$ROOT/leak" forks "not a repo"
+  [ "$status" -eq 2 ]
 }

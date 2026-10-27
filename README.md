@@ -1,15 +1,33 @@
-# 🔐 Leak Response Toolkit
+<p align="center">
+  <img src="assets/banner.svg" alt="Leak Response Toolkit: rotate, hunt copies, investigate, prevent" width="100%">
+</p>
 
-[![checks](https://github.com/aboutBilal/leak-response-toolkit/actions/workflows/secret-scan.yml/badge.svg)](https://github.com/aboutBilal/leak-response-toolkit/actions/workflows/secret-scan.yml)
-[![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![changelog](https://img.shields.io/badge/version-1.0.0-informational.svg)](CHANGELOG.md)
+<p align="center">
+  <a href="https://github.com/aboutBilal/leak-response-toolkit/actions/workflows/secret-scan.yml"><img src="https://github.com/aboutBilal/leak-response-toolkit/actions/workflows/secret-scan.yml/badge.svg" alt="checks"></a>
+  <a href="CHANGELOG.md"><img src="https://img.shields.io/badge/version-1.1.0-informational.svg" alt="version 1.1.0"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="license MIT"></a>
+  <a href="CONTRIBUTING.md"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg" alt="PRs welcome"></a>
+</p>
 
-**A free, step-by-step kit for anyone whose code or secrets ended up somewhere public: what to do in the first hours, how to check where copies survive, and how to stop it happening again.**
+<h3 align="center">Code or secrets went public? Here is what to do in the first hour,<br>how to find where copies survive, and how to stop it happening again.</h3>
 
-It covers the common cases: a key committed to a public repo, a private repo made public by mistake, code copied to someone else's account, a "your key was exposed" email from a provider, and secrets leaked through gists, logs, images or packages. Even a few minutes of exposure means the secrets must be treated as stolen.
+<p align="center">
+  <a href="#-start-here-what-happened"><b>🚨 In an incident? Start here</b></a> ·
+  <a href="CHEATSHEET.md">📄 One-page cheat sheet</a> ·
+  <a href="docs/01-runbook.md">📘 Full runbook</a> ·
+  <a href="docs/07-practice-drill.md">🎯 Practise first</a>
+</p>
+
+---
+
+## ⚡ Why minutes matter
+
+| ⏱️ **5 minutes** | 📈 **28.6 million** | 🧟 **64%** | 🛡️ **5 of 9** |
+|:-:|:-:|:-:|:-:|
+| Time attackers needed to find and use AWS keys exposed on public GitHub ([Unit 42, 2023](https://unit42.paloaltonetworks.com/malicious-operations-of-exposed-iam-keys-cryptojacking/)) | New hard-coded secrets pushed to public GitHub in 2025, up 34% ([GitGuardian, 2026](https://www.gitguardian.com/state-of-secrets-sprawl-report-2026)) | Secrets leaked in 2022 that were still exploitable four years later ([GitGuardian, 2026](https://www.gitguardian.com/state-of-secrets-sprawl-report-2026)) | Secret types GitHub push protection blocked in our test, while gitleaks caught 9 of 9 ([measured](docs/04-prevention.md#-what-each-layer-catches-a-measured-test)) |
 
 > [!IMPORTANT]
-> **Rotate first, delete second.** Bots watch every public push to GitHub and harvest keys within minutes. Deleting the repo does not un-leak anything; a revoked key does.
+> **Rotate first, delete second.** Deleting a repository does not un-leak anything; a revoked key does. Everything else in this kit limits the spread and tells you what happened.
 
 ---
 
@@ -42,14 +60,14 @@ flowchart LR
 
 | Step | Do | Tool here |
 |:-:|---|---|
-| 1 | Save a copy of the leaked repo, its metadata and forks **before** anything is deleted | [`scripts/snapshot-evidence.sh`](scripts/snapshot-evidence.sh) |
-| 2 | Scan the **full history**, not only the latest commit | [`scripts/scan-secrets.sh`](scripts/scan-secrets.sh) |
+| 1 | Save a copy of the leaked repo, its metadata and forks **before** anything is deleted | `./leak snapshot` |
+| 2 | Scan the **full history**, not only the latest commit | `./leak scan` |
 | 3 | Rotate and **revoke** every secret found, most powerful first | [`docs/02-rotate-secrets.md`](docs/02-rotate-secrets.md) |
-| 4 | Delete the repo or file a takedown (every fork too), then **hunt for other copies** | [`scripts/hunt-copies.sh`](scripts/hunt-copies.sh), [`scripts/find-commit-copies.sh`](scripts/find-commit-copies.sh), [`templates/takedown-request.md`](templates/takedown-request.md) |
+| 4 | Delete the repo or file a takedown (every fork too), then **hunt for other copies** | `./leak forks`, `./leak hunt`, `./leak commits`, [takedown request](templates/takedown-request.md) |
 | 5 | Search logs from the **first push** to the **moment each key was rotated** | [`docs/03-investigate.md`](docs/03-investigate.md) |
-| 6 | Tell the right people, keep a timeline, report to leadership | [`templates/incident-timeline.md`](templates/incident-timeline.md), [`templates/executive-report.html`](templates/executive-report.html) |
+| 6 | Tell the right people, keep a timeline, report to leadership | [messages](templates/notification-messages.md), [timeline](templates/incident-timeline.md), [executive report](templates/executive-report.html) |
 
-The full walkthrough is in **[`docs/01-runbook.md`](docs/01-runbook.md)**.
+The full walkthrough is in **[`docs/01-runbook.md`](docs/01-runbook.md)**. To track the response as a team, paste [`templates/incident-issue.md`](templates/incident-issue.md) into a private issue.
 
 ---
 
@@ -58,22 +76,18 @@ The full walkthrough is in **[`docs/01-runbook.md`](docs/01-runbook.md)**.
 ```bash
 git clone https://github.com/aboutBilal/leak-response-toolkit.git
 cd leak-response-toolkit
-
-# 1. Snapshot the leaked repo (metadata, forks, full mirror)
-./scripts/snapshot-evidence.sh someuser/leaked-repo
-
-# 2. Scan its whole history for secrets (values are redacted in the output)
-./scripts/scan-secrets.sh evidence/someuser_leaked-repo_*/repo.git
-
-# 3. List forks that also need a takedown
-./scripts/list-forks.sh someuser/leaked-repo
-
-# 4. Hunt for surviving copies: archives, re-uploads, mirrors, code search (markdown report)
-./scripts/hunt-copies.sh --since 2026-01-31 someuser/leaked-repo
-
-# 5. Find renamed re-uploads by commit IDs from the ORIGINAL repository
-./scripts/find-commit-copies.sh --exclude someuser/leaked-repo <first-commit-sha> <recent-commit-sha>
+./leak help
 ```
+
+| Command | What it does |
+|---|---|
+| `./leak snapshot someuser/leaked-repo` | Saves a full mirror, metadata, forks and (with the owner's token) traffic, plus a checksum manifest |
+| `./leak scan <path>` | Scans **every commit** for secrets; values are always redacted |
+| `./leak forks someuser/leaked-repo` | Lists every fork, including forks of forks, for the takedown |
+| `./leak hunt --since 2026-01-31 someuser/leaked-repo` | Checks 15+ public sources for surviving copies and writes a markdown report |
+| `./leak commits --exclude someuser/leaked-repo <sha> <sha>` | Finds renamed re-uploads that carry the original commits |
+
+<p align="center"><img src="assets/demo-scan.svg" alt="Real output of ./leak scan: two secrets found in a commit that was later deleted, values redacted" width="88%"></p>
 
 **Needs:** `git`, `curl`, `jq`, and either [`gitleaks`](https://github.com/gitleaks/gitleaks) or Docker (the scan script falls back to the official gitleaks image).
 Optional: set `GITHUB_TOKEN` for higher API limits; if the token belongs to the repo owner, the snapshot also saves **clone and visitor traffic** for the last 14 days.
@@ -99,11 +113,14 @@ leak-response-toolkit/
 │   ├── hunt-copies.sh               15+ public sources checked, dated markdown report
 │   └── find-commit-copies.sh        public repos containing the original commit IDs
 ├── templates/
+│   ├── incident-issue.md            team checklist to paste into a private issue
 │   ├── incident-timeline.md         fill-in timeline and decision log
 │   ├── notification-messages.md     leadership, affected customers, the person involved, reporters
 │   ├── takedown-request.md          the facts a GitHub DMCA notice needs
 │   ├── post-incident-review.md      blameless review with actions and owners
 │   └── executive-report.html        leadership report, print-ready A4
+├── leak                             one command for every script: ./leak help
+├── CHEATSHEET.md                    the first 15 minutes on one page
 ├── tests/scripts.bats               offline tests; test secrets generated at runtime
 ├── Makefile                         make check = shellcheck + tests + secret scan
 └── .github/                         CI (secrets, shellcheck, tests, links), Dependabot, issue and PR templates

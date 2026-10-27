@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+# leak - one entry point for the Leak Response Toolkit.
+#
+# Usage: ./leak <command> [arguments]
+#
+# Commands (in the order you usually need them):
+#   snapshot <owner>/<repo> [dir]        save evidence before the repo is deleted
+#   scan <path> [report.json]            find secrets in the full history (values redacted)
+#   forks <owner>/<repo>                 list every fork, for the takedown request
+#   hunt [--since DATE] <owner>/<repo>   check 15+ public sources for surviving copies
+#   commits [--exclude o/r] <sha> ...    find public repos containing original commits
+#   help [command]                       this text, or a command's own help
+#   version                              print the toolkit version
+#
+# Start here if you are in an incident: README.md -> "Start here: what happened?"
+set -euo pipefail
+
+VERSION="1.1.0"
+here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+script_for() {
+  case "$1" in
+    snapshot) echo "snapshot-evidence.sh" ;;
+    scan) echo "scan-secrets.sh" ;;
+    forks) echo "list-forks.sh" ;;
+    hunt) echo "hunt-copies.sh" ;;
+    commits) echo "find-commit-copies.sh" ;;
+    *) return 1 ;;
+  esac
+}
+
+usage() { sed -n '2,/^set -/{/^#/s/^# \{0,1\}//p;}' "$0"; }
+
+cmd="${1:-help}"
+shift || true
+case "$cmd" in
+  help|-h|--help)
+    if [[ -n "${1:-}" ]] && s="$(script_for "$1")"; then exec "$here/scripts/$s" --help; fi
+    usage ;;
+  version|-v|--version)
+    echo "leak-response-toolkit $VERSION" ;;
+  *)
+    if s="$(script_for "$cmd")"; then
+      exec "$here/scripts/$s" "$@"
+    fi
+    echo "unknown command: $cmd" >&2
+    echo "run './leak help' for the list" >&2
+    exit 2 ;;
+esac
