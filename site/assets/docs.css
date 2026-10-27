@@ -29,7 +29,7 @@
   background: var(--bg-2); color: var(--text-2); text-decoration: none; font-size: 13.5px; line-height: 1.5;
 }
 .sidebar-incident b { display: block; color: var(--text); font-size: 14px; }
-.sidebar-incident .pulse { margin-top: 6px; }
+.sidebar-incident .alert-dot { margin-top: 6px; }
 .sidebar-incident:hover { border-color: var(--line-2); }
 .drawer-backdrop { display: none; }
 
@@ -106,7 +106,7 @@
 .highlight .err { color: inherit; background: none; }
 
 /* ---------- Tables ---------- */
-.table-wrap { margin: 20px 0 28px; border: 1px solid var(--line); border-radius: var(--r); overflow-x: auto; scrollbar-width: thin; }
+.table-wrap { position: relative; margin: 20px 0 28px; border: 1px solid var(--line); border-radius: var(--r); overflow-x: auto; scrollbar-width: thin; }
 .doc-body table { width: 100%; border-collapse: collapse; font-size: 14.5px; line-height: 1.55; }
 .doc-body th, .doc-body td { padding: 10px 14px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }
 .doc-body th { background: var(--bg-2); color: var(--text); font-size: 13px; font-weight: 600; white-space: nowrap; }

@@ -191,7 +191,7 @@ Report vulnerabilities privately; see [SECURITY.md](SECURITY.md).
 
 This is not another secret scanner. It uses gitleaks and adds prevention, response and reporting around it, so it works alongside the tools you may already use.
 
-| | gitleaks | TruffleHog | GitGuardian | Leak Response Toolkit |
+| Capability | gitleaks | TruffleHog | GitGuardian | Leak Response Toolkit |
 |---|---|---|---|---|
 | Scan full Git history | Yes | Yes | Yes | Yes (gitleaks) |
 | Check whether a found secret is still live | No | Yes | Yes | No, by design |

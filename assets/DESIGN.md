@@ -81,25 +81,27 @@ Weights: 400 for text, 600 for labels, 700 for titles. Labels above titles ("eye
 
 The documentation site and home page (`site/`) use the same tokens, with a few additions for an interactive surface. Source: [`site/assets/tokens.css`](../site/assets/tokens.css), [`docs.css`](../site/assets/docs.css) and [`landing.css`](../site/assets/landing.css).
 
-### Themes
+### Idea: an incident field manual
 
-| Surface | Theme |
+The home page reads like the first pages of a well-made operations manual, not a marketing template. It leads with the one thing a reader under pressure needs, the first 15 minutes of a response, and everything after it is reference: the commands set like a manual page, output shown as captioned figures, the guides as a table of contents. Specific content does the persuading; decoration does not.
+
+Avoid the patterns of generated landing pages: glow blobs, background grids, gradient text, a version pill above a centred hero, an uppercase label over every section, bento tiles, pointer spotlights, slogan headings ("X, not Y"), pulsing dots and scroll-in animations.
+
+### Themes and type
+
+| Surface | Rule |
 |---|---|
-| Home page | Always dark. It is the product's front door and matches the terminal. |
-| Documentation | Follows the reader's system setting; the header switch overrides it and is remembered. |
-| Code blocks | Always dark, in both themes, so commands look the same as in a terminal. |
+| Every page | Follows the reader's system setting; the header switch overrides it and is remembered. |
+| Code, terminals, install and verify blocks | Always dark, in both themes, so commands look the same as in a terminal. |
+| Text | IBM Plex Sans (variable, 100–700), an engineering typeface that reads as documentation. Headings 600, body 400. |
+| Code | JetBrains Mono, as in the README images. |
 
-### Depth
+### Colour on the web
 
-| Token | Value | Use |
-|---|---|---|
-| Hairline | `rgba(230, 234, 242, 0.09)` dark, `#E3E7EE` light | Borders between areas. Prefer a hairline to a shadow. |
-| Strong hairline | `rgba(230, 234, 242, 0.16)` dark, `#D2D8E2` light | Hover borders, buttons. |
-| Elevation 1 | `0 1px 2px` | Code blocks in light mode. |
-| Elevation 3 | `0 40px 100px -30px rgba(0,0,0,0.8)` | Floating windows only: terminal, search, product frame. |
-| Header | 72–78% opaque background with a 14 px blur | Sticky header in every theme. |
-
-**Ambient light** is allowed in two places only: behind the home page headline and behind the closing call to action. It is one ember radial gradient at no more than 20% opacity, plus one cool radial (`rgba(92,120,190,0.16)`) behind the product. A 64 px grid at 4.5% opacity, faded out with a mask, sits under both. Nowhere else.
+- **Ink does the work.** Primary buttons are ink on paper (`#111827` on white; inverted in dark mode).
+- **Red means urgency.** The incident card's top rule, its label and the header's "Leaked a secret?" dot. Nowhere else.
+- **Ember marks links and the current page**, never large surfaces.
+- **Depth comes from hairlines** (`#E3E7EE` light, `rgba(230, 234, 242, 0.09)` dark), paper surfaces and one soft shadow on the incident card. The header is solid.
 
 ### Code colours
 
@@ -116,23 +118,21 @@ Two hues on the dark code surface, so syntax never competes with status colours.
 
 ### Motion
 
-| Token | Value | Use |
-|---|---|---|
-| Fast | 150 ms, `cubic-bezier(0.2, 0.7, 0.2, 1)` | Hover and focus changes. |
-| Reveal | 700 ms, same easing, 70 ms stagger | Home page sections fading in on scroll. |
-| Terminal | 100 ms per line | The hero terminal, once, on load. |
-
-All motion stops when the reader asks for reduced motion. Nothing loops except the incident indicator's pulse, which also stops.
+Hover and focus changes only: 150 ms, `cubic-bezier(0.2, 0.7, 0.2, 1)`. Nothing moves on scroll or on load, and nothing loops. Reduced-motion settings are respected.
 
 ### Components
 
 | Component | Specification |
 |---|---|
-| Header | Brand, four links, search (`Ctrl K` or `⌘K`, or `/`), theme switch on documentation pages, GitHub, and "Leaked a secret?" with a pulsing `fail` dot that opens the cheat sheet. |
-| Search | Modal dialog over a blurred backdrop. Results are page sections, keyboard-driven (arrow keys, Enter, Esc). The index is built from the Markdown by `tools/build-search-index.py`. |
+| Header | Solid, hairline below. Brand, four links, search (`Ctrl K`, `⌘K` or `/`), theme switch, GitHub, and "Leaked a secret?" with a static `fail` dot that opens the cheat sheet. |
+| Incident card | Paper surface, 3 px `fail` top rule, label in `fail`. Rows: time in 13 px mono, the action in 15 px with the verb phrase in 600, an optional command chip. Footer links to the cheat sheet and the runbook. Content mirrors `CHEATSHEET.md`. |
+| Manual page | `dl` grid: command synopsis in mono (arguments in `muted`), description beside it; groups match `leak help` (Prevent, Respond, Setup). |
+| Figure | Hairline frame, 10 px radius, caption below starting with **Figure n.** Screenshots are cropped from the top at 16:9; terminals show in full. |
+| Table of contents | Four columns under a 2 px ink rule; each entry is a guide title in 600 with a one-line summary. |
+| Search | Modal dialog over a dimmed backdrop. Results are page sections, keyboard-driven (arrow keys, Enter, Esc). The index is built from the Markdown by `tools/build-search-index.py`. |
 | Callout | Tint background, 30% status-colour border, 18 px line icon, sentence-case label. Note uses `info`, Tip `pass`, Important `ember`, Warning `warn`, Caution `fail`. |
 | Code block | Dark surface, 40 px header with the language and a copy button, 13.5 px mono on a 1.7 line height. |
-| Bento tile | Raised gradient surface (`#131A29` to `#0F1421`), 18 px radius, hairline border; a soft highlight follows the pointer on devices that hover. Each tile shows a real piece of the product, never an abstract illustration. |
+| Logo strip | Monochrome marks in `text-2` from [Simple Icons](https://simpleicons.org) 16.36.0 (CC0), 19 px, each followed by the product name. Brands whose owners do not permit logo use without a licence (AWS, Microsoft Azure, Azure DevOps) and tools without a mark appear as names only. |
 | Sidebar | Group titles in 13 px semibold; pages on a 1 px guide line; the current page in ember with an ember guide segment. |
 
 ### Checks

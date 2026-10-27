@@ -25,15 +25,9 @@
   body.appendChild(live);
 
   // ---------- Header ----------
-  var header = document.querySelector("[data-header]");
-  if (header) {
-    var onScroll = function () { header.classList.toggle("scrolled", window.scrollY > 8); };
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-  }
   each("kbd[data-mod]", function (k) { k.textContent = isMac ? "⌘K" : "Ctrl K"; });
 
-  // ---------- Theme (docs): follows the system until the reader picks one ----------
+  // ---------- Theme: follows the system until the reader picks one ----------
   var toggle = document.querySelector("[data-theme-toggle]");
   function themeLabel() {
     if (toggle) toggle.setAttribute("aria-label", doc.dataset.theme === "dark" ? "Switch to light theme" : "Switch to dark theme");
@@ -127,7 +121,7 @@
     var dark = doc.dataset.theme === "dark";
     return {
       startOnLoad: false, securityLevel: "strict", theme: "base",
-      fontFamily: "Inter, system-ui, sans-serif",
+      fontFamily: "IBM Plex Sans, system-ui, sans-serif",
       themeVariables: dark
         ? { fontSize: "15px", background: "#0E1320", primaryColor: "#1C2433", primaryTextColor: "#E6EAF2", primaryBorderColor: "#3A4558", secondaryColor: "#111827", tertiaryColor: "#0E1320", lineColor: "#828D9F", textColor: "#E6EAF2", clusterBkg: "#111827", clusterBorder: "#2B3445", edgeLabelBackground: "#0E1320", noteBkgColor: "#2A2112", noteTextColor: "#E6EAF2", noteBorderColor: "#D29922" }
         : { fontSize: "15px", background: "#F6F7F9", primaryColor: "#FFFFFF", primaryTextColor: "#111827", primaryBorderColor: "#C9D0DC", secondaryColor: "#F1F3F6", tertiaryColor: "#FFFFFF", lineColor: "#667183", textColor: "#111827", clusterBkg: "#FFFFFF", clusterBorder: "#E3E7EE", edgeLabelBackground: "#F6F7F9", noteBkgColor: "#FFF8C5", noteTextColor: "#111827", noteBorderColor: "#9A6700" }
@@ -445,31 +439,6 @@
       });
     });
   });
-
-  // ---------- Home page motion ----------
-  var reveals = document.querySelectorAll(".reveal");
-  if (reveals.length && "IntersectionObserver" in window && !reduceMotion) {
-    doc.classList.add("reveal-ready");
-    var shown = new IntersectionObserver(function (entries) {
-      entries.forEach(function (e) {
-        if (!e.isIntersecting) return;
-        e.target.classList.add("in");
-        shown.unobserve(e.target);
-      });
-    }, { rootMargin: "0px 0px -8% 0px", threshold: 0.08 });
-    Array.prototype.forEach.call(reveals, function (r) { shown.observe(r); });
-  } else {
-    Array.prototype.forEach.call(reveals, function (r) { r.classList.add("in"); });
-  }
-  if (media("(hover: hover) and (pointer: fine)").matches) {
-    each(".tile", function (t) {
-      t.addEventListener("pointermove", function (e) {
-        var r = t.getBoundingClientRect();
-        t.style.setProperty("--mx", (e.clientX - r.left) + "px");
-        t.style.setProperty("--my", (e.clientY - r.top) + "px");
-      });
-    });
-  }
 
   // Regions that scroll sideways must be reachable with the keyboard.
   function focusScrollables() {

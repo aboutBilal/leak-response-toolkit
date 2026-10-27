@@ -6,7 +6,7 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 
 ### Added
 
-- **Redesigned documentation site and home page.** A new home page (hero terminal with real `leak audit` output, product tiles, timeline, output showcase, verification, comparison, FAQ) and a new documentation theme: light and dark themes with a switch, dark code blocks with copy buttons, callouts with icons, heading links, an "On this page" rail, a mobile drawer, print styles for runbooks, and a 404 page.
+- **Redesigned documentation site and home page.** The home page is now an incident field manual: it leads with the first 15 minutes of a response, then the `leak` commands set like a manual page, real output as captioned figures, the guides as a table of contents, release verification, a comparison and answers to common questions. The documentation has light and dark themes with a switch, IBM Plex Sans, dark code blocks with copy buttons, callouts with icons, heading links, an "On this page" rail, a mobile drawer, print styles for runbooks, and a 404 page.
 - **Documentation search.** Press `Ctrl K`, `⌘K` or `/` on any page to search every runbook, guide and template by section.
 - **Site checks in CI.** `tools/check-site.py` checks every internal link and anchor, page titles, descriptions, headings, image alt text and the search index on every pull request, before anything is deployed.
 

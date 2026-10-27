@@ -2,7 +2,7 @@
 
 The core response is always the same: **rotate secrets first, then remove copies, then investigate and prevent.** What differs is how much you control, where copies can be, and how you clean up. Find your situation below, then follow the linked steps.
 
-| | Scenario | You control the copy? | Jump to |
+| Case | Scenario | You control the copy? | Jump to |
 |:-:|---|:-:|---|
 | A | You (or your team) committed a secret to a public repository | Yes | [A](#a--a-secret-committed-to-your-own-public-repository) |
 | B | A private repository was made public by mistake | Yes | [B](#b--a-private-repository-was-made-public-by-mistake) |

@@ -2,7 +2,7 @@
 
 > **Blameless:** this review asks how the system allowed the leak, not who to blame. People act sensibly given what they know and what the system makes easy. Fix the system and the same mistake becomes hard to make.
 
-| | |
+| Field | Value |
 |---|---|
 | Date of incident | |
 | Date of review | |

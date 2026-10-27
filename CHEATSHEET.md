@@ -2,7 +2,7 @@
 
 Print this, pin it, or keep it open during an incident. The full guide is in the [README](README.md).
 
-| | Do this | Not this |
+| When | Do this | Not this |
 |:-:|---|---|
 | **0–2 min** | Say it out loud: tell your lead or security channel. Start a timeline with times in UTC | Quietly delete the commit and hope |
 | **2–5 min** | If you control the copy and it was **public by mistake**, make it **private** (keeps evidence). Otherwise ask the owner for **Insights → Traffic** screenshots before anything is deleted | Delete first: you lose clone counts and the exact contents |

@@ -4,7 +4,7 @@
 
 ## Summary
 
-| | |
+| Field | Value |
 |---|---|
 | Incident lead | |
 | Opened | |
