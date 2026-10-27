@@ -23,7 +23,7 @@ People open this toolkit during an incident. The visuals should be quiet, legibl
 | `ink-900` | `#111827` | Cards, terminal surface |
 | `ink-800` | `#1C2433` | Raised elements: title bars, chips |
 | `ink-700` | `#2B3445` | Hairline borders, inactive dots |
-| `ink-500` | `#6B7689` | Tertiary text, arrows, hints |
+| `ink-500` | `#828D9F` | Tertiary text, arrows, hints (4.6:1 or better on every dark surface) |
 | `ink-300` | `#A3ADBF` | Secondary text |
 | `ink-100` | `#E6EAF2` | Primary text |
 | `ember-500` | `#FF6B3D` | Brand mark |
@@ -41,7 +41,7 @@ People open this toolkit during an incident. The visuals should be quiet, legibl
 | `line` | `#E3E7EE` | Hairlines |
 | `text` | `#111827` | Primary text and headings |
 | `text-2` | `#4B5565` | Secondary text |
-| `muted` | `#6B7689` | Notes, labels |
+| `muted` | `#667183` | Notes, labels (4.6:1 on `paper` and `wash`) |
 | `ember-700` | `#C2410C` | Accent text on white (4.9:1) |
 | `pass` / `pass-tint` | `#1A7F37` / `#DAFBE1` | Passed |
 | `warn` / `warn-tint` | `#9A6700` / `#FFF8C5` | Needs attention; fields to complete |

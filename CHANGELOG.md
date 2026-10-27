@@ -4,6 +4,39 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
+## [3.2.0] - 2026-10-27
+
+An independent review found 18 issues before launch. All are fixed, each with a regression test.
+
+### Security
+
+- `leak audit` could print a secret value for a Dockerfile with an unusual name (for example `Dockerfile:v2`). The finding is now assembled from the file, line and variable name only, so the value cannot appear.
+- `GITHUB_TOKEN` and webhook URLs are passed to `curl` and `git` on standard input or through the environment, never as command-line arguments, so they no longer appear in process lists.
+
+### Fixed
+
+- **Fail closed.** A scanner error (for example an invalid `.gitleaks.toml`) exited with the same code as "secrets found", and the GitHub Action then passed. Scanner failures now exit `4`, and the Action fails.
+- **No false "clean".** `leak hunt` reported rate-limited or failed sources (Sourcegraph, GitHub activity, the event archive) as clean. Every source now reports "not checked" on failure, and `hunt` exits `4` when the result is incomplete.
+- `leak forks` and `leak commits` exit `4` on API errors instead of printing an empty result.
+- `leak audit-org` includes repositories whose names start with a dot (such as `.github`), clones private repositories with the token, marks repositories it could not clone as "not audited" (excluded from the average), and stops listing once `--limit` is reached.
+- A missing option value (for example `--limit` with nothing after it) exits `2` instead of hanging.
+- `leak notify` sends every word of the message, not only the last.
+- `leak report` reports a clean scan as clean.
+- `leak scan` writes its default report to `./secrets-report.json` instead of the parent folder.
+- `--help` works after other arguments; usage lines name the `leak` command.
+- Tables print without `column` installed; the minimum bash version is stated correctly (4.4); `leak` no longer needs `readlink -f`.
+- README and SECURITY claims corrected: CodeQL runs on `main` and pull requests, every contacted service is listed, and `snapshot` is described as keeping a copy of the leaked repository.
+
+### Added
+
+- `scripts/lib.sh`: shared helpers enforcing the rules above (credentials out of argv, errors never reported as clean, one set of exit codes).
+- Exit codes are documented everywhere: `0` clean, `1` findings, `2` usage error, `4` incomplete.
+- GitHub Action: `github-token` input (defaults to the workflow token); hunts warn when sources could not be checked.
+- Releases move the major tag (`v3`) automatically, so `@v3` always means the latest 3.x release.
+- CI runs actionlint.
+- Documentation site (GitHub Pages): a product home page and the docs, with sidebar filtering, an "On this page" contents rail, copy buttons, previous and next links, dark mode and self-hosted fonts. Lighthouse: accessibility 100 on every page.
+- 9 regression tests (34 in total).
+
 ## [3.1.0] - 2026-10-27
 
 ### Added
@@ -135,7 +168,8 @@ Prevention becomes the second half of the kit: not only responding to leaks, but
 - Templates: incident timeline, takedown request, notification messages, post-incident review, executive report (print-ready HTML).
 - Quality: offline bats tests, shellcheck, gitleaks on full history, link and anchor checks in CI, Dependabot for pinned actions, pre-commit hook, contribution guide, issue and pull request templates, security policy.
 
-[Unreleased]: https://github.com/aboutBilal/leak-response-toolkit/compare/v3.1.0...HEAD
+[Unreleased]: https://github.com/aboutBilal/leak-response-toolkit/compare/v3.2.0...HEAD
+[3.2.0]: https://github.com/aboutBilal/leak-response-toolkit/compare/v3.1.0...v3.2.0
 [3.1.0]: https://github.com/aboutBilal/leak-response-toolkit/compare/v3.0.0...v3.1.0
 [3.0.0]: https://github.com/aboutBilal/leak-response-toolkit/compare/v2.3.0...v3.0.0
 [2.3.0]: https://github.com/aboutBilal/leak-response-toolkit/compare/v2.2.0...v2.3.0

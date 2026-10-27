@@ -4,16 +4,18 @@
 # CI secret scanning, Docker hygiene and (unless --no-scan) the full history.
 # Read-only: changes nothing. See docs/08-secrets-by-design.md for the why.
 #
-# Usage: ./scripts/audit.sh [--no-scan] [--json] [path]   (default path: current directory)
+# Usage: leak audit [--no-scan] [--json] [path]   (default path: current directory)
 #   --no-scan   skip the full-history secret scan (fast; history is reported as not checked)
 #   --json      print one JSON object (grade, score, every check) instead of text
 # Exit:  0 no critical findings, 1 critical findings, 2 bad arguments
 set -uo pipefail
+# shellcheck source=scripts/lib.sh
+. "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 
-case "${1:-}" in -h|--help) sed -n '2,/^set -/{/^#/s/^# \{0,1\}//p;}' "$0"; exit 0 ;; esac
 scan=1; json=0; repo=""
 while (($#)); do
   case "$1" in
+    -h|--help) print_help "$0"; exit 0 ;;
     --no-scan) scan=0 ;;
     --json) json=1 ;;
     -*) echo "unknown option: $1" >&2; exit 2 ;;
@@ -81,16 +83,32 @@ else warn "no CI configuration found" 15; tip "add a job from prevention/ci/"; f
 
 heading "5. Container hygiene"
 # Files ending in .example or kept under examples/ are documentation, not builds.
-dockerfiles="$(git -C "$repo" ls-files | grep -E '(^|/)(Dockerfile[^/]*|[^/]*\.Dockerfile)$' | grep -vE '(\.example$|(^|/)examples?/)' || true)"
-if [[ -z "$dockerfiles" ]]; then pass "no Dockerfiles" 10
+dockerfiles=()
+while IFS= read -r f; do dockerfiles+=("$f"); done < <(git -C "$repo" ls-files | grep -E '(^|/)(Dockerfile[^/]*|[^/]*\.Dockerfile)$' | grep -vE '(\.example$|(^|/)examples?/)' || true)
+if ((${#dockerfiles[@]} == 0)); then pass "no Dockerfiles" 10
 else
-  bad_lines="$(cd "$repo" && grep -nHiE '^[[:space:]]*(ARG|ENV)[[:space:]]+[A-Z0-9_]*(SECRET|PASSWORD|PASSWD|TOKEN|API_KEY|PRIVATE_KEY)[A-Z0-9_]*[[:space:]]*=[[:space:]]*[^$[:space:]]' $dockerfiles 2>/dev/null | head -3 || true)"
-  if [[ -f "$repo/.dockerignore" ]] && grep -qE '^\.env' "$repo/.dockerignore" && [[ -z "$bad_lines" ]]; then pass ".env excluded from builds; no secrets in ARG/ENV" 10
+  # Report where a secret-looking value is baked in: file, line and variable name only.
+  # The message is assembled from those three parts, so the value can never be printed.
+  where=""
+  secret_kv='^[[:space:]]*([Aa][Rr][Gg]|[Ee][Nn][Vv])[[:space:]]+([A-Za-z0-9_]*([Ss][Ee][Cc][Rr][Ee][Tt]|[Pp][Aa][Ss][Ss][Ww][Oo]?[Rr][Dd]|[Tt][Oo][Kk][Ee][Nn]|[Aa][Pp][Ii]_[Kk][Ee][Yy]|[Pp][Rr][Ii][Vv][Aa][Tt][Ee]_[Kk][Ee][Yy])[A-Za-z0-9_]*)[[:space:]]*=[[:space:]]*[^$[:space:]]'
+  for f in "${dockerfiles[@]}"; do
+    n=0
+    while IFS= read -r line || [[ -n "$line" ]]; do
+      n=$((n + 1))
+      if [[ "$line" =~ $secret_kv ]]; then
+        where="$f:$n (${BASH_REMATCH[1]^^} ${BASH_REMATCH[2]}=<redacted>)"
+        break 2
+      fi
+    done < "$repo/$f"
+  done
+  if [[ -n "$where" ]]; then
+    fail "secret-looking value baked into an image: $where" 10
+    tip "use BuildKit secret mounts: prevention/docker/Dockerfile.build-secrets.example"
+  elif [[ -f "$repo/.dockerignore" ]] && grep -qE '^\.env' "$repo/.dockerignore"; then
+    pass ".env excluded from builds; no secrets in ARG/ENV" 10
   else
-    # Show where, never the value: file:line and the variable name only.
-    where="$(echo "$bad_lines" | head -1 | sed -E 's/^([^:]+:[0-9]+):[[:space:]]*([Aa][Rr][Gg]|[Ee][Nn][Vv])[[:space:]]+([A-Za-z0-9_]+).*/\1 (\2 \3=<redacted>)/')"
-    [[ -n "$bad_lines" ]] && { fail "secret-looking value baked into an image: $where" 10; tip "use BuildKit secret mounts: prevention/docker/Dockerfile.build-secrets.example"; }
-    [[ -z "$bad_lines" ]] && { warn ".dockerignore missing or does not exclude .env" 10; tip "copy prevention/docker/dockerignore to .dockerignore"; }
+    warn ".dockerignore missing or does not exclude .env" 10
+    tip "copy prevention/docker/dockerignore to .dockerignore"
   fi
 fi
 
@@ -102,7 +120,7 @@ if ((scan)); then
     0) pass "no secrets found in any commit" 20 ;;
     1) fail "$(jq 'length' "$report") secret finding(s) in history (types: $(jq -r '[.[].RuleID]|unique|join(", ")' "$report"))" 20
        tip "rotate them first, then see docs/06-scenarios.md (scenario A) to clean history" ;;
-    *) warn "scan could not run: $(echo "$out" | tail -1)" 20; tip "./leak doctor" ;;
+    *) warn "history scan failed, so history is not checked: $(echo "$out" | tail -1)" 20; tip "leak doctor" ;;
   esac
   rm -f "$report"
 else

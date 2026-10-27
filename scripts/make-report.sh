@@ -3,27 +3,26 @@
 # The investigation table, counts and secret types are filled in from the results;
 # facts the tools cannot know (exposure window, owners, decisions) stay highlighted.
 #
-# Usage: ./scripts/make-report.sh <hunt-dir> [--scan secrets-report.json] [--out report.html]
+# Usage: leak report <hunt-dir> [--scan secrets-report.json] [--out report.html]
 #   <hunt-dir>   a folder written by hunt-copies.sh (has meta.json and results.jsonl)
 #   --scan       the JSON report written by scan-secrets.sh (secret TYPES are used, never values)
 #   --out        output file (default: <hunt-dir>/executive-report.html)
 set -euo pipefail
 
-help() { sed -n '2,/^set -/{/^#/s/^# \{0,1\}//p;}' "$0"; }
-case "${1:-}" in
-  -h|--help) help; exit 0 ;;
-  "") help >&2; exit 2 ;;
-esac
+# shellcheck source=scripts/lib.sh
+. "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 
-hunt="$1"; shift
-scan=""; out=""
+hunt=""; scan=""; out=""
 while (($#)); do
   case "$1" in
-    --scan) scan="$2"; shift 2 ;;
-    --out) out="$2"; shift 2 ;;
-    *) echo "unknown option: $1" >&2; exit 2 ;;
+    -h|--help) print_help "$0"; exit 0 ;;
+    --scan) need_value "$1" "${2:-}"; scan="$2"; shift 2 ;;
+    --out) need_value "$1" "${2:-}"; out="$2"; shift 2 ;;
+    -*) echo "unknown option: $1" >&2; exit "$EXIT_USAGE" ;;
+    *) if [[ -z "$hunt" ]]; then hunt="$1"; else echo "unexpected argument: $1" >&2; exit "$EXIT_USAGE"; fi; shift ;;
   esac
 done
+[[ -n "$hunt" ]] || { print_help "$0" >&2; exit "$EXIT_USAGE"; }
 [[ -f "$hunt/meta.json" && -f "$hunt/results.jsonl" ]] || { echo "not a hunt folder (needs meta.json and results.jsonl): $hunt" >&2; exit 2; }
 [[ -z "$scan" || -f "$scan" ]] || { echo "scan report not found: $scan" >&2; exit 2; }
 command -v jq >/dev/null || { echo "missing: jq" >&2; exit 2; }
@@ -54,8 +53,13 @@ if [[ -n "$scan" ]]; then
   secret_rows="$(jq -r --arg owner "$(tbc owner)" --arg st "$(tbc status)" \
     'group_by(.RuleID)[] | "<tr><td>\(.[0].RuleID|@html)</td><td>\(length)</td><td>\([.[].File]|unique|length)</td><td>\(min_by(.Date).Date[0:10])</td><td>\($owner)</td><td>\($st)</td></tr>"' "$scan")"
   n_types="$(jq '[.[].RuleID] | unique | length' "$scan")"
-  secret_summary="$n_types type(s) found by the history scan: $(jq -r '[.[].RuleID] | unique | join(", ") | @html' "$scan")"
-  secrets_card_v="$n_types type(s) found"
+  if ((n_types == 0)); then
+    secret_summary="The history scan found no secrets"
+    secrets_card_v="None found"
+  else
+    secret_summary="$n_types type(s) found by the history scan: $(jq -r '[.[].RuleID] | unique | join(", ") | @html' "$scan")"
+    secrets_card_v="$n_types type(s) found"
+  fi
 fi
 
 check_rows="$(jq -r '
@@ -95,12 +99,12 @@ $style
 <div class="summary">
   <p><b>What happened.</b> $(tbc "Whose code, pushed where, public for how long.")</p>
   <p><b>What the investigation found.</b> $finding $total checks were run on $run.</p>
-  <p><b>Secrets.</b> $secret_summary. Every one is treated as compromised until rotated and the old value revoked.</p>
+  <p><b>Secrets.</b> $secret_summary.$( [[ "$secrets_card_v" == "None found" ]] || echo " Every one is treated as compromised until rotated and the old value revoked.")</p>
   <p><b>What remains.</b> Copies cloned while the code was public cannot be detected by anyone, so the code is treated as disclosed.</p>
 </div>
 <div class="cards">
   $copies_card
-  <div class="card bad"><div class="k">Credentials in the code</div><div class="v">$secrets_card_v</div><p>Safe only once each is rotated and revoked.</p></div>
+  <div class="card $( [[ "$secrets_card_v" == "None found" ]] && echo ok || echo bad)"><div class="k">Credentials in the code</div><div class="v">$secrets_card_v</div><p>Safe only once each is rotated and revoked.</p></div>
   <div class="card warn"><div class="k">Source code</div><div class="v">Disclosed</div><p>May have been cloned while public.</p></div>
 </div>
 
@@ -127,7 +131,7 @@ $style
 </ul>
 
 <h2>4. Secrets to rotate</h2>
-$(if [[ -n "$secret_rows" ]]; then echo '<table><tr><th>Type</th><th>Findings</th><th>Files</th><th>First seen</th><th>Owner</th><th>Status</th></tr>'"$secret_rows"'</table><p class="note">Types and counts only. Values are never included in this report.</p>'; else echo "<p>$(tbc "Run ./leak scan and pass --scan to fill this section")</p>"; fi)
+$(if [[ -n "$secret_rows" ]]; then echo '<table><tr><th>Type</th><th>Findings</th><th>Files</th><th>First seen</th><th>Owner</th><th>Status</th></tr>'"$secret_rows"'</table><p class="note">Types and counts only. Values are never included in this report.</p>'; elif [[ -n "$scan" ]]; then echo "<p>No secrets were found in any commit. Keep the scan report with the evidence.</p>"; else echo "<p>$(tbc "Run leak scan and pass --scan to fill this section")</p>"; fi)
 
 <h2>5. Next actions</h2>
 <table>

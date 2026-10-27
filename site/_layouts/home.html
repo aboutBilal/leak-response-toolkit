@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ site.title }}: {{ site.description }}</title>
+  <meta name="description" content="Open-source runbooks, tested prevention configs and a CLI to keep secrets out of Git and respond in minutes when one leaks.">
+  <meta property="og:title" content="{{ site.title }}">
+  <meta property="og:description" content="{{ site.description }}">
+  <meta property="og:image" content="{{ site.url }}{{ site.baseurl }}/assets/social-preview.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="{{ site.baseurl }}/assets/logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="{{ site.baseurl }}/assets/fonts/fonts.css">
+  <link rel="stylesheet" href="{{ site.baseurl }}/assets/site.css">
+</head>
+<body class="landing" data-base="{{ site.baseurl }}" data-repo="{{ site.repository }}">
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="top">
+    <a class="brand" href="{{ site.baseurl }}/"><img src="{{ site.baseurl }}/assets/logo.svg" alt="" width="24" height="24"><span>Leak Response Toolkit</span></a>
+    <nav class="top-links" aria-label="Main">
+      <a href="{{ site.baseurl }}/overview.html">Docs</a>
+      <a href="{{ site.baseurl }}/docs/01-runbook.html">Runbook</a>
+      <a href="{{ site.baseurl }}/docs/08-secrets-by-design.html">Prevention</a>
+      <a href="https://github.com/{{ site.repository }}">GitHub</a>
+    </nav>
+  </header>
+  <main id="main">{{ content }}</main>
+  <footer class="site-foot">
+    <div class="wrap foot-grid">
+      <div><a class="brand" href="{{ site.baseurl }}/"><img src="{{ site.baseurl }}/assets/logo.svg" alt="" width="20" height="20"><span>Leak Response Toolkit</span></a><p>MIT licensed. Engineering guidance, not legal advice.</p></div>
+      <nav aria-label="Footer"><a href="{{ site.baseurl }}/overview.html">Documentation</a><a href="{{ site.baseurl }}/SECURITY.html">Security</a><a href="{{ site.baseurl }}/CHANGELOG.html">Changelog</a><a href="{{ site.baseurl }}/CONTRIBUTING.html">Contributing</a><a href="https://github.com/{{ site.repository }}">GitHub</a></nav>
+    </div>
+  </footer>
+  <script src="{{ site.baseurl }}/assets/site.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,31 @@
+- section: Start
+  pages:
+    - { title: Overview, url: /overview.html }
+    - { title: Cheat sheet, url: /CHEATSHEET.html }
+- section: Respond
+  pages:
+    - { title: Runbook, url: /docs/01-runbook.html }
+    - { title: Scenarios, url: /docs/06-scenarios.html }
+    - { title: Rotate secrets, url: /docs/02-rotate-secrets.html }
+    - { title: Investigate, url: /docs/03-investigate.html }
+    - { title: Where copies survive, url: /docs/05-where-copies-survive.html }
+- section: Prevent
+  pages:
+    - { title: Secrets by design, url: /docs/08-secrets-by-design.html }
+    - { title: Prevention, url: /docs/04-prevention.html }
+    - { title: Prevention kit, url: /prevention/README.html }
+    - { title: Practice drill, url: /docs/07-practice-drill.html }
+- section: Templates
+  pages:
+    - { title: Incident checklist, url: /templates/incident-issue.html }
+    - { title: Notification messages, url: /templates/notification-messages.html }
+    - { title: Incident timeline, url: /templates/incident-timeline.html }
+    - { title: Takedown request, url: /templates/takedown-request.html }
+    - { title: Post-incident review, url: /templates/post-incident-review.html }
+- section: Project
+  pages:
+    - { title: Security, url: /SECURITY.html }
+    - { title: Contributing, url: /CONTRIBUTING.html }
+    - { title: Changelog, url: /CHANGELOG.html }
+    - { title: Roadmap, url: /ROADMAP.html }
+    - { title: Visual language, url: /assets/DESIGN.html }

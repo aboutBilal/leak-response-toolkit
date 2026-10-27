@@ -2,7 +2,7 @@
 <rect x="0.5" y="0.5" width="999" height="447" rx="12" fill="#111827" stroke="#2B3445"/>
 <path d="M12.5 0.5 H987.5 A12 12 0 0 1 999.5 12.5 V40 H0.5 V12.5 A12 12 0 0 1 12.5 0.5 Z" fill="#1C2433"/>
 <circle cx="24" cy="20" r="5" fill="#2B3445"/><circle cx="42" cy="20" r="5" fill="#2B3445"/><circle cx="60" cy="20" r="5" fill="#2B3445"/>
-<text x="500.0" y="25" fill="#6B7689" font-family="'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,'Liberation Mono',monospace" font-size="13" text-anchor="middle">leak scan · real output, values redacted by gitleaks</text>
+<text x="500.0" y="25" fill="#828D9F" font-family="'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,'Liberation Mono',monospace" font-size="13" text-anchor="middle">leak scan · real output, values redacted by gitleaks</text>
 <g font-family="'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,'Liberation Mono',monospace" font-size="14.5" style="font-variant-ligatures:none">
 <text style="white-space:pre" x="24" y="72" font-weight="600"><tspan fill="#FF8A5C">$</tspan><tspan fill="#E6EAF2"> leak scan payments-api</tspan></text>
 <text style="white-space:pre" x="24" y="96" fill="#E6EAF2" font-weight="600">==&gt; gitleaks v8.30.1 (Docker image, pinned by digest) on ./payments-api</text>
@@ -10,7 +10,7 @@
 <text style="white-space:pre" x="24" y="144" fill="#A3ADBF" font-weight="400"></text>
 <text style="white-space:pre" x="24" y="168" fill="#E6EAF2" font-weight="600">==&gt; 2 finding(s), secret values redacted. Full report: ./report.json</text>
 <text style="white-space:pre" x="24" y="192" fill="#A3ADBF" font-weight="400">    Oldest first (when each secret entered the history); first 50 shown:</text>
-<text style="white-space:pre" x="24" y="216" fill="#6B7689" font-weight="600">RULE              FILE          LINE  COMMIT      DATE</text>
+<text style="white-space:pre" x="24" y="216" fill="#828D9F" font-weight="600">RULE              FILE          LINE  COMMIT      DATE</text>
 <text style="white-space:pre" x="24" y="240" fill="#F85149" font-weight="400">aws-access-token  settings.ini  1     b52022d6c5  2026-10-27T10:53:30Z</text>
 <text style="white-space:pre" x="24" y="264" fill="#F85149" font-weight="400">slack-bot-token   settings.ini  2     b52022d6c5  2026-10-27T10:53:30Z</text>
 <text style="white-space:pre" x="24" y="288" fill="#A3ADBF" font-weight="400"></text>

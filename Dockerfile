@@ -2,8 +2,9 @@
 # The toolkit with every dependency, ready to run anywhere Docker runs.
 #
 #   docker run --rm -v "$PWD:/repo" ghcr.io/aboutbilal/leak-response-toolkit audit /repo
-#   docker run --rm -v "$PWD:/repo" ghcr.io/aboutbilal/leak-response-toolkit scan /repo
-#   docker run --rm ghcr.io/aboutbilal/leak-response-toolkit hunt --since 2026-01-01 owner/repo
+#   docker run --rm -v "$PWD:/repo" ghcr.io/aboutbilal/leak-response-toolkit scan /repo     (report: ./secrets-report.json)
+#   docker run --rm -v "$PWD:/work" -w /work ghcr.io/aboutbilal/leak-response-toolkit hunt --since 2026-01-01 owner/repo
+#   (results are written to the mounted folder; add -e GITHUB_TOKEN for higher API limits)
 #
 # Built on the official gitleaks image, so scans use the same pinned gitleaks as CI.
 FROM ghcr.io/gitleaks/gitleaks:v8.30.1@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f

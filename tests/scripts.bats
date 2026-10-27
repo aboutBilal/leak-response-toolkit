@@ -30,6 +30,7 @@ commit_all() {
 
 @test "every script prints its help and exits 0" {
   for s in "$ROOT"/scripts/*.sh "$ROOT"/leak; do
+    [[ "$s" == */lib.sh ]] && continue   # a sourced library, not a command
     run "$s" --help
     [ "$status" -eq 0 ] || { echo "$s exited $status"; false; }
     [[ "$output" == *"Usage:"* ]] || { echo "$s help has no Usage line"; false; }
@@ -270,4 +271,115 @@ commit_all() {
   [ "$status" -eq 0 ]
   grep -q 'prefers-reduced-motion' "$TMP/out.svg"
   grep -q 'class="ln"' "$TMP/out.svg"
+}
+
+# ---------- Regression tests for the independent review (v3.2.0) ----------
+
+# fake_curl <http-code> [body]: a curl test double that answers every request the same way.
+fake_curl() {
+  mkdir -p "$TMP/bin"
+  cat > "$TMP/bin/curl" <<MOCK
+#!/usr/bin/env bash
+out=""; reads=0
+while ((\$#)); do case "\$1" in -o) out="\$2"; shift 2 ;; -K) [[ "\$2" == - ]] && reads=1; shift 2 ;; *) shift ;; esac; done
+((reads)) && cat > "$TMP/curl-config.txt"
+[[ -n "\$out" ]] && printf '%s' '${2:-{\}}' > "\$out"
+printf '%s' '$1'
+MOCK
+  chmod +x "$TMP/bin/curl"
+  printf '#!/bin/sh\nexit 0\n' > "$TMP/bin/sleep"; chmod +x "$TMP/bin/sleep"
+}
+
+@test "scan: a scanner failure exits 4, never 1 (fail closed)" {
+  scanner_available || skip "needs gitleaks or docker"
+  new_repo "$TMP/broken"
+  echo "hello" > "$TMP/broken/README.md"
+  echo "not valid toml [[[" > "$TMP/broken/.gitleaks.toml"
+  commit_all "$TMP/broken" "init"
+  run "$ROOT/scripts/scan-secrets.sh" "$TMP/broken" "$TMP/broken.json"
+  [ "$status" -eq 4 ]
+  [[ "$output" == *"scan is incomplete"* ]]
+}
+
+@test "audit: an odd Dockerfile name cannot leak the value (Dockerfile:v2)" {
+  new_repo "$TMP/odd"
+  value="$(head -c 4096 /dev/urandom | LC_ALL=C tr -dc 'a-z0-9' | head -c 20)"
+  printf 'FROM alpine\nENV API_TOKEN=%s\n' "$value" > "$TMP/odd/Dockerfile:v2"
+  commit_all "$TMP/odd" "odd name"
+  NO_COLOR=1 run "$ROOT/scripts/audit.sh" --no-scan "$TMP/odd"
+  [[ "$output" == *"API_TOKEN=<redacted>"* ]]
+  [[ "$output" != *"$value"* ]]
+  run "$ROOT/scripts/audit.sh" --no-scan --json "$TMP/odd"
+  [[ "$output" != *"$value"* ]]
+}
+
+@test "hunt: every failing source is 'not checked', never clean, and exits 4" {
+  fake_curl 403 '{"message":"API rate limit exceeded"}'
+  run env PATH="$TMP/bin:$PATH" "$ROOT/scripts/hunt-copies.sh" --since 2026-01-01 --out "$TMP/h" someone/example
+  [ "$status" -eq 4 ]
+  report="$(ls "$TMP"/h/hunt_*/REPORT.md)"
+  run grep -c '^| .*| clean |' "$report"
+  [ "$output" = "0" ]
+  run grep -c '^| .*| not checked |' "$report"
+  [ "$output" -ge 10 ]
+}
+
+@test "notify: the webhook URL never appears in curl's arguments, and all words are sent" {
+  mkdir -p "$TMP/bin"
+  cat > "$TMP/bin/curl" <<MOCK
+#!/usr/bin/env bash
+printf '%s\n' "\$@" > "$TMP/argv.txt"
+for a in "\$@"; do [[ "\$a" == "-K" ]] && cat > "$TMP/config.txt"; done
+for ((i=1;i<=\$#;i++)); do [[ "\${!i}" == --data-binary ]] && { j=\$((i+1)); cp "\${!j#@}" "$TMP/payload.json"; }; done
+exit 0
+MOCK
+  chmod +x "$TMP/bin/curl"
+  run env PATH="$TMP/bin:$PATH" LEAK_WEBHOOK_URL="https://hooks.example.invalid/T000/PLACEHOLDERVALUE" "$ROOT/scripts/notify.sh" Leak found in repo
+  [ "$status" -eq 0 ]
+  run grep -c PLACEHOLDERVALUE "$TMP/argv.txt"
+  [ "$output" = "0" ]
+  run jq -r .text "$TMP/payload.json"
+  [ "$output" = "Leak found in repo" ]
+}
+
+@test "forks and commits: API errors exit 4 instead of an empty result" {
+  fake_curl 404 '{"message":"Not Found"}'
+  run env PATH="$TMP/bin:$PATH" "$ROOT/scripts/list-forks.sh" someone/example
+  [ "$status" -eq 4 ]
+  fake_curl 403 '{"message":"rate limited"}'
+  run env PATH="$TMP/bin:$PATH" "$ROOT/scripts/find-commit-copies.sh" 0123456789abcdef0123456789abcdef01234567
+  [ "$status" -eq 4 ]
+}
+
+@test "options without a value exit 2 instead of hanging" {
+  for args in "audit-org --limit" "audit-org --out" "hunt --since" "report --scan" "commits --exclude" "scan . --sarif"; do
+    run timeout 10 "$ROOT/leak" $args
+    [ "$status" -eq 2 ] || { echo "leak $args exited $status"; false; }
+  done
+}
+
+@test "audit-org: includes dot-named repositories such as .github" {
+  mkdir -p "$TMP/org"
+  for n in .github app; do new_repo "$TMP/org/$n"; echo x > "$TMP/org/$n/README.md"; commit_all "$TMP/org/$n" init; done
+  run "$ROOT/scripts/audit-org.sh" --no-scan --out "$TMP/o" --dir "$TMP/org"
+  run jq -r '.repositories, ([.results[].repository] | sort | join(","))' "$TMP/o/audit-org.json"
+  [ "${lines[0]}" = "2" ]
+  [ "${lines[1]}" = ".github,app" ]
+}
+
+@test "report: a clean scan is reported as clean" {
+  mkdir -p "$TMP/hc"
+  echo '{"run":"20260101T000000Z","since":"2025-12-01","repos":["someone/example"]}' > "$TMP/hc/meta.json"
+  echo '{"section":"someone/example","check":"Wayback","status":"clean","detail":"0"}' > "$TMP/hc/results.jsonl"
+  echo '[]' > "$TMP/empty.json"
+  run "$ROOT/scripts/make-report.sh" "$TMP/hc" --scan "$TMP/empty.json" --out "$TMP/r.html"
+  [ "$status" -eq 0 ]
+  grep -q "found no secrets" "$TMP/r.html"
+  ! grep -q "0 type(s) found" "$TMP/r.html"
+}
+
+@test "--help works after other arguments" {
+  run "$ROOT/leak" audit --no-scan --help
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Usage: leak audit"* ]]
 }

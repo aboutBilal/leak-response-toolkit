@@ -37,3 +37,5 @@ override.tf.json
 .pypirc
 .netrc
 .docker/config.json
+_site_src/
+_site/

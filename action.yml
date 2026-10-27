@@ -38,6 +38,10 @@ inputs:
     description: "slack (default), teams or discord"
     required: false
     default: slack
+  github-token:
+    description: "Token for GitHub API calls in hunt and audit-org (default: the workflow token). Use a token that can read private repositories to include them in audit-org"
+    required: false
+    default: ${{ github.token }}
   fail-on-findings:
     description: Fail the step when secrets, critical audit findings or copies are found
     required: false
@@ -66,6 +70,7 @@ runs:
         LEAK_WEBHOOK_URL: ${{ inputs.webhook-url }}
         WEBHOOK_FORMAT: ${{ inputs.webhook-format }}
         FAIL: ${{ inputs.fail-on-findings }}
+        GITHUB_TOKEN: ${{ inputs.github-token }}
         TOOLKIT: ${{ github.action_path }}
         REPOSITORY: ${{ github.repository }}
         RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
@@ -77,9 +82,13 @@ runs:
           scan)
             sarif_args=(); [[ -n "$SARIF" ]] && sarif_args=(--sarif "$SARIF")
             "$TOOLKIT/leak" scan "$TARGET" "$out/secrets-report.json" "${sarif_args[@]}" | tee "$out/log.txt"; rc=${PIPESTATUS[0]}
-            [[ "$rc" -gt 1 ]] && exit "$rc"
+            # Fail closed: anything but "clean" or "found", or a missing report, is a failed scan.
+            if [[ "$rc" != 0 && "$rc" != 1 ]] || ! jq -e 'type == "array"' "$out/secrets-report.json" >/dev/null 2>&1; then
+              echo "::error::the secret scan failed (exit $rc); results are incomplete"
+              exit 4
+            fi
             report="$out/secrets-report.json"
-            if [[ -f "$out/secrets-report.json" ]]; then findings="$(jq 'length' "$out/secrets-report.json")"; fi
+            findings="$(jq 'length' "$out/secrets-report.json")"
             summary="$findings secret finding(s) in the history of $REPOSITORY (types: $(jq -r '[.[].RuleID]|unique|join(", ")' "$out/secrets-report.json" 2>/dev/null)). Values are redacted."
             {
               echo "## Secret scan (full history)"
@@ -92,14 +101,14 @@ runs:
             } >> "$GITHUB_STEP_SUMMARY" ;;
           audit)
             NO_COLOR=1 "$TOOLKIT/leak" audit "$TARGET" | tee "$out/audit.txt"; findings=${PIPESTATUS[0]}
-            [[ "$findings" -gt 1 ]] && exit "$findings"
+            [[ "$findings" -gt 1 ]] && { echo "::error::the audit failed (exit $findings)"; exit 4; }
             report="$out/audit.txt"
             summary="Secret hygiene audit of $REPOSITORY: $(tail -1 "$out/audit.txt")"
             { echo "## Secret hygiene audit"; echo; echo '```'; cat "$out/audit.txt"; echo '```'; } >> "$GITHUB_STEP_SUMMARY" ;;
           audit-org)
             [[ -n "$OWNER" ]] || { echo "::error::mode audit-org needs the owner input"; exit 2; }
             "$TOOLKIT/leak" audit-org --out "$out/audit-org" "$OWNER"; rc=$?
-            [[ "$rc" -gt 1 ]] && exit "$rc"
+            if [[ "$rc" -gt 1 ]] || [[ ! -f "$out/audit-org/audit-org.json" ]]; then echo "::error::audit-org failed (exit $rc)"; exit 4; fi
             report="$out/audit-org/dashboard.html"
             findings="$(jq .critical "$out/audit-org/audit-org.json")"
             summary="Secret hygiene across $OWNER: $(jq -r '"\(.repositories) repositories, average \(.average_percent)%, \(.critical) with critical findings"' "$out/audit-org/audit-org.json")."
@@ -108,10 +117,14 @@ runs:
             [[ -n "$REPOS" ]] || { echo "::error::mode hunt needs the repos input"; exit 2; }
             args=(--out "$out/hunts"); [[ -n "$SINCE" ]] && args+=(--since "$SINCE")
             # shellcheck disable=SC2086
-            "$TOOLKIT/leak" hunt "${args[@]}" $REPOS
-            report="$(ls -d "$out"/hunts/hunt_*/REPORT.md | head -1)"
+            "$TOOLKIT/leak" hunt "${args[@]}" $REPOS; rc=$?
+            [[ "$rc" == 2 ]] && exit 2
+            report="$(ls -d "$out"/hunts/hunt_*/REPORT.md 2>/dev/null | head -1)"
+            [[ -n "$report" ]] || { echo "::error::the hunt did not produce a report"; exit 4; }
             findings="$(grep -c '^| .*| \*\*found\*\* |' "$report" || true)"
-            summary="Copy hunt for $REPOS: $findings item(s) need follow-up."
+            unchecked="$(grep -c '^| .*| not checked |' "$report" || true)"
+            [[ "$unchecked" -gt 0 ]] && echo "::warning::$unchecked source(s) could not be checked (rate limits or outages); the hunt is incomplete"
+            summary="Copy hunt for $REPOS: $findings item(s) need follow-up, $unchecked source(s) not checked."
             cat "$report" >> "$GITHUB_STEP_SUMMARY" ;;
           *) echo "::error::unknown mode: $MODE (use scan, audit, audit-org or hunt)"; exit 2 ;;
         esac

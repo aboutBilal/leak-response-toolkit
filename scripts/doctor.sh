@@ -3,14 +3,22 @@
 # Reports required tools, a secret scanner (gitleaks or Docker), optional tools,
 # the GitHub token and the remaining API budget. Changes nothing.
 #
-# Usage: ./scripts/doctor.sh [--offline]
+# Usage: leak doctor [--offline]
 #   --offline   skip the GitHub API budget check
 # Exit:  0 ready, 1 something required is missing
 set -uo pipefail
+# shellcheck source=scripts/lib.sh
+. "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 
-case "${1:-}" in -h|--help) sed -n '2,/^set -/{/^#/s/^# \{0,1\}//p;}' "$0"; exit 0 ;; esac
 offline=0
-[[ "${1:-}" == "--offline" ]] && offline=1
+while (($#)); do
+  case "$1" in
+    -h|--help) print_help "$0"; exit 0 ;;
+    --offline) offline=1 ;;
+    *) echo "unknown option: $1" >&2; exit "$EXIT_USAGE" ;;
+  esac
+  shift
+done
 
 missing=0
 if [[ -t 1 && -z "${NO_COLOR:-}" ]]; then G=$'\033[32m' Y=$'\033[33m' R=$'\033[31m' N=$'\033[0m'; else G="" Y="" R="" N=""; fi
@@ -32,7 +40,7 @@ for cmd in bash git curl jq; do
     bad "$cmd" "not found: install it with your package manager"
   fi
 done
-if ((BASH_VERSINFO[0] < 4)); then bad "bash 4+" "found ${BASH_VERSION}; macOS: brew install bash"; fi
+if ((BASH_VERSINFO[0] < 4 || (BASH_VERSINFO[0] == 4 && BASH_VERSINFO[1] < 4))); then bad "bash 4.4+" "found ${BASH_VERSION}; macOS: brew install bash"; fi
 
 echo "Secret scanner (one of)"
 if command -v gitleaks >/dev/null; then
@@ -48,7 +56,7 @@ fi
 echo "Optional"
 if command -v sha256sum >/dev/null || command -v shasum >/dev/null; then ok "sha256" "found (evidence checksums)"
 else warn "sha256" "missing sha256sum/shasum: evidence manifests cannot be written"; fi
-if command -v column >/dev/null; then ok "column" "found"; else warn "column" "missing: tables are less tidy"; fi
+if command -v column >/dev/null; then ok "column" "found"; else warn "column" "missing: tables are printed unaligned"; fi
 if [[ -n "${GITHUB_TOKEN:-}" ]]; then
   ok "GITHUB_TOKEN" "set (5,000 API requests/hour)"
 else
@@ -57,15 +65,15 @@ fi
 
 if ((offline == 0)); then
   echo "GitHub API"
-  auth=()
-  [[ -n "${GITHUB_TOKEN:-}" ]] && auth=(-H "Authorization: Bearer ${GITHUB_TOKEN}")
-  if rl="$(curl -fsS --max-time 15 "${auth[@]}" https://api.github.com/rate_limit 2>/dev/null)"; then
-    core="$(jq -r '.resources.core | "\(.remaining)/\(.limit)"' <<<"$rl")"
-    search="$(jq -r '.resources.search | "\(.remaining)/\(.limit)"' <<<"$rl")"
+  rl_file="$(mktemp)"
+  if [[ "$(gh_get /rate_limit "$rl_file")" == 200 ]]; then
+    core="$(jq -r '.resources.core | "\(.remaining)/\(.limit)"' "$rl_file")"
+    search="$(jq -r '.resources.search | "\(.remaining)/\(.limit)"' "$rl_file")"
     ok "reachable" "core $core · search $search remaining"
   else
     warn "reachable" "api.github.com not reachable from here"
   fi
+  rm -f "$rl_file"
 fi
 
 echo

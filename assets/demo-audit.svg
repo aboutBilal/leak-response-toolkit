@@ -2,33 +2,33 @@
 <rect x="0.5" y="0.5" width="999" height="711" rx="12" fill="#111827" stroke="#2B3445"/>
 <path d="M12.5 0.5 H987.5 A12 12 0 0 1 999.5 12.5 V40 H0.5 V12.5 A12 12 0 0 1 12.5 0.5 Z" fill="#1C2433"/>
 <circle cx="24" cy="20" r="5" fill="#2B3445"/><circle cx="42" cy="20" r="5" fill="#2B3445"/><circle cx="60" cy="20" r="5" fill="#2B3445"/>
-<text x="500.0" y="25" fill="#6B7689" font-family="'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,'Liberation Mono',monospace" font-size="13" text-anchor="middle">leak audit · real output, secret values never printed</text>
+<text x="500.0" y="25" fill="#828D9F" font-family="'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,'Liberation Mono',monospace" font-size="13" text-anchor="middle">leak audit · real output, secret values never printed</text>
 <style>.ln{opacity:0;animation:reveal .25s ease-out forwards}@keyframes reveal{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}.cur{opacity:0}@keyframes show{to{opacity:1}}@keyframes blink{50%{opacity:0}}@media (prefers-reduced-motion: reduce){.ln{opacity:1;animation:none}.cur{opacity:1;animation:none}}</style>
 <g font-family="'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,'Liberation Mono',monospace" font-size="14.5" style="font-variant-ligatures:none">
 <text class="ln" style="white-space:pre;animation-delay:0.00s" x="24" y="72" font-weight="600"><tspan fill="#FF8A5C">$</tspan><tspan fill="#E6EAF2"> leak audit legacy-api</tspan></text>
 <text class="ln" style="white-space:pre;animation-delay:0.82s" x="24" y="96" fill="#E6EAF2" font-weight="600">Secret hygiene audit: legacy-api</text>
 <text class="ln" style="white-space:pre;animation-delay:1.04s" x="24" y="120" fill="#E6EAF2" font-weight="600">1. Files that usually hold secrets</text>
 <text class="ln" style="white-space:pre;animation-delay:1.26s" x="24" y="144" fill="#F85149" font-weight="600">  ✘ tracked by Git: .env</text>
-<text class="ln" style="white-space:pre;animation-delay:1.48s" x="24" y="168" fill="#6B7689" font-weight="400">      → rotate anything inside them, then: git rm --cached &lt;file&gt; and add to .gitignore</text>
+<text class="ln" style="white-space:pre;animation-delay:1.48s" x="24" y="168" fill="#828D9F" font-weight="400">      → rotate anything inside them, then: git rm --cached &lt;file&gt; and add to .gitignore</text>
 <text class="ln" style="white-space:pre;animation-delay:1.70s" x="24" y="192" fill="#E6EAF2" font-weight="600">2. Ignore rules</text>
 <text class="ln" style="white-space:pre;animation-delay:1.92s" x="24" y="216" fill="#D29922" font-weight="400">  ! not ignored: .env .env.local server.pem id_rsa terraform.tfstate</text>
-<text class="ln" style="white-space:pre;animation-delay:2.14s" x="24" y="240" fill="#6B7689" font-weight="400">      → append prevention/gitignore-secrets to .gitignore</text>
+<text class="ln" style="white-space:pre;animation-delay:2.14s" x="24" y="240" fill="#828D9F" font-weight="400">      → append prevention/gitignore-secrets to .gitignore</text>
 <text class="ln" style="white-space:pre;animation-delay:2.36s" x="24" y="264" fill="#D29922" font-weight="400">  ! code reads environment variables but there is no .env.example</text>
-<text class="ln" style="white-space:pre;animation-delay:2.58s" x="24" y="288" fill="#6B7689" font-weight="400">      → commit prevention/env/env.example, adapted</text>
+<text class="ln" style="white-space:pre;animation-delay:2.58s" x="24" y="288" fill="#828D9F" font-weight="400">      → commit prevention/env/env.example, adapted</text>
 <text class="ln" style="white-space:pre;animation-delay:2.80s" x="24" y="312" fill="#E6EAF2" font-weight="600">3. Commit-time blocking</text>
 <text class="ln" style="white-space:pre;animation-delay:3.02s" x="24" y="336" fill="#D29922" font-weight="400">  ! no pre-commit secret scanner configured</text>
-<text class="ln" style="white-space:pre;animation-delay:3.24s" x="24" y="360" fill="#6B7689" font-weight="400">      → copy prevention/pre-commit-config.yaml to .pre-commit-config.yaml</text>
+<text class="ln" style="white-space:pre;animation-delay:3.24s" x="24" y="360" fill="#828D9F" font-weight="400">      → copy prevention/pre-commit-config.yaml to .pre-commit-config.yaml</text>
 <text class="ln" style="white-space:pre;animation-delay:3.46s" x="24" y="384" fill="#D29922" font-weight="400">  ! no pre-commit hook installed in this clone</text>
-<text class="ln" style="white-space:pre;animation-delay:3.68s" x="24" y="408" fill="#6B7689" font-weight="400">      → pre-commit install   (or copy prevention/hooks/pre-commit)</text>
+<text class="ln" style="white-space:pre;animation-delay:3.68s" x="24" y="408" fill="#828D9F" font-weight="400">      → pre-commit install   (or copy prevention/hooks/pre-commit)</text>
 <text class="ln" style="white-space:pre;animation-delay:3.90s" x="24" y="432" fill="#E6EAF2" font-weight="600">4. CI secret scanning</text>
 <text class="ln" style="white-space:pre;animation-delay:4.12s" x="24" y="456" fill="#D29922" font-weight="400">  ! CI exists but runs no secret scan</text>
-<text class="ln" style="white-space:pre;animation-delay:4.34s" x="24" y="480" fill="#6B7689" font-weight="400">      → add a job from prevention/ci/</text>
+<text class="ln" style="white-space:pre;animation-delay:4.34s" x="24" y="480" fill="#828D9F" font-weight="400">      → add a job from prevention/ci/</text>
 <text class="ln" style="white-space:pre;animation-delay:4.56s" x="24" y="504" fill="#E6EAF2" font-weight="600">5. Container hygiene</text>
 <text class="ln" style="white-space:pre;animation-delay:4.78s" x="24" y="528" fill="#F85149" font-weight="600">  ✘ secret-looking value baked into an image: Dockerfile:3 (ENV API_TOKEN=&lt;redacted&gt;)</text>
-<text class="ln" style="white-space:pre;animation-delay:5.00s" x="24" y="552" fill="#6B7689" font-weight="400">      → use BuildKit secret mounts: prevention/docker/Dockerfile.build-secrets.example</text>
+<text class="ln" style="white-space:pre;animation-delay:5.00s" x="24" y="552" fill="#828D9F" font-weight="400">      → use BuildKit secret mounts: prevention/docker/Dockerfile.build-secrets.example</text>
 <text class="ln" style="white-space:pre;animation-delay:5.22s" x="24" y="576" fill="#E6EAF2" font-weight="600">6. Full history</text>
 <text class="ln" style="white-space:pre;animation-delay:5.44s" x="24" y="600" fill="#F85149" font-weight="600">  ✘ 2 secret finding(s) in history (types: generic-api-key, stripe-access-token)</text>
-<text class="ln" style="white-space:pre;animation-delay:5.66s" x="24" y="624" fill="#6B7689" font-weight="400">      → rotate them first, then see docs/06-scenarios.md (scenario A) to clean history</text>
+<text class="ln" style="white-space:pre;animation-delay:5.66s" x="24" y="624" fill="#828D9F" font-weight="400">      → rotate them first, then see docs/06-scenarios.md (scenario A) to clean history</text>
 <text class="ln" style="white-space:pre;animation-delay:5.88s" x="24" y="648" fill="#A3ADBF" font-weight="400"></text>
 <text class="ln" style="white-space:pre;animation-delay:6.10s" x="24" y="672" fill="#F85149" font-weight="700">Score 0/100 · Grade F  (critical findings cap the grade at F)</text>
 <rect class="cur" x="24" y="680" width="9" height="3" fill="#3FB950" style="animation:show 0s 6.32s forwards,blink 1s steps(1) 6.32s infinite"/>

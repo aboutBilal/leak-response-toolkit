@@ -2,8 +2,8 @@
 # Grade every repository of a GitHub organisation or user (or every Git repository
 # in a local folder) and build one dashboard: HTML, markdown and JSON.
 #
-# Usage: ./scripts/audit-org.sh [options] <org-or-user>
-#        ./scripts/audit-org.sh [options] --dir <folder-of-repos>
+# Usage: leak audit-org [options] <org-or-user>
+#        leak audit-org [options] --dir <folder-of-repos>
 # Options:
 #   --no-scan          skip full-history scans (much faster; history marked not checked)
 #   --limit N          audit at most N repositories (default 50)
@@ -12,17 +12,20 @@
 # Env:   GITHUB_TOKEN (optional) - includes private repositories you can read; higher API limits.
 # Exit:  0 no repository has critical findings, 1 at least one has, 2 bad arguments
 set -uo pipefail
+# shellcheck source=scripts/lib.sh
+. "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
+shopt -s dotglob nullglob   # include repositories such as .github
 
-help() { sed -n '2,/^set -/{/^#/s/^# \{0,1\}//p;}' "$0"; }
+help() { print_help "$0"; }
 scan_flag=(); limit=50; forks=0; out=""; owner=""; dir=""
 while (($#)); do
   case "$1" in
     -h|--help) help; exit 0 ;;
     --no-scan) scan_flag=(--no-scan); shift ;;
-    --limit) limit="${2:-}"; shift 2 ;;
+    --limit) need_value "$1" "${2:-}"; limit="$2"; shift 2 ;;
     --include-forks) forks=1; shift ;;
-    --out) out="${2:-}"; shift 2 ;;
-    --dir) dir="${2:-}"; shift 2 ;;
+    --out) need_value "$1" "${2:-}"; out="$2"; shift 2 ;;
+    --dir) need_value "$1" "${2:-}"; dir="$2"; shift 2 ;;
     -*) echo "unknown option: $1" >&2; exit 2 ;;
     *) owner="$1"; shift ;;
   esac
@@ -38,11 +41,12 @@ out="${out:-audits/audit_$stamp}"
 mkdir -p "$out/results"
 work="$(mktemp -d)"; trap 'rm -rf "$work"' EXIT
 
+# gh <path>: print the JSON body; fail on any non-200 response (token stays out of argv).
 gh() {
-  local auth=()
-  [[ -n "${GITHUB_TOKEN:-}" ]] && auth=(-H "Authorization: Bearer ${GITHUB_TOKEN}")
-  curl -fsS --max-time 60 -H "Accept: application/vnd.github+json" "${auth[@]}" "https://api.github.com$1"
+  local f; f="$(mktemp)"
+  if [[ "$(gh_get "$1" "$f")" == 200 ]]; then cat "$f"; rm -f "$f"; else rm -f "$f"; return 1; fi
 }
+git_auth_env   # private repositories clone with GITHUB_TOKEN; git never prompts
 
 # 1. Collect repositories as "name<TAB>path-or-clone-url"
 targets="$work/targets.tsv"; : > "$targets"
@@ -76,8 +80,8 @@ while IFS=$'\t' read -r name src; do
     path="$work/repos/$name"
     depth=(); ((${#scan_flag[@]})) && depth=(--depth 1)
     if ! git clone --quiet "${depth[@]}" "$src" "$path" 2>/dev/null; then
-      jq -n --arg r "$name" '{repository: $r, grade: "?", score: 0, max: 0, percent: 0, critical: false, error: "clone failed", checks: []}' > "$out/results/$name.json"
-      printf '  [%d/%d] %-40s clone failed\n' "$i" "$total" "$name"
+      jq -n --arg r "$name" '{repository: $r, grade: "not audited", score: 0, max: 0, percent: null, critical: false, error: "could not be cloned (private without a token, or unavailable)", checks: []}' > "$out/results/$name.json"
+      printf '  [%d/%d] %-40s not audited (clone failed)\n' "$i" "$total" "$name"
       continue
     fi
   fi
@@ -90,29 +94,33 @@ done < "$targets"
 jq -s --arg label "$label" --arg run "$stamp" --argjson scanned "$(( ${#scan_flag[@]} == 0 ))" '{
   label: $label, run: $run, history_scanned: ($scanned == 1),
   repositories: length,
-  average_percent: ((map(.percent) | add) / length | floor),
+  audited: (map(select(.error | not)) | length),
+  not_audited: (map(select(.error)) | length),
+  average_percent: (map(select(.error | not) | .percent) | if length > 0 then (add / length | floor) else 0 end),
   critical: (map(select(.critical)) | length),
-  grades: (reduce .[] as $r ({A:0,B:0,C:0,D:0,F:0}; .[$r.grade] += 1)),
-  results: (sort_by(.percent, .repository))
+  grades: (reduce (.[] | select(.error | not)) as $r ({A:0,B:0,C:0,D:0,F:0}; .[$r.grade] += 1)),
+  results: (sort_by((.error != null), (.percent // 0), .repository))
 }' "$out"/results/*.json > "$out/audit-org.json"
 
 summary="$out/audit-org.json"
 {
   echo "# Secret hygiene: $label"
   echo
-  echo "- **Run:** $stamp (UTC) · **Repositories:** $(jq .repositories "$summary") · **Average:** $(jq .average_percent "$summary")% · **Critical:** $(jq .critical "$summary")"
+  echo "- **Run:** $stamp (UTC) · **Repositories:** $(jq .repositories "$summary") ($(jq .not_audited "$summary") not audited) · **Average:** $(jq .average_percent "$summary")% · **Critical:** $(jq .critical "$summary")"
   echo "- **Grades:** $(jq -r '.grades | to_entries | map("\(.key) \(.value)") | join(" · ")' "$summary")"
   [[ "$(jq .history_scanned "$summary")" == true ]] || echo "- History was **not** scanned (--no-scan)."
   echo
   echo "| Repository | Grade | Score | Needs attention |"
   echo "|---|:-:|:-:|---|"
-  jq -r '.results[] | "| \(.repository) | \(.grade) | \(.percent)% | \([.checks[] | select(.status != "pass") | .message] | join("; ") | if . == "" then "—" else . end) |"' "$summary"
+  jq -r '.results[] | if .error then "| \(.repository) | not audited | – | \(.error) |"
+    else "| \(.repository) | \(.grade) | \(.percent)% | \([.checks[] | select(.status != "pass") | .message] | join("; ") | if . == "" then "—" else . end) |" end' "$summary"
 } > "$out/README.md"
 
 style="$(sed -n '/<style>/,/<\/style>/p' "$here/../templates/executive-report.html")"
 rows="$(jq -r '
   def pill: if .grade == "A" or .grade == "B" then "ok" elif .grade == "C" or .grade == "D" then "warn" else "bad" end;
-  .results[] | "<tr><td><b>\(.repository|@html)</b></td><td><span class=\"pill \(pill)\">\(.grade|@html)</span></td><td>\(.percent)%</td><td>\([.checks[] | select(.status != "pass") | "<div class=\"\(if .status == "fail" then "f" else "w" end)\">\(.message|@html)</div>"] | join("") | if . == "" then "<span class=\"note\">Nothing to fix</span>" else . end)</td></tr>"' "$summary")"
+  .results[] | if .error then "<tr><td><b>\(.repository|@html)</b></td><td><span class=\"pill na\">Not audited</span></td><td>–</td><td class=\"note\">\(.error|@html)</td></tr>"
+  else "<tr><td><b>\(.repository|@html)</b></td><td><span class=\"pill \(pill)\">\(.grade|@html)</span></td><td>\(.percent)%</td><td>\([.checks[] | select(.status != "pass") | "<div class=\"\(if .status == "fail" then "f" else "w" end)\">\(.message|@html)</div>"] | join("") | if . == "" then "<span class=\"note\">Nothing to fix</span>" else . end)</td></tr>" end' "$summary")"
 bars="$(jq -r '.repositories as $n | .grades | to_entries[] | "<div class=\"bar\"><span class=\"g\">\(.key)</span><span class=\"track\"><span class=\"fill g\(.key)\" style=\"width:\(if $n > 0 then (.value * 100 / $n | floor) else 0 end)%\"></span></span><span class=\"c\">\(.value)</span></div>"' "$summary")"
 cat > "$out/dashboard.html" <<HTML
 <!doctype html>
@@ -130,7 +138,7 @@ $style
 <h1>$(jq -rn --arg l "$label" '$l|@html')</h1>
 <p class="note">Generated by leak-response-toolkit on $(date -u +"%Y-%m-%d %H:%M UTC"). $( [[ "$(jq .history_scanned "$summary")" == true ]] && echo "Full history scanned." || echo "History not scanned (--no-scan).") Secret values are never included.</p>
 <div class="cards">
-  <div class="card ok"><div class="k">Repositories</div><div class="v">$(jq .repositories "$summary")</div><p>graded A–F</p></div>
+  <div class="card ok"><div class="k">Repositories</div><div class="v">$(jq .audited "$summary")</div><p>graded A–F$( [[ "$(jq .not_audited "$summary")" -gt 0 ]] && echo ", $(jq .not_audited "$summary") not audited")</p></div>
   <div class="card warn"><div class="k">Average score</div><div class="v">$(jq .average_percent "$summary")%</div><p>across all repositories</p></div>
   <div class="card bad"><div class="k">Critical</div><div class="v">$(jq .critical "$summary")</div><p>tracked secret files, baked-in or historical secrets</p></div>
 </div>

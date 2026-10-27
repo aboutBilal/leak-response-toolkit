@@ -4,9 +4,8 @@
 
 | Version | Supported |
 |---|:-:|
-| 3.x (latest release) | Security fixes |
-| 2.x | Critical fixes until 2027-01-31 |
-| 1.x | No, please upgrade |
+| Latest 3.x release | Security fixes |
+| Older releases | No, please upgrade |
 
 ## Reporting a vulnerability
 
@@ -59,8 +58,8 @@ cosign verify ghcr.io/aboutbilal/leak-response-toolkit:X.Y.Z \
 
 ## Using the toolkit safely
 
-- `scan` and `audit` run locally; `hunt`, `forks`, `commits` and `audit-org` send only repository names and commit IDs to public APIs.
-- `notify` reads the webhook URL from `LEAK_WEBHOOK_URL`, so it never appears in arguments, process lists or logs; messages contain counts and types, never values.
-- Output and reports are **redacted**: secret values are never printed or written.
+- `scan` and `audit` run locally. `hunt`, `forks`, `commits` and `audit-org` send only repository names, account names and commit IDs to public services: GitHub, GitLab, the Internet Archive, Software Heritage, Sourcegraph, Codeberg and play.clickhouse.com.
+- Tokens (`GITHUB_TOKEN`) and webhook URLs (`LEAK_WEBHOOK_URL`) are handed to `curl` and `git` through standard input or the environment, never as command-line arguments, so they do not appear in process lists. Alerts contain counts and types, never values.
+- Output and reports are **redacted**: secret values are never printed or written to reports. `leak snapshot` does keep a full copy of the leaked repository, which is the evidence itself.
 - Evidence folders (`evidence/`, `hunts/`) can contain leaked code. They are git-ignored here; keep them out of any repository and share them only with the people handling the incident.
 - Releases include a source archive signed with Sigstore; container images ship with an SBOM and build provenance.

@@ -1,5 +1,5 @@
 SHELL := /bin/bash
-SCRIPTS := $(wildcard scripts/*.sh) leak prevention/hooks/pre-commit
+SCRIPTS := $(wildcard scripts/*.sh) leak prevention/hooks/pre-commit tools/build-site.sh
 PREFIX ?= $(HOME)/.local
 
 .PHONY: help check lint test scan audit install uninstall image
@@ -10,8 +10,8 @@ help: ## List the targets
 check: lint test scan ## Run everything CI runs
 
 lint: ## shellcheck every script (local shellcheck, else Docker)
-	@if command -v shellcheck >/dev/null; then shellcheck -S warning $(SCRIPTS); \
-	else docker run --rm -v "$(CURDIR):/mnt:ro" -w /mnt koalaman/shellcheck:stable -S warning $(SCRIPTS); fi
+	@if command -v shellcheck >/dev/null; then shellcheck -S warning -x $(SCRIPTS); \
+	else docker run --rm -v "$(CURDIR):/mnt:ro" -w /mnt koalaman/shellcheck:stable -S warning -x $(SCRIPTS); fi
 	@echo "lint: ok"
 
 test: ## Offline bats tests (install: apt install bats / brew install bats-core)

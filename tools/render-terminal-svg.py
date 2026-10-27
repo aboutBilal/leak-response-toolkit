@@ -14,7 +14,7 @@ import html
 import re
 
 # Design tokens: assets/DESIGN.md. Status colours only for status; everything else neutral.
-INK_900, INK_800, INK_700, INK_500, INK_300, INK_100 = "#111827", "#1C2433", "#2B3445", "#6B7689", "#A3ADBF", "#E6EAF2"
+INK_900, INK_800, INK_700, INK_500, INK_300, INK_100 = "#111827", "#1C2433", "#2B3445", "#828D9F", "#A3ADBF", "#E6EAF2"
 EMBER_400, PASS, WARN, FAIL = "#FF8A5C", "#3FB950", "#D29922", "#F85149"
 
 COLOURS = [

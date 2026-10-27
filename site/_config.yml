@@ -1,0 +1,32 @@
+# Documentation site (GitHub Pages). Assembled by tools/build-site.sh; do not edit the copies in _site_src.
+title: Leak Response Toolkit
+description: Prevent secret leaks. Respond in minutes.
+url: https://aboutbilal.github.io
+baseurl: /leak-response-toolkit
+repository: aboutBilal/leak-response-toolkit
+
+markdown: kramdown
+kramdown:
+  input: GFM
+  hard_wrap: false
+  syntax_highlighter: rouge
+
+plugins:
+  - jekyll-relative-links
+  - jekyll-optional-front-matter
+  - jekyll-readme-index
+  - jekyll-titles-from-headings
+  - jekyll-default-layout
+
+relative_links:
+  enabled: true
+  collections: false
+
+titles_from_headings:
+  strip_title: true
+
+defaults:
+  - scope: { path: "" }
+    values: { layout: default }
+
+exclude: [README.source.md]

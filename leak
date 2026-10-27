@@ -1,28 +1,41 @@
 #!/usr/bin/env bash
 # leak - one entry point for the Leak Response Toolkit.
 #
-# Usage: ./leak <command> [arguments]
+# Usage: leak <command> [arguments]        (every command also takes --help)
 #
-# Commands (in the order you usually need them):
-#   snapshot <owner>/<repo> [dir]        save evidence before the repo is deleted
-#   scan <path> [report.json] [--sarif f] find secrets in the full history (values redacted)
-#   forks <owner>/<repo>                 list every fork, for the takedown request
-#   hunt [--since DATE] <owner>/<repo>   check 15+ public sources for surviving copies
-#   commits [--exclude o/r] <sha> ...    find public repos containing original commits
-#   report <hunt-dir> [--scan r.json]    build the leadership report from the results
-#   audit [--no-scan] [--json] [path]    grade a repository's secret hygiene (A-F)
-#   audit-org <org> | --dir <folder>     grade every repository; HTML dashboard
-#   doctor [--offline]                   check this machine is ready, before an incident
-#   notify [--format f] "message"        alert Slack, Teams or Discord (URL from LEAK_WEBHOOK_URL)
-#   help [command]                       this text, or a command's own help
-#   version                              print the toolkit version
+# Prevent
+#   audit [--no-scan] [--json] [path]       grade a repository's secret hygiene, A to F
+#   audit-org [--no-scan] <org> | --dir d   grade every repository; HTML dashboard
+# Respond
+#   snapshot <owner>/<repo> [dir]           save evidence before the repository is deleted
+#   scan <path> [report.json] [--sarif f]   find secrets in every commit (values redacted)
+#   forks <owner>/<repo>                    list every fork, for the takedown request
+#   hunt [--since date] <owner>/<repo>      check GitHub, GitLab, web archives and code search for copies
+#   commits [--exclude o/r] <sha> ...       find public repositories containing the original commits
+#   report <hunt-dir> [--scan r.json]       build the leadership report from the results
+#   notify [--format f] <message>           alert Slack, Teams or Discord (URL from LEAK_WEBHOOK_URL)
+# Setup
+#   doctor [--offline]                      check this machine is ready, before an incident
+#   help [command] | version
 #
-# Start here if you are in an incident: README.md -> "Start here: what happened?"
+# Exit codes: 0 clean, 1 findings, 2 usage error, 4 incomplete (a scanner or service failed)
+# In an incident: README.md, section "Responding to a leak", or docs/01-runbook.md
 set -euo pipefail
 
-VERSION="3.1.0"
-# Resolve symlinks (make install, the Docker image) to find scripts/ next to the real file.
-here="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
+VERSION="3.2.0"
+
+# Follow symlinks (make install, the container image) to find scripts/ next to the
+# real file. Portable: does not rely on `readlink -f` (missing on older macOS).
+resolve() {
+  local path="$1" dir target
+  while [[ -L "$path" ]]; do
+    dir="$(cd "$(dirname "$path")" && pwd)"
+    target="$(readlink "$path")"
+    [[ "$target" == /* ]] && path="$target" || path="$dir/$target"
+  done
+  cd "$(dirname "$path")" && pwd
+}
+here="$(resolve "${BASH_SOURCE[0]}")"
 
 script_for() {
   case "$1" in
@@ -55,6 +68,6 @@ case "$cmd" in
       exec "$here/scripts/$s" "$@"
     fi
     echo "unknown command: $cmd" >&2
-    echo "run './leak help' for the list" >&2
+    echo "run 'leak help' for the list" >&2
     exit 2 ;;
 esac

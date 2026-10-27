@@ -23,14 +23,14 @@
     <rect x="288" y="296" width="88" height="40" rx="8" fill="#1C2433" stroke="#2B3445"/><text x="332" y="321" fill="#E6EAF2" text-anchor="middle">hunt</text>
     <rect x="392" y="296" width="104" height="40" rx="8" fill="#1C2433" stroke="#2B3445"/><text x="444" y="321" fill="#E6EAF2" text-anchor="middle">report</text>
   </g>
-  <text x="72" y="376" fill="#6B7689" font-family="Inter,'Segoe UI',Helvetica,Arial,sans-serif" font-size="16">Architecture, tested prevention configs, runbooks, CLI, GitHub Action</text>
+  <text x="72" y="376" fill="#828D9F" font-family="Inter,'Segoe UI',Helvetica,Arial,sans-serif" font-size="16">Architecture, tested prevention configs, runbooks, CLI, GitHub Action</text>
 
   <!-- Product window: real output of `leak audit .` on this repository -->
   <g filter="url(#elev)">
     <rect x="712" y="64" width="496" height="312" rx="12" fill="#111827" stroke="#2B3445"/>
     <path d="M724 64 H1196 A12 12 0 0 1 1208 76 V104 H712 V76 A12 12 0 0 1 724 64 Z" fill="#1C2433"/>
     <circle cx="736" cy="84" r="5" fill="#2B3445"/><circle cx="754" cy="84" r="5" fill="#2B3445"/><circle cx="772" cy="84" r="5" fill="#2B3445"/>
-    <text x="960" y="89" fill="#6B7689" font-family="'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="13" text-anchor="middle">leak audit · this repository</text>
+    <text x="960" y="89" fill="#828D9F" font-family="'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="13" text-anchor="middle">leak audit · this repository</text>
     <g font-family="'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="14.5">
       <text x="736" y="128"><tspan fill="#FF8A5C">$</tspan><tspan fill="#E6EAF2"> leak audit .</tspan></text>
       <text x="736" y="160" fill="#3FB950">✔ <tspan fill="#A3ADBF">no secret files tracked by Git</tspan></text>
@@ -45,6 +45,6 @@
   </g>
 </g>
 <line x1="72" y1="552" x2="1208" y2="552" stroke="#2B3445"/>
-<text x="72" y="592" fill="#6B7689" font-family="'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace" font-size="16">github.com/aboutBilal/leak-response-toolkit</text>
-<text x="1208" y="592" fill="#6B7689" font-family="Inter,'Segoe UI',Helvetica,Arial,sans-serif" font-size="16" text-anchor="end">Signed releases · SBOM · OpenSSF Scorecard</text>
+<text x="72" y="592" fill="#828D9F" font-family="'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace" font-size="16">github.com/aboutBilal/leak-response-toolkit</text>
+<text x="1208" y="592" fill="#828D9F" font-family="Inter,'Segoe UI',Helvetica,Arial,sans-serif" font-size="16" text-anchor="end">Signed releases · SBOM · OpenSSF Scorecard</text>
 </svg>

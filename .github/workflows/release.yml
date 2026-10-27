@@ -43,6 +43,22 @@ jobs:
             echo "released $tag"
           done
 
+      - name: Move the major version tag to this release (for example v3 -> v3.2.0)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          sha="$(git rev-list -n 1 "$TAG")"
+          major="${TAG%%.*}"
+          if gh api "repos/$REPO/git/refs/tags/$major" >/dev/null 2>&1; then
+            gh api -X PATCH "repos/$REPO/git/refs/tags/$major" -f sha="$sha" -F force=true >/dev/null
+          else
+            gh api -X POST "repos/$REPO/git/refs" -f ref="refs/tags/$major" -f sha="$sha" >/dev/null
+          fi
+          echo "moved $major to $TAG ($sha)"
+
       - uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
 
       - name: Attach a signed source archive to this release

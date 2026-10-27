@@ -33,7 +33,7 @@ Deleting a repository does not revoke a credential. Rotation does. Everything el
 docker run --rm -v "$PWD:/repo" ghcr.io/aboutbilal/leak-response-toolkit audit /repo
 ```
 
-**From source** (bash 4+, git, curl, jq, and gitleaks or Docker):
+**From source** (bash 4.4+, git, curl, jq, and gitleaks or Docker):
 
 ```bash
 git clone https://github.com/aboutBilal/leak-response-toolkit.git
@@ -99,7 +99,7 @@ Or use the hooks directly from this repository:
 # .pre-commit-config.yaml
 repos:
   - repo: https://github.com/aboutBilal/leak-response-toolkit
-    rev: v3.1.0
+    rev: v3.2.0
     hooks:
       - id: forbid-secret-files    # no dependencies
       - id: leak-guard             # also scans staged changes with gitleaks
@@ -158,7 +158,7 @@ Findings appear in the job summary and, with SARIF, in the repository's Security
 | Command | Purpose |
 |---|---|
 | `leak audit [--json] [path]` | Grade a repository's secret hygiene from A to F, with a fix for each gap |
-| `leak audit-org <org>` | Grade every repository in an organisation; HTML dashboard, markdown and JSON |
+| `leak audit-org [--no-scan] <org>` | Grade every repository in an organisation (or `--dir` a folder of repositories); HTML dashboard, markdown and JSON |
 | `leak scan <path> [--sarif file]` | Scan every commit for secrets; values are always redacted |
 | `leak snapshot owner/repo` | Preserve a leaked repository: mirror, metadata, forks, traffic and a checksum manifest |
 | `leak forks owner/repo` | List every fork, including forks of forks, for a takedown request |
@@ -168,7 +168,7 @@ Findings appear in the job summary and, with SARIF, in the repository's Security
 | `leak notify "message"` | Send an alert to Slack, Teams or Discord (URL from `LEAK_WEBHOOK_URL`) |
 | `leak doctor` | Check that a machine has everything it needs, before an incident |
 
-Every command has `--help`.
+Every command has `--help`. Exit codes are the same everywhere: `0` clean, `1` findings, `2` usage error, `4` incomplete (a scanner or remote service failed, so the result must not be read as clean).
 
 ## Security of the toolkit
 
@@ -178,8 +178,10 @@ A tool that handles leak investigations has to be trustworthy itself. Each of th
 - Container images ship with an SBOM and SLSA build provenance.
 - [OpenSSF Scorecard](https://scorecard.dev/viewer/?uri=github.com/aboutBilal/leak-response-toolkit) runs on every push to `main`.
 - GitHub Actions are pinned to commit SHAs and container images to digests; Dependabot keeps them current.
-- Every push runs CodeQL, shellcheck, actionlint, 25 offline tests on Linux and macOS, and a full-history secret scan.
-- No command prints, stores or tests a secret value, and tests enforce this. The repository contains no secrets, not even fake ones: test values are generated at run time.
+- Every push runs shellcheck, actionlint, 34 offline tests on Linux and macOS, and a full-history secret scan; CodeQL analyses every change to `main` and every pull request.
+- No command prints or tests a secret value, and tests enforce this. `leak snapshot` keeps a copy of a leaked repository as evidence, so evidence folders are git-ignored and must be handled as sensitive. The repository itself contains no secrets, not even fake ones.
+- Tokens and webhook URLs are passed to `curl` on standard input, never as command-line arguments, so they do not appear in process lists.
+- A source that fails or is rate-limited is reported as "not checked", never as clean.
 
 Report vulnerabilities privately; see [SECURITY.md](SECURITY.md).
 
@@ -203,7 +205,7 @@ This is not another secret scanner. It uses gitleaks and adds prevention, respon
 <details>
 <summary>Does it send code or secrets anywhere?</summary>
 
-No. `scan` and `audit` run locally. `hunt`, `forks`, `commits` and `audit-org` send only repository names and commit IDs to public APIs (GitHub, GitLab, the Internet Archive, Software Heritage, Sourcegraph, Codeberg). Alerts contain counts and secret types, never values.
+No. `scan` and `audit` run locally. `hunt`, `forks`, `commits` and `audit-org` send only repository names, account names and commit IDs to public services: GitHub, GitLab, the Internet Archive, Software Heritage, Sourcegraph, Codeberg and the public GitHub event dataset at play.clickhouse.com. Alerts contain counts and secret types, never values.
 </details>
 
 <details>
