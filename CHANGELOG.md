@@ -4,6 +4,10 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
+### Fixed
+
+- The test suite no longer needs GNU `timeout`, which macOS does not have; hangs are caught by bats' own per-test limit (`BATS_TEST_TIMEOUT`) on every platform.
+
 ## [3.2.0] - 2026-10-27
 
 An independent review found 18 issues before launch. All are fixed, each with a regression test.

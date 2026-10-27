@@ -16,7 +16,7 @@ lint: ## shellcheck every script (local shellcheck, else Docker)
 
 test: ## Offline bats tests (install: apt install bats / brew install bats-core)
 	@command -v bats >/dev/null || { echo "bats not found: apt install bats, or brew install bats-core"; exit 2; }
-	@bats tests
+	@BATS_TEST_TIMEOUT=60 bats tests
 
 scan: ## Secret scan of this repository's full history
 	@./scripts/scan-secrets.sh . "$${TMPDIR:-/tmp}/leak-response-toolkit-self-scan.json"

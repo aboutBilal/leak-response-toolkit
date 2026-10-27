@@ -352,8 +352,9 @@ MOCK
 }
 
 @test "options without a value exit 2 instead of hanging" {
+  # A hang is caught by BATS_TEST_TIMEOUT (set in CI and in `make test`); no GNU timeout needed.
   for args in "audit-org --limit" "audit-org --out" "hunt --since" "report --scan" "commits --exclude" "scan . --sarif"; do
-    run timeout 10 "$ROOT/leak" $args
+    run "$ROOT/leak" $args
     [ "$status" -eq 2 ] || { echo "leak $args exited $status"; false; }
   done
 }
