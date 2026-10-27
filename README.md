@@ -4,9 +4,9 @@
 
 <p align="center">
   <a href="https://github.com/aboutBilal/leak-response-toolkit/actions/workflows/secret-scan.yml"><img src="https://github.com/aboutBilal/leak-response-toolkit/actions/workflows/secret-scan.yml/badge.svg" alt="checks"></a>
-  <a href="CHANGELOG.md"><img src="https://img.shields.io/badge/version-2.1.0-informational.svg" alt="version 2.1.0"></a>
+  <a href="CHANGELOG.md"><img src="https://img.shields.io/badge/version-2.2.0-informational.svg" alt="version 2.2.0"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="license MIT"></a>
-  <a href="https://scorecard.dev/viewer/?uri=github.com/aboutBilal/leak-response-toolkit"><img src="https://api.scorecard.dev/projects/github.com/aboutBilal/leak-response-toolkit/badge" alt="OpenSSF Scorecard"></a>
+  <a href="https://scorecard.dev/viewer/?uri=github.com/aboutBilal/leak-response-toolkit"><img src="https://img.shields.io/ossf-scorecard/github.com/aboutBilal/leak-response-toolkit?label=openssf%20scorecard&style=flat" alt="OpenSSF Scorecard"></a>
   <a href="#-use-it-in-your-ci-github-action"><img src="https://img.shields.io/badge/GitHub%20Action-ready-2088FF.svg?logo=githubactions&logoColor=white" alt="GitHub Action"></a>
   <a href="#-install"><img src="https://img.shields.io/badge/docker-ghcr.io-2496ED.svg?logo=docker&logoColor=white" alt="Docker image"></a>
   <a href="CONTRIBUTING.md"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg" alt="PRs welcome"></a>

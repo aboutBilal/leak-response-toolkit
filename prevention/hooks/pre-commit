@@ -28,7 +28,7 @@ if command -v gitleaks >/dev/null; then
 elif command -v docker >/dev/null; then
   top="$(git rev-parse --show-toplevel)"
   docker run --rm --network none --user "$(id -u):$(id -g)" -v "$top:/repo" -w /repo \
-    ghcr.io/gitleaks/gitleaks:v8.30.1 "${scan[@]}" /repo \
+    ghcr.io/gitleaks/gitleaks:v8.30.1@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f "${scan[@]}" /repo \
     || { echo "✘ Commit blocked: gitleaks found a secret in the staged changes (value redacted above)." >&2; exit 1; }
 else
   echo "! gitleaks not installed: only file names were checked. Install: https://github.com/gitleaks/gitleaks#installing" >&2

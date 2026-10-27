@@ -4,6 +4,22 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
+## [2.2.0] - 2026-10-27
+
+Supply-chain hardening, guided by the OpenSSF Scorecard results.
+
+### Added
+
+- **Signed releases:** every release gets a source archive, its SHA-256 and a keyless **Sigstore** signature bundle; the container image is signed by digest. Verification commands are in [SECURITY.md](SECURITY.md#verifying-a-release).
+- **CodeQL** static analysis of the workflows and Python tooling.
+- **Dependabot** now also updates the container base image.
+- SECURITY.md: supported versions, what counts as a vulnerability, and a coordinated-disclosure timeline.
+
+### Changed
+
+- Every container image reference (Dockerfile, CI, scripts, prevention kit) is **pinned by digest** as well as by tag.
+- The Scorecard badge links directly to the current score.
+
 ## [2.1.0] - 2026-10-27
 
 ### Added
@@ -66,7 +82,8 @@ Prevention becomes the second half of the kit: not only responding to leaks, but
 - Templates: incident timeline, takedown request, notification messages, post-incident review, executive report (print-ready HTML).
 - Quality: offline bats tests, shellcheck, gitleaks on full history, link and anchor checks in CI, Dependabot for pinned actions, pre-commit hook, contribution guide, issue and pull request templates, security policy.
 
-[Unreleased]: https://github.com/aboutBilal/leak-response-toolkit/compare/v2.1.0...HEAD
+[Unreleased]: https://github.com/aboutBilal/leak-response-toolkit/compare/v2.2.0...HEAD
+[2.2.0]: https://github.com/aboutBilal/leak-response-toolkit/compare/v2.1.0...v2.2.0
 [2.1.0]: https://github.com/aboutBilal/leak-response-toolkit/compare/v2.0.0...v2.1.0
 [2.0.0]: https://github.com/aboutBilal/leak-response-toolkit/compare/v1.1.0...v2.0.0
 [1.1.0]: https://github.com/aboutBilal/leak-response-toolkit/compare/v1.0.0...v1.1.0
