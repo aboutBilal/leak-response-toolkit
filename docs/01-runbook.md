@@ -1,11 +1,13 @@
-# 01 · Runbook: company repo pushed to a public personal account
+# 01 · Runbook: code or secrets exposed in a public repository
 
-**Situation:** a private company repository was pushed to a public repository on someone's personal account. It may contain secrets (keys, passwords, connection strings) and proprietary code.
+**Situation:** a repository that should be private, or secrets inside one, became publicly readable: pushed to a public repo, made public by mistake, or copied to someone else's account. It may contain secrets (keys, passwords, connection strings) and proprietary code.
+
+This is the full response. For what changes in your specific case (your own repo, a provider alert, leaks outside Git), see [`06-scenarios.md`](06-scenarios.md).
 
 **Goal, in order:** stop the damage → remove the copy → find out what happened → stop it happening again.
 
 > [!WARNING]
-> **Assume every secret in the repo is already stolen**, no matter how short the exposure. Automated scanners pick up keys from public pushes within minutes. A 3-hour exposure is not "probably fine".
+> **Assume every secret in the repo is already stolen**, no matter how short the exposure. Automated scanners pick up keys from public pushes within minutes. An exposure of minutes or hours is not "probably fine".
 
 ---
 
@@ -16,7 +18,7 @@
 | **Incident lead** | Decisions, the timeline, who does what |
 | **Rotator** | Revoking and replacing secrets |
 | **Investigator** | Logs, forks, scope of what leaked |
-| **Communicator** | Manager, security, legal, client |
+| **Communicator** | Manager, security, legal, affected customers or data owners |
 
 One person can hold several roles. Write down who holds which.
 
@@ -96,7 +98,7 @@ Signs of abuse: logins from unfamiliar IPs or countries, new compute (crypto-min
 ### 7. 📣 Tell the right people
 
 - Manager, security and legal.
-- **The client**, if it is their code or their data. Contracts usually require prompt notice.
+- **The owner of the code or data**, if it is not yours (a customer, partner or employer). Contracts usually require prompt notice.
 - Keep a written timeline from the start: [`incident-timeline.md`](../templates/incident-timeline.md).
 - For leadership, use [`executive-report.html`](../templates/executive-report.html): one page of summary, then the evidence.
 
@@ -120,5 +122,5 @@ Signs of abuse: logins from unfamiliar IPs or countries, new compute (crypto-min
 - [ ] Repo and all forks are gone (or a takedown is filed and tracked)
 - [ ] Copy hunt run and repeated after 7 days, reports kept
 - [ ] Logs checked for the full window, findings written down
-- [ ] Data exposure assessed and legal or client notified where required
+- [ ] Data exposure assessed and legal or affected parties notified where required
 - [ ] Timeline complete and prevention actions assigned

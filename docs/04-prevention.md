@@ -85,7 +85,7 @@ A test branch with one **fake** credential of each type was pushed to a public r
 
 ### Outside your walls: public-leak monitoring
 
-Services such as **GitGuardian public monitoring** watch public GitHub for your company's secrets, domains and developer emails, and alert you. It turns "a client told us" into "we knew in minutes".
+Services such as **GitGuardian public monitoring** watch public GitHub for your company's secrets, domains and developer emails, and alert you. It turns "someone outside told us" into "we knew in minutes".
 
 ---
 

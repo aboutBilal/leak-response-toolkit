@@ -1,11 +1,26 @@
 # 🔐 Leak Response Toolkit
 
-**What to do in the first hours after company code or secrets end up in a public Git repository, and how to stop it happening again.**
+**A free, step-by-step kit for anyone whose code or secrets ended up somewhere public: what to do in the first hours, how to check where copies survive, and how to stop it happening again.**
 
-A typical case: a developer clones a private company repository and pushes it to a personal GitHub account as a public repo. Even if it is public for only a few hours, any secrets inside it must be treated as stolen.
+It covers the common cases: a key committed to a public repo, a private repo made public by mistake, code copied to someone else's account, a "your key was exposed" email from a provider, and secrets leaked through gists, logs, images or packages. Even a few minutes of exposure means the secrets must be treated as stolen.
 
 > [!IMPORTANT]
 > **Rotate first, delete second.** Bots watch every public push to GitHub and harvest keys within minutes. Deleting the repo does not un-leak anything; a revoked key does.
+
+---
+
+## 🧭 Start here: what happened?
+
+| Situation | Go to |
+|---|---|
+| 🔑 I committed a secret to a public repo | [Scenario A](docs/06-scenarios.md#a--a-secret-committed-to-your-own-public-repository) |
+| 🔓 A private repo was made public by mistake | [Scenario B](docs/06-scenarios.md#b--a-private-repository-was-made-public-by-mistake) |
+| 📤 Our code was pushed to someone else's public account | [Full runbook](docs/01-runbook.md) |
+| 📧 A provider emailed: "your key was exposed" | [Scenario D](docs/06-scenarios.md#d--a-provider-alert-your-key-was-exposed) |
+| 📦 It leaked outside Git: gist, paste, CI logs, image, package, chat | [Scenario E](docs/06-scenarios.md#e--leaks-outside-git) |
+| 🙋 Someone reported it to us | [Scenario F](docs/06-scenarios.md#f--someone-reported-it-to-you) |
+
+Whatever the case, the first move is the same: **rotate the exposed secrets** ([how, per secret type](docs/02-rotate-secrets.md)).
 
 ---
 
@@ -66,11 +81,12 @@ Optional: set `GITHUB_TOKEN` for higher API limits; if the token belongs to the 
 ```
 leak-response-toolkit/
 ├── docs/
-│   ├── 01-runbook.md            the incident, step by step
+│   ├── 01-runbook.md            the full response, step by step
 │   ├── 02-rotate-secrets.md     rotation per secret type (Azure, AWS, Google Cloud, GitHub, DBs, SSH, app secrets)
 │   ├── 03-investigate.md        log queries: was the key used?
 │   ├── 04-prevention.md         layers that stop leaks, with a measured test of what each catches
-│   └── 05-where-copies-survive.md   archives, forks, re-uploads, evidence that disappears, removal requests
+│   ├── 05-where-copies-survive.md   archives, forks, re-uploads, evidence that disappears, removal requests
+│   └── 06-scenarios.md          what changes per leak type: own repo, made public, copied, alerts, non-Git leaks
 ├── scripts/
 │   ├── snapshot-evidence.sh     mirror + metadata + forks + traffic, with a checksum manifest
 │   ├── scan-secrets.sh          full-history scan, redacted summary
