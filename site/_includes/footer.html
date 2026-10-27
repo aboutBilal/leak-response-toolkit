@@ -1,0 +1,41 @@
+<footer class="site-footer">
+  <div class="wrap footer-grid">
+    <div class="footer-brand">
+      <a class="brand" href="{{ site.baseurl }}/"><img src="{{ site.baseurl }}/assets/logo.svg" alt="" width="22" height="22"><span>Leak Response Toolkit</span></a>
+      <p>Runbooks, prevention configs and a CLI for secret leaks in Git.</p>
+      <p class="fine">Engineering guidance, not legal advice.</p>
+    </div>
+    <nav class="footer-col" aria-labelledby="foot-docs">
+      <h2 id="foot-docs">Documentation</h2>
+      <ul>
+        <li><a href="{{ site.baseurl }}/overview.html">Overview</a></li>
+        <li><a href="{{ site.baseurl }}/CHEATSHEET.html">Cheat sheet</a></li>
+        <li><a href="{{ site.baseurl }}/docs/01-runbook.html">Incident runbook</a></li>
+        <li><a href="{{ site.baseurl }}/prevention/README.html">Prevention kit</a></li>
+        <li><a href="{{ site.baseurl }}/docs/07-practice-drill.html">Practice drill</a></li>
+      </ul>
+    </nav>
+    <nav class="footer-col" aria-labelledby="foot-project">
+      <h2 id="foot-project">Project</h2>
+      <ul>
+        <li><a href="{{ site.baseurl }}/CHANGELOG.html">Changelog</a></li>
+        <li><a href="{{ site.baseurl }}/ROADMAP.html">Roadmap</a></li>
+        <li><a href="{{ site.baseurl }}/SECURITY.html">Security policy</a></li>
+        <li><a href="{{ site.baseurl }}/assets/DESIGN.html">Visual language</a></li>
+      </ul>
+    </nav>
+    <nav class="footer-col" aria-labelledby="foot-community">
+      <h2 id="foot-community">Community</h2>
+      <ul>
+        <li><a href="https://github.com/{{ site.repository }}">GitHub</a></li>
+        <li><a href="https://github.com/{{ site.repository }}/discussions">Discussions</a></li>
+        <li><a href="https://github.com/{{ site.repository }}/releases">Releases</a></li>
+        <li><a href="{{ site.baseurl }}/CONTRIBUTING.html">Contributing</a></li>
+      </ul>
+    </nav>
+  </div>
+  <div class="wrap footer-bottom">
+    <span>Released under the <a href="https://github.com/{{ site.repository }}/blob/main/LICENSE">MIT License</a>.</span>
+    <span>Version {{ site.version }}</span>
+  </div>
+</footer>

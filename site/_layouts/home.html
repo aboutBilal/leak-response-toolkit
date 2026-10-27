@@ -1,36 +1,50 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{{ site.title }}: {{ site.description }}</title>
-  <meta name="description" content="Open-source runbooks, tested prevention configs and a CLI to keep secrets out of Git and respond in minutes when one leaks.">
-  <meta property="og:title" content="{{ site.title }}">
-  <meta property="og:description" content="{{ site.description }}">
+  <title>{% if page.title %}{{ page.title }} · {{ site.title }}{% else %}{{ site.title }}: {{ site.description }}{% endif %}</title>
+  <meta name="description" content="Open-source runbooks, tested prevention configs and a CLI that keeps secrets out of Git and helps you respond in minutes when one leaks.">
+  <link rel="canonical" href="{{ site.url }}{{ site.baseurl }}/">
+  <meta name="theme-color" content="#0B0F1A">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="{{ site.title }}">
+  <meta property="og:url" content="{{ site.url }}{{ site.baseurl }}/">
+  <meta property="og:title" content="{{ site.title }}: {{ site.description }}">
+  <meta property="og:description" content="Open-source runbooks, tested prevention configs and a CLI for secret leaks in Git.">
   <meta property="og:image" content="{{ site.url }}{{ site.baseurl }}/assets/social-preview.png">
+  <meta property="og:image:width" content="1280">
+  <meta property="og:image:height" content="640">
+  <meta property="og:image:alt" content="Leak Response Toolkit: prevent secret leaks, respond in minutes.">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" href="{{ site.baseurl }}/assets/logo.svg" type="image/svg+xml">
+  <link rel="preload" href="{{ site.baseurl }}/assets/fonts/Inter-Variable.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="{{ site.baseurl }}/assets/fonts/fonts.css">
-  <link rel="stylesheet" href="{{ site.baseurl }}/assets/site.css">
+  <link rel="stylesheet" href="{{ site.baseurl }}/assets/tokens.css">
+  <link rel="stylesheet" href="{{ site.baseurl }}/assets/landing.css">
+  <script>document.documentElement.classList.add("js");</script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "{{ site.title }}",
+    "description": "Open-source runbooks, tested prevention configs and a CLI for secret leaks in Git.",
+    "applicationCategory": "SecurityApplication",
+    "operatingSystem": "Linux, macOS",
+    "softwareVersion": "{{ site.version }}",
+    "license": "https://opensource.org/licenses/MIT",
+    "codeRepository": "https://github.com/{{ site.repository }}",
+    "url": "{{ site.url }}{{ site.baseurl }}/",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+  }
+  </script>
 </head>
 <body class="landing" data-base="{{ site.baseurl }}" data-repo="{{ site.repository }}">
   <a class="skip" href="#main">Skip to content</a>
-  <header class="top">
-    <a class="brand" href="{{ site.baseurl }}/"><img src="{{ site.baseurl }}/assets/logo.svg" alt="" width="24" height="24"><span>Leak Response Toolkit</span></a>
-    <nav class="top-links" aria-label="Main">
-      <a href="{{ site.baseurl }}/overview.html">Docs</a>
-      <a href="{{ site.baseurl }}/docs/01-runbook.html">Runbook</a>
-      <a href="{{ site.baseurl }}/docs/08-secrets-by-design.html">Prevention</a>
-      <a href="https://github.com/{{ site.repository }}">GitHub</a>
-    </nav>
-  </header>
+  {% include header.html %}
   <main id="main">{{ content }}</main>
-  <footer class="site-foot">
-    <div class="wrap foot-grid">
-      <div><a class="brand" href="{{ site.baseurl }}/"><img src="{{ site.baseurl }}/assets/logo.svg" alt="" width="20" height="20"><span>Leak Response Toolkit</span></a><p>MIT licensed. Engineering guidance, not legal advice.</p></div>
-      <nav aria-label="Footer"><a href="{{ site.baseurl }}/overview.html">Documentation</a><a href="{{ site.baseurl }}/SECURITY.html">Security</a><a href="{{ site.baseurl }}/CHANGELOG.html">Changelog</a><a href="{{ site.baseurl }}/CONTRIBUTING.html">Contributing</a><a href="https://github.com/{{ site.repository }}">GitHub</a></nav>
-    </div>
-  </footer>
+  {% include footer.html %}
+  {% include search.html %}
   <script src="{{ site.baseurl }}/assets/site.js" defer></script>
 </body>
 </html>

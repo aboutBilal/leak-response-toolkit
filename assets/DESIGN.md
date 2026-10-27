@@ -9,7 +9,7 @@ People open this toolkit during an incident. The visuals should be quiet, legibl
 - **Colour carries meaning.** Status colours appear only where something passed, needs attention or failed. Nothing is coloured for decoration.
 - **One accent.** Ember is the only brand colour. Use it for the mark, step numbers, the command prompt and at most one call to action per image.
 - **Neutrals do the work.** Roughly 60% background, 30% surfaces and text, 10% accent and status.
-- **Hierarchy through type, not effects.** No glows, textures, gradients (except the mark's highlight) or drop shadows beyond the single elevation below.
+- **Hierarchy through type, not effects.** In images, reports and dashboards: no glows, textures, gradients (except the mark's highlight) or drop shadows beyond the single elevation below. The website has a small, documented allowance for depth; see [Website](#website).
 - **Flush left, on a grid.** 8-point spacing. Text aligns to a common left edge.
 - **Real content only.** Every terminal image is rendered from captured output with [`tools/render-terminal-svg.py`](../tools/render-terminal-svg.py).
 
@@ -76,3 +76,65 @@ Weights: 400 for text, 600 for labels, 700 for titles. Labels above titles ("eye
 | Step card | `ink-900` fill, `ink-700` border, 12 px radius; step number in `ember-400`, title `ink-100`, body `ink-300`. |
 | Status pill | Tint background with matching status text, 8 px radius. Only for status. |
 | Feature image | `ink-950` background; copy on the left (eyebrow, title, body, one command chip); product window on the right. |
+
+## Website
+
+The documentation site and home page (`site/`) use the same tokens, with a few additions for an interactive surface. Source: [`site/assets/tokens.css`](../site/assets/tokens.css), [`docs.css`](../site/assets/docs.css) and [`landing.css`](../site/assets/landing.css).
+
+### Themes
+
+| Surface | Theme |
+|---|---|
+| Home page | Always dark. It is the product's front door and matches the terminal. |
+| Documentation | Follows the reader's system setting; the header switch overrides it and is remembered. |
+| Code blocks | Always dark, in both themes, so commands look the same as in a terminal. |
+
+### Depth
+
+| Token | Value | Use |
+|---|---|---|
+| Hairline | `rgba(230, 234, 242, 0.09)` dark, `#E3E7EE` light | Borders between areas. Prefer a hairline to a shadow. |
+| Strong hairline | `rgba(230, 234, 242, 0.16)` dark, `#D2D8E2` light | Hover borders, buttons. |
+| Elevation 1 | `0 1px 2px` | Code blocks in light mode. |
+| Elevation 3 | `0 40px 100px -30px rgba(0,0,0,0.8)` | Floating windows only: terminal, search, product frame. |
+| Header | 72–78% opaque background with a 14 px blur | Sticky header in every theme. |
+
+**Ambient light** is allowed in two places only: behind the home page headline and behind the closing call to action. It is one ember radial gradient at no more than 20% opacity, plus one cool radial (`rgba(92,120,190,0.16)`) behind the product. A 64 px grid at 4.5% opacity, faded out with a mask, sits under both. Nowhere else.
+
+### Code colours
+
+Two hues on the dark code surface, so syntax never competes with status colours.
+
+| Role | Colour | Contrast on `#0E131F` |
+|---|---|---|
+| Text | `#E6EAF2` | 15.4:1 |
+| Keywords, commands, prompt | `#FF8A5C` | 8.0:1 |
+| Keys, attributes, names | `#FFB59A` | 10.9:1 |
+| Strings, numbers | `#9CC3F5` | 10.2:1 |
+| Variables | `#C9B8F5` | 10.3:1 |
+| Comments (italic) | `#8B95A7` | 6.1:1 |
+
+### Motion
+
+| Token | Value | Use |
+|---|---|---|
+| Fast | 150 ms, `cubic-bezier(0.2, 0.7, 0.2, 1)` | Hover and focus changes. |
+| Reveal | 700 ms, same easing, 70 ms stagger | Home page sections fading in on scroll. |
+| Terminal | 100 ms per line | The hero terminal, once, on load. |
+
+All motion stops when the reader asks for reduced motion. Nothing loops except the incident indicator's pulse, which also stops.
+
+### Components
+
+| Component | Specification |
+|---|---|
+| Header | Brand, four links, search (`Ctrl K` or `⌘K`, or `/`), theme switch on documentation pages, GitHub, and "Leaked a secret?" with a pulsing `fail` dot that opens the cheat sheet. |
+| Search | Modal dialog over a blurred backdrop. Results are page sections, keyboard-driven (arrow keys, Enter, Esc). The index is built from the Markdown by `tools/build-search-index.py`. |
+| Callout | Tint background, 30% status-colour border, 18 px line icon, sentence-case label. Note uses `info`, Tip `pass`, Important `ember`, Warning `warn`, Caution `fail`. |
+| Code block | Dark surface, 40 px header with the language and a copy button, 13.5 px mono on a 1.7 line height. |
+| Bento tile | Raised gradient surface (`#131A29` to `#0F1421`), 18 px radius, hairline border; a soft highlight follows the pointer on devices that hover. Each tile shows a real piece of the product, never an abstract illustration. |
+| Sidebar | Group titles in 13 px semibold; pages on a 1 px guide line; the current page in ember with an ember guide segment. |
+
+### Checks
+
+`tools/check-site.py` runs on every pull request and blocks a deploy if an internal link, anchor, page title, description, `h1`, image alt text or search entry is missing. Keep every new colour pairing at 4.5:1 or better; `muted` text is for `bg` and `bg-2` only.

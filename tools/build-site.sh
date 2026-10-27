@@ -14,6 +14,10 @@ rm -rf "$out"
 mkdir -p "$out"
 
 cp -R "$root/site/." "$out/"
+# The version shown on the site comes from the CLI, so it cannot drift from the release.
+version="$(sed -n 's/^VERSION="\(.*\)"$/\1/p' "$root/leak")"
+[[ -n "$version" ]] || { echo "could not read VERSION from ./leak" >&2; exit 1; }
+printf '\nversion: "%s"\n' "$version" >> "$out/_config.yml"
 mkdir -p "$out/assets"
 cp "$root"/assets/*.svg "$root"/assets/*.png "$out/assets/"
 
@@ -25,9 +29,12 @@ for page in "${pages[@]}"; do
   # Explicit front matter makes every file a page (GitHub Pages skips CONTRIBUTING and
   # CODE_OF_CONDUCT otherwise). README becomes the Overview page; site/index.html is the home page.
   front="---"$'\n'; [[ "$page" == README.md ]] && front+="permalink: /overview.html"$'\n'"title: Overview"$'\n'; front+="---"$'\n'
-  { printf '%s' "$front"; printf '{%% raw %%}\n'; cat "$page"; printf '\n{%% endraw %%}\n'; } > "$out/$page"
+  # jekyll-relative-links converts Markdown links only; HTML links to .md files are converted here.
+  { printf '%s' "$front"; printf '{%% raw %%}\n'; sed -E 's/(href="[^":]+)\.md(#[^"]*)?"/\1.html\2"/g' "$page"; printf '\n{%% endraw %%}\n'; } > "$out/$page"
 done
 # Templates that are not Markdown are published as-is (for example the executive report).
 cp templates/*.html "$out/templates/"
+# Full-text search index, one entry per section (served as a static file).
+python3 "$root/tools/build-search-index.py" "$out/search.json" "${pages[@]}"
 
 echo "site source: $out ($(find "$out" -name '*.md' | wc -l | tr -d ' ') pages)"

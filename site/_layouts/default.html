@@ -3,56 +3,78 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% if page.url == "/" %}{{ site.title }}: {{ site.description }}{% else %}{{ page.title | default: site.title }} · {{ site.title }}{% endif %}</title>
-  <meta name="description" content="{{ site.description }}">
-  <meta property="og:title" content="{{ page.title | default: site.title }}">
-  <meta property="og:description" content="{{ site.description }}">
+  <script>
+    (function () {
+      var d = document.documentElement, t = null;
+      try { t = localStorage.getItem("theme"); } catch (e) {}
+      if (t !== "light" && t !== "dark") t = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      d.setAttribute("data-theme", t);
+      d.classList.add("js");
+    })();
+  </script>
+  {%- assign section = nil -%}{%- assign navtitle = nil -%}
+  {%- for group in site.data.nav -%}{%- for item in group.pages -%}{%- if item.url == page.url -%}{%- assign section = group.section -%}{%- assign navtitle = item.title -%}{%- endif -%}{%- endfor -%}{%- endfor %}
+  {%- assign desc = page.description -%}
+  {%- unless desc -%}{%- assign desc = content | split: "</h1>" | last | strip_html | remove: "[!NOTE]" | remove: "[!TIP]" | remove: "[!IMPORTANT]" | remove: "[!WARNING]" | remove: "[!CAUTION]" | normalize_whitespace | strip | truncate: 160 -%}{%- endunless %}
+  <title>{{ navtitle | default: page.title | default: site.title }} · {{ site.title }}</title>
+  <meta name="description" content="{{ desc | default: site.description | escape }}">
+  <link rel="canonical" href="{{ site.url }}{{ site.baseurl }}{{ page.url }}">
+  <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0B0F1A" media="(prefers-color-scheme: dark)">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="{{ site.title }}">
+  <meta property="og:url" content="{{ site.url }}{{ site.baseurl }}{{ page.url }}">
+  <meta property="og:title" content="{{ navtitle | default: page.title | default: site.title }}">
+  <meta property="og:description" content="{{ desc | default: site.description | escape }}">
   <meta property="og:image" content="{{ site.url }}{{ site.baseurl }}/assets/social-preview.png">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" href="{{ site.baseurl }}/assets/logo.svg" type="image/svg+xml">
+  <link rel="preload" href="{{ site.baseurl }}/assets/fonts/Inter-Variable.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="{{ site.baseurl }}/assets/fonts/fonts.css">
-  <link rel="stylesheet" href="{{ site.baseurl }}/assets/site.css">
+  <link rel="stylesheet" href="{{ site.baseurl }}/assets/tokens.css">
+  <link rel="stylesheet" href="{{ site.baseurl }}/assets/docs.css">
 </head>
-<body data-base="{{ site.baseurl }}" data-repo="{{ site.repository }}">
+<body class="docs" data-base="{{ site.baseurl }}" data-repo="{{ site.repository }}">
   <a class="skip" href="#content">Skip to content</a>
-  <header class="top">
-    <a class="brand" href="{{ site.baseurl }}/"><img src="{{ site.baseurl }}/assets/logo.svg" alt="" width="24" height="24"><span>Leak Response Toolkit</span></a>
-    <nav class="top-links" aria-label="Project">
-      <a href="{{ site.baseurl }}/overview.html">Docs</a>
-      <a href="{{ site.baseurl }}/docs/01-runbook.html">Runbook</a>
-      <a href="{{ site.baseurl }}/docs/08-secrets-by-design.html">Prevention</a>
-      <a href="https://github.com/{{ site.repository }}/releases/latest">Releases</a>
-      <a href="https://github.com/{{ site.repository }}">GitHub</a>
-    </nav>
-    <button class="menu" aria-expanded="false" aria-controls="sidebar">Menu</button>
-  </header>
-  <div class="shell">
+  {% include header.html docs=true %}
+  <div class="docs-shell">
     <aside id="sidebar" class="sidebar" aria-label="Documentation">
-      <label class="skip" for="filter">Filter pages</label>
-      <input id="filter" class="filter" type="search" placeholder="Filter pages" autocomplete="off">
-      {% for group in site.data.nav %}
-      <p class="group">{{ group.section }}</p>
-      <ul>
-        {% for item in group.pages %}
-        <li><a href="{{ site.baseurl }}{{ item.url }}"{% if page.url == item.url %} aria-current="page"{% endif %}>{{ item.title }}</a></li>
+      <nav aria-label="Documentation pages">
+        {% for group in site.data.nav %}
+        <p class="group">{{ group.section }}</p>
+        <ul>
+          {% for item in group.pages %}
+          <li><a href="{{ site.baseurl }}{{ item.url }}"{% if page.url == item.url %} aria-current="page"{% endif %}>{{ item.title }}</a></li>
+          {% endfor %}
+        </ul>
         {% endfor %}
-      </ul>
-      {% endfor %}
+      </nav>
+      <a class="sidebar-incident" href="{{ site.baseurl }}/CHEATSHEET.html"><span class="pulse" aria-hidden="true"></span><span><b>Leaked a secret?</b> Rotate it first, then follow the 15-minute cheat sheet.</span></a>
     </aside>
-    <main id="content" class="content">
+    <div class="drawer-backdrop" data-drawer-close hidden></div>
+    <main id="content" class="docs-main">
       <div class="doc">
         <article class="doc-body">
+          {% if section %}<p class="crumb">{{ section }}</p>{% endif %}
+          {% unless content contains "<h1" %}<h1>{{ navtitle | default: page.title }}</h1>{% endunless %}
           {{ content }}
+          <div class="doc-meta">
+            <a href="https://github.com/{{ site.repository }}/edit/main/{{ page.path }}">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4Z"/><path d="m13.5 6.5 4 4"/></svg>Edit this page</a>
+            <a href="https://github.com/{{ site.repository }}/issues/new?title={{ 'Docs: ' | append: page.title | url_encode }}">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16v.5"/></svg>Report a problem</a>
+          </div>
           <nav class="pager" aria-label="Previous and next page"></nav>
         </article>
-        <nav class="toc" aria-label="On this page"></nav>
+        <aside class="toc-rail" aria-label="On this page"><nav class="toc"></nav></aside>
       </div>
-      <footer class="foot">
-        <span>MIT licensed. Engineering guidance, not legal advice.</span>
-        <a href="https://github.com/{{ site.repository }}/edit/main/{{ page.path | replace: 'README.md', 'README.md' }}">Edit this page</a>
+      <footer class="docs-foot">
+        <span>Released under the <a href="https://github.com/{{ site.repository }}/blob/main/LICENSE">MIT License</a>. Engineering guidance, not legal advice.</span>
+        <span>Version {{ site.version }}</span>
       </footer>
     </main>
   </div>
+  {% include search.html %}
   <script src="{{ site.baseurl }}/assets/site.js" defer></script>
 </body>
 </html>

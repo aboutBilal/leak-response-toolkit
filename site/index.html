@@ -1,153 +1,341 @@
 ---
 layout: home
 ---
+{%- capture check -%}<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>{%- endcapture -%}
+{%- capture arrow -%}<svg class="icon arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>{%- endcapture -%}
+{%- capture ext -%}<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg>{%- endcapture -%}
+{%- capture file -%}<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5"/></svg>{%- endcapture -%}
 <section class="hero">
-  <div class="wrap hero-grid">
+  <div class="grid-bg" aria-hidden="true"></div>
+  <div class="glow glow-ember" aria-hidden="true"></div>
+  <div class="glow glow-cool" aria-hidden="true"></div>
+  <div class="wrap">
     <div class="hero-copy">
-      <p class="eyebrow">Open source · MIT license</p>
-      <h1>Prevent secret leaks.<br>Respond in minutes.</h1>
-      <p class="lede">For DevOps, platform and security teams. Tested prevention configs, incident runbooks and one CLI that grades your repositories, scans their full history, finds surviving copies of leaked code and writes the report leadership needs.</p>
+      <a class="pill" href="{{ site.baseurl }}/CHANGELOG.html"><span class="pill-tag">v{{ site.version }}</span>Read the release notes <span aria-hidden="true">→</span></a>
+      <h1>Prevent secret leaks.<br><span class="soft">Respond in minutes.</span></h1>
+      <p class="lede">Tested prevention configs, incident runbooks and one CLI that grades your repositories, scans every commit, finds surviving copies of leaked code and writes the report leadership needs.</p>
       <div class="cta">
-        <a class="btn primary" href="#install">Get started</a>
-        <a class="btn" href="{{ site.baseurl }}/docs/01-runbook.html">In an incident? Open the runbook</a>
+        <a class="btn primary" href="#install">Get started {{ arrow }}</a>
+        <a class="btn" href="{{ site.baseurl }}/docs/01-runbook.html">Read the runbook</a>
       </div>
-      <div class="cmdline" data-copy="docker run --rm -v &quot;$PWD:/repo&quot; ghcr.io/aboutbilal/leak-response-toolkit audit /repo">
-        <code><span class="prompt">$</span> docker run --rm -v "$PWD:/repo" ghcr.io/aboutbilal/leak-response-toolkit audit /repo</code>
+      <div class="cmdline" data-copy='docker run --rm -v "$PWD:/repo" ghcr.io/aboutbilal/leak-response-toolkit audit /repo'>
+        <code><span class="prompt" aria-hidden="true">$</span>docker run --rm -v "$PWD:/repo" ghcr.io/aboutbilal/leak-response-toolkit audit /repo</code>
       </div>
       <p class="hint">Grades the repository in the current folder. Runs locally; your code never leaves the machine.</p>
     </div>
-    <figure class="term" aria-label="Output of leak audit on this repository">
-      <div class="term-bar"><i></i><i></i><i></i><span>leak audit · this repository</span></div>
-<pre class="term-body"><span class="prompt">$</span> leak audit .
-<span class="pass">✔</span> no secret files tracked by Git
-<span class="pass">✔</span> .env, keys and state files are ignored
-<span class="pass">✔</span> pre-commit secret scanner configured
-<span class="pass">✔</span> pre-commit hook installed in this clone
-<span class="pass">✔</span> CI runs a secret scan
-<span class="pass">✔</span> .env excluded from builds; no secrets in ARG/ENV
-<span class="pass">✔</span> no secrets found in any commit
 
-<b>Score 100/100 · Grade <span class="pass">A</span></b></pre>
+    <figure class="term" aria-label="Output of leak audit on this repository: every check passed, score 100 out of 100, grade A">
+      <div class="term-bar" aria-hidden="true"><i></i><i></i><i></i><span>~/leak-response-toolkit</span></div>
+<pre class="term-body" aria-hidden="true"><span class="l"><span class="prompt">$ </span><span class="typed">leak audit .</span></span><span class="l" style="--i:0"><b>Secret hygiene audit</b></span><span class="l sec" style="--i:1">1. Files that usually hold secrets</span><span class="l" style="--i:2">  <span class="pass">✔</span> no secret files tracked by Git</span><span class="l sec" style="--i:3">2. Ignore rules</span><span class="l" style="--i:4">  <span class="pass">✔</span> .env, keys and state files are ignored</span><span class="l sec" style="--i:5">3. Commit-time blocking</span><span class="l" style="--i:6">  <span class="pass">✔</span> pre-commit secret scanner configured</span><span class="l" style="--i:7">  <span class="pass">✔</span> pre-commit hook installed in this clone</span><span class="l sec" style="--i:8">4. CI secret scanning</span><span class="l" style="--i:9">  <span class="pass">✔</span> CI runs a secret scan</span><span class="l sec" style="--i:10">5. Container hygiene</span><span class="l" style="--i:11">  <span class="pass">✔</span> .env excluded from builds; no secrets in ARG/ENV</span><span class="l sec" style="--i:12">6. Full history</span><span class="l" style="--i:13">  <span class="pass">✔</span> no secrets found in any commit</span><span class="l" style="--i:14"> </span><span class="l" style="--i:15"><b>Score 100/100 · Grade <span class="pass">A</span></b><span class="cursor"></span></span></pre>
     </figure>
   </div>
-</section>
 
-<section class="proof" aria-label="Why it matters">
-  <div class="wrap proof-grid">
-    <div><p class="stat">5 min</p><p>for attackers to find and use AWS keys exposed on public GitHub. <a href="https://unit42.paloaltonetworks.com/malicious-operations-of-exposed-iam-keys-cryptojacking/">Unit 42, 2023</a></p></div>
-    <div><p class="stat">28.6M</p><p>new hard-coded secrets reached public GitHub in 2025, up 34%. <a href="https://www.gitguardian.com/state-of-secrets-sprawl-report-2026">GitGuardian, 2026</a></p></div>
-    <div><p class="stat">64%</p><p>of secrets leaked in 2022 were still exploitable four years later. <a href="https://www.gitguardian.com/state-of-secrets-sprawl-report-2026">GitGuardian, 2026</a></p></div>
-    <div><p class="stat">5 of 9</p><p>secret types stopped by push protection in our test; a pre-commit scan stopped all 9. <a href="{{ site.baseurl }}/docs/04-prevention.html#what-each-layer-catches-a-measured-test">Measured</a></p></div>
+  <div class="wrap works">
+    <p>Works with the platforms and tools you already use</p>
+    <ul>
+      <li>GitHub</li><li>GitLab</li><li>Bitbucket</li><li>Azure DevOps</li><li>AWS</li><li>Azure</li><li>Google Cloud</li><li>Docker</li><li>pre-commit</li><li>gitleaks</li>
+    </ul>
   </div>
 </section>
 
-<section class="steps">
+<section class="metrics" aria-labelledby="metrics-title">
+  <h2 id="metrics-title" class="sr-only">Why minutes matter</h2>
+  <div class="wrap metric-grid">
+    <div class="metric reveal"><p class="num">5<span>min</span></p><p class="desc">for attackers to find and use AWS keys exposed on public GitHub.</p><a class="src" href="https://unit42.paloaltonetworks.com/malicious-operations-of-exposed-iam-keys-cryptojacking/">Unit 42, 2023 {{ ext }}</a></div>
+    <div class="metric reveal" style="--d:1"><p class="num">28.6<span>M</span></p><p class="desc">new hard-coded secrets reached public GitHub in 2025, up 34%.</p><a class="src" href="https://www.gitguardian.com/state-of-secrets-sprawl-report-2026">GitGuardian, 2026 {{ ext }}</a></div>
+    <div class="metric reveal" style="--d:2"><p class="num">64<span>%</span></p><p class="desc">of secrets leaked in 2022 were still exploitable four years later.</p><a class="src" href="https://www.gitguardian.com/state-of-secrets-sprawl-report-2026">GitGuardian, 2026 {{ ext }}</a></div>
+    <div class="metric reveal" style="--d:3"><p class="num">5<span>of 9</span></p><p class="desc">secret types blocked by push protection in our test. A pre-commit scan blocked all 9.</p><a class="src" href="{{ site.baseurl }}/docs/04-prevention.html#what-each-layer-catches-a-measured-test">How we measured {{ arrow }}</a></div>
+  </div>
+</section>
+
+<section class="features" id="features">
   <div class="wrap">
-    <p class="eyebrow">How it works</p>
-    <h2>Before, during and after a leak</h2>
-    <ol class="step-grid">
-      <li><span class="num">01 · Prevent</span><h3>Design leaks out</h3><p>Hooks that block <code>.env</code> files and keys, CI scans, keyless deployments, and a grade for every repository.</p><code class="chip">leak audit</code></li>
-      <li><span class="num">02 · Detect</span><h3>Find every secret</h3><p>Every commit on every branch, including secrets deleted later. Values are always redacted.</p><code class="chip">leak scan</code></li>
-      <li><span class="num">03 · Respond</span><h3>Contain the spread</h3><p>Rotate in the right order, preserve evidence, and search forks, GitHub, GitLab and web archives for copies.</p><code class="chip">leak hunt</code></li>
-      <li><span class="num">04 · Report</span><h3>Close the loop</h3><p>A report leadership can act on, message templates, a blameless review and a 45-minute drill.</p><code class="chip">leak report</code></li>
+    <div class="section-head reveal">
+      <p class="eyebrow">What's inside</p>
+      <h2>Everything between the leak and the post-mortem</h2>
+      <p>Seven tools with two rules in common: a secret value is never printed, and a check that fails is never reported as clean.</p>
+    </div>
+
+    <div class="bento">
+      <article class="tile wide reveal">
+        <div class="tile-copy">
+          <code class="tag">leak audit</code>
+          <h3>Grade every repository</h3>
+          <p>An A–F score for secret hygiene, with the exact fix for each gap: tracked secret files, ignore rules, commit hooks, CI scanning, container builds and the full history.</p>
+        </div>
+        <div class="viz grade" aria-hidden="true">
+          <div class="ring-wrap">
+            <svg class="ring" viewBox="0 0 112 112"><circle class="track" cx="56" cy="56" r="46"/><circle class="arc" cx="56" cy="56" r="46"/></svg>
+            <div class="ring-label"><b>A</b><span>100/100</span></div>
+          </div>
+          <ul class="checks"><li>{{ check }}No secret files tracked</li><li>{{ check }}Commit hook installed</li><li>{{ check }}CI scans every push</li><li>{{ check }}Full history clean</li></ul>
+        </div>
+      </article>
+
+      <article class="tile reveal" style="--d:1">
+        <code class="tag">leak scan</code>
+        <h3>Find every secret in history</h3>
+        <p>Every commit on every branch, including secrets deleted later. SARIF output for code scanning.</p>
+        <div class="viz codeview" aria-hidden="true">
+          <div><span class="rule">aws-access-token</span><span class="where">config/app.ini:2</span></div>
+          <div><span class="rule">slack-bot-token</span><span class="where">.env:5</span></div>
+          <div><span>value</span><span class="redact"></span></div>
+        </div>
+      </article>
+
+      <article class="tile reveal">
+        <code class="tag">leak hunt</code>
+        <h3>Find copies that survive deletion</h3>
+        <p>Forks, re-uploads on GitHub and GitLab, web archives and code search.</p>
+        <ul class="viz sources" aria-hidden="true">
+          <li><span class="dot pass"></span>Same-name forks<b class="pass">clean</b></li>
+          <li><span class="dot pass"></span>Wayback Machine<b class="pass">clean</b></li>
+          <li><span class="dot fail"></span>Software Heritage<b class="fail">found</b></li>
+          <li><span class="dot warn"></span>Code search<b class="warn">not checked</b></li>
+        </ul>
+      </article>
+
+      <article class="tile reveal" style="--d:1">
+        <code class="tag">leak report</code>
+        <h3>Brief leadership the same day</h3>
+        <p>A print-ready report from the evidence: secret types and counts, never values.</p>
+        <div class="viz paper" aria-hidden="true">
+          <i class="title"></i><i class="w65"></i>
+          <div class="paper-cards"><span class="p">Copies<br>none found</span><span class="f">Secrets<br>2 types</span><span class="w">Notice<br>to send</span></div>
+          <i class="w80"></i><i></i><i class="w65"></i>
+        </div>
+      </article>
+
+      <article class="tile reveal" style="--d:2">
+        <code class="tag">prevention kit</code>
+        <h3>Block leaks before they ship</h3>
+        <p>Copy-ready hooks, CI templates and keyless deployments. Every file is tested.</p>
+        <ul class="viz files" aria-hidden="true">
+          <li>{{ file }}pre-commit-config.yaml<em>tested</em></li>
+          <li>{{ file }}ci/github-actions.yml<em>tested</em></li>
+          <li>{{ file }}oidc/github-to-clouds.yml<em>tested</em></li>
+        </ul>
+      </article>
+
+      <article class="tile reveal">
+        <code class="tag">GitHub Action</code>
+        <h3>Run it in every pipeline</h3>
+        <p>One action for scan, audit, audit-org and hunt, with SARIF for code scanning and alerts to Slack, Teams or Discord.</p>
+        <ul class="viz pipeline" aria-hidden="true">
+          <li>{{ check }}leak scan<b>0 findings</b></li>
+          <li>{{ check }}upload SARIF<b>code scanning</b></li>
+          <li>{{ check }}notify<b>on findings</b></li>
+        </ul>
+      </article>
+
+      <article class="tile wide reveal">
+        <div class="tile-copy">
+          <code class="tag">leak audit-org</code>
+          <h3>See the whole organisation</h3>
+          <p>Every repository graded on one dashboard, worst first, with Markdown and JSON for automation. Repositories that could not be read are marked, not hidden.</p>
+        </div>
+        <div class="viz bars" aria-hidden="true">
+          <p>Grade distribution</p>
+          <div class="bar"><b>A</b><span><i class="pass-bg" style="--w:20%"></i></span><b>1</b></div>
+          <div class="bar"><b>B</b><span><i class="pass-bg" style="--w:20%"></i></span><b>1</b></div>
+          <div class="bar"><b>C</b><span><i style="--w:0%"></i></span><b>0</b></div>
+          <div class="bar"><b>D</b><span><i class="warn-bg" style="--w:40%"></i></span><b>2</b></div>
+          <div class="bar"><b>F</b><span><i class="fail-bg" style="--w:20%"></i></span><b>1</b></div>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="flow">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <p class="eyebrow">How it works</p>
+      <h2>Before, during and after a leak</h2>
+      <p>Each stage has a guide you can follow under pressure and a command that does the slow part.</p>
+    </div>
+    <ol class="timeline">
+      <li class="reveal"><span class="node">01</span><h3>Prevent</h3><p>Hooks, push protection, CI scans and keyless deployments keep secrets out of Git.</p><code class="chip">leak audit</code></li>
+      <li class="reveal" style="--d:1"><span class="node">02</span><h3>Detect</h3><p>Scan every commit on every branch, including secrets that were deleted later.</p><code class="chip">leak scan</code></li>
+      <li class="reveal" style="--d:2"><span class="node">03</span><h3>Respond</h3><p>Rotate in the right order, preserve evidence and hunt for surviving copies.</p><code class="chip">leak hunt</code></li>
+      <li class="reveal" style="--d:3"><span class="node">04</span><h3>Learn</h3><p>Report to leadership, run a blameless review and rehearse with a 45-minute drill.</p><code class="chip">leak report</code></li>
     </ol>
   </div>
 </section>
 
-<section class="feature">
-  <div class="wrap feature-grid">
-    <div class="feature-copy">
-      <p class="eyebrow">leak audit-org</p>
-      <h2>Every repository, graded on one page</h2>
-      <p>Grade a whole organisation from A to F, worst first, with the exact fix for each gap. HTML for people, markdown and JSON for automation.</p>
-      <ul class="ticks"><li>Tracked secret files, ignore rules, hooks, CI scanning, container hygiene and full history</li><li>Runs locally or as a scheduled GitHub Action</li><li>Never prints a secret value</li></ul>
-      <a class="more" href="{{ site.baseurl }}/overview.html#organisation-dashboard">How to run it →</a>
+<section class="showcase">
+  <div class="wrap">
+    <div class="section-head center reveal">
+      <p class="eyebrow">Output</p>
+      <h2>Real output, not mock-ups</h2>
+      <p>Produced by the toolkit on demo repositories. Secret values never appear.</p>
     </div>
-    <figure class="window"><div class="window-bar"><i></i><i></i><i></i><span>dashboard.html</span></div><img src="{{ site.baseurl }}/assets/dashboard-screen.png" alt="The audit-org dashboard: five repositories graded A to F, a grade distribution, and the fixes each repository needs" width="1000" height="1000" loading="lazy"></figure>
-  </div>
-</section>
-
-<section class="feature alt">
-  <div class="wrap feature-grid">
-    <figure class="window"><div class="window-bar"><i></i><i></i><i></i><span>executive-report.html</span></div><img src="{{ site.baseurl }}/assets/report-screen.png" alt="A report generated by leak report: executive summary, status cards and key facts" width="909" height="909" loading="lazy"></figure>
-    <div class="feature-copy">
-      <p class="eyebrow">leak hunt · leak report</p>
-      <h2>From evidence to a decision, the same day</h2>
-      <p>Deleting a repository does not delete its copies. <code>leak hunt</code> checks forks, same-name repositories on GitHub and GitLab, the Wayback Machine, Software Heritage and code search, then <code>leak report</code> turns the results into a print-ready report.</p>
-      <ul class="ticks"><li>Every check recorded with its raw response and a checksum manifest</li><li>Secret types and counts, never values</li><li>Facts only a person knows are left highlighted to complete</li></ul>
-      <a class="more" href="{{ site.baseurl }}/docs/05-where-copies-survive.html">Where copies survive →</a>
+    <div class="segmented-wrap">
+      <div class="segmented" role="tablist" aria-label="Example output">
+        <button type="button" role="tab" id="tab-dash" aria-selected="true" aria-controls="panel-dash">Organisation dashboard</button>
+        <button type="button" role="tab" id="tab-report" aria-selected="false" aria-controls="panel-report" tabindex="-1">Leadership report</button>
+        <button type="button" role="tab" id="tab-term" aria-selected="false" aria-controls="panel-term" tabindex="-1">Terminal</button>
+      </div>
+    </div>
+    <div class="browser reveal">
+      <div class="browser-bar" aria-hidden="true"><i></i><i></i><i></i><span class="url" data-url>dashboard.html</span></div>
+      <div class="panel shot" role="tabpanel" id="panel-dash" aria-labelledby="tab-dash" data-url="dashboard.html"><img src="{{ site.baseurl }}/assets/dashboard-screen.png" alt="The audit-org dashboard: five repositories graded from A to F, a grade distribution, and the fixes each repository needs" width="1000" height="1000" loading="lazy" decoding="async"></div>
+      <div class="panel shot" role="tabpanel" id="panel-report" aria-labelledby="tab-report" data-url="executive-report.html" hidden><img src="{{ site.baseurl }}/assets/report-screen.png" alt="A leadership report generated by leak report: executive summary, status cards and key facts" width="909" height="909" loading="lazy" decoding="async"></div>
+      <div class="panel shot dark" role="tabpanel" id="panel-term" aria-labelledby="tab-term" data-url="leak audit" hidden><img src="{{ site.baseurl }}/assets/demo-audit.svg" alt="leak audit on a repository with problems: grade F, with a fix for every finding and secret values redacted" loading="lazy" decoding="async"></div>
     </div>
   </div>
 </section>
 
 <section class="trust">
-  <div class="wrap">
-    <p class="eyebrow">Security of the toolkit</p>
-    <h2>Built to be checked, not just trusted</h2>
-    <div class="trust-grid">
-      <div><h3>Signed releases</h3><p>Archives and container images are signed with Sigstore. <a href="{{ site.baseurl }}/SECURITY.html#verifying-a-release">Verify one</a>.</p></div>
-      <div><h3>SBOM and provenance</h3><p>Every image ships with a software bill of materials and SLSA build provenance.</p></div>
-      <div><h3>OpenSSF Scorecard</h3><p>An independent security assessment runs on every change. <a href="https://scorecard.dev/viewer/?uri=github.com/aboutBilal/leak-response-toolkit">See the report</a>.</p></div>
-      <div><h3>Everything pinned</h3><p>Actions by commit SHA, images by digest, kept current by Dependabot.</p></div>
-      <div><h3>Tested on Linux and macOS</h3><p>shellcheck, actionlint and 34 offline tests on every push; CodeQL on every change to main.</p></div>
-      <div><h3>Never touches a secret</h3><p>No command prints or tests a secret value; tokens stay out of process lists; failed checks are never reported as clean.</p></div>
+  <div class="wrap trust-grid">
+    <div class="reveal">
+      <div class="section-head">
+        <p class="eyebrow">Security of the toolkit</p>
+        <h2>Built to be verified, not just trusted</h2>
+        <p>A tool used in leak investigations has to meet a higher bar. Every claim below can be checked.</p>
+      </div>
+      <ul class="trust-list">
+        <li><span class="ico"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4.5 6v5.5c0 4.6 3.2 8.4 7.5 9.5 4.3-1.1 7.5-4.9 7.5-9.5V6Z"/><path d="m9 12 2.2 2.2L15.5 10"/></svg></span><div><h3>Signed releases</h3><p>Source archives and container images are signed with Sigstore and ship with an SBOM and SLSA build provenance.</p></div></li>
+        <li><span class="ico"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V12M10 20V5M16 20v-9M21 20H3"/></svg></span><div><h3>OpenSSF Scorecard</h3><p>An independent security assessment runs on every change. <a href="https://scorecard.dev/viewer/?uri=github.com/{{ site.repository }}">See the report</a></p></div></li>
+        <li><span class="ico"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span><div><h3>Fails closed</h3><p>A scanner error or a rate-limited source is reported as "not checked" with exit code 4. It is never reported as clean.</p></div></li>
+        <li><span class="ico"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l18 18M10.6 6.1A9.8 9.8 0 0 1 12 6c5 0 8.5 4 9.5 6-.4.8-1.2 2-2.3 3.1M6.6 7.6C4.6 8.9 3.2 10.7 2.5 12c1 2 4.5 6 9.5 6 1.6 0 3-.4 4.3-1"/><path d="M9.9 10a3 3 0 0 0 4.1 4.1"/></svg></span><div><h3>Secrets stay private</h3><p>No command prints or tests a secret value. Tokens and webhook URLs never appear in process lists or logs.</p></div></li>
+        <li><span class="ico"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m7 9 3 3-3 3M13 15h4"/></svg></span><div><h3>Tested on Linux and macOS</h3><p>shellcheck, actionlint, CodeQL and 34 offline tests run on every push. Every action and image is pinned by digest.</p></div></li>
+      </ul>
     </div>
+    <div class="verify reveal" style="--d:1">
+      <div class="verify-head"><span>Verify a release</span></div>
+      <div class="panel">
+<pre><code><span class="prompt">$</span> cosign verify ghcr.io/aboutbilal/leak-response-toolkit:{{ site.version }} \
+    <span class="flag">--certificate-identity-regexp</span> \
+      '^https://github.com/{{ site.repository }}/' \
+    <span class="flag">--certificate-oidc-issuer</span> \
+      https://token.actions.githubusercontent.com</code></pre>
+      </div>
+      <div class="verify-out" aria-label="Expected result">
+        <span class="pass">✔</span> The cosign claims were validated<br>
+        <span class="pass">✔</span> Existence of the claims in the transparency log was verified offline<br>
+        <span class="pass">✔</span> The code-signing certificate was verified using trusted certificate authority certificates
+      </div>
+      <div class="verify-foot">
+        <a class="link-arrow" href="{{ site.baseurl }}/SECURITY.html#verifying-a-release">Verification guide {{ arrow }}</a>
+        <a class="link-arrow" href="https://github.com/{{ site.repository }}/releases/latest">Latest release {{ arrow }}</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="compare">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <p class="eyebrow">Comparison</p>
+      <h2>Works with the scanner you already have</h2>
+      <p>Detection comes from gitleaks. The toolkit adds what happens before and after it.</p>
+    </div>
+    <div class="table-wrap reveal">
+      <table>
+        <thead><tr><th scope="col"><span class="sr-only">Capability</span></th><th scope="col">gitleaks</th><th scope="col">TruffleHog</th><th scope="col">GitGuardian</th><th scope="col" class="us">Leak Response Toolkit</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Scan the full Git history</th><td><span class="yes">{{ check }}<span class="sr-only">Yes</span></span></td><td><span class="yes">{{ check }}<span class="sr-only">Yes</span></span></td><td><span class="yes">{{ check }}<span class="sr-only">Yes</span></span></td><td class="us"><span class="yes">{{ check }}<span class="sr-only">Yes</span></span>&nbsp; with gitleaks</td></tr>
+          <tr><th scope="row">Block secrets at commit</th><td><span class="yes">{{ check }}<span class="sr-only">Yes</span></span></td><td><span class="yes">{{ check }}<span class="sr-only">Yes</span></span></td><td><span class="yes">{{ check }}<span class="sr-only">Yes</span></span></td><td class="us"><span class="yes">{{ check }}<span class="sr-only">Yes</span></span>&nbsp; plus blocked file types</td></tr>
+          <tr><th scope="row">Grade repositories and organisations</th><td><span class="no">—<span class="sr-only">No</span></span></td><td><span class="no">—<span class="sr-only">No</span></span></td><td><span class="no">—<span class="sr-only">No</span></span></td><td class="us"><span class="yes">{{ check }}<span class="sr-only">Yes</span></span></td></tr>
+          <tr><th scope="row">Incident runbook for each leak scenario</th><td><span class="no">—<span class="sr-only">No</span></span></td><td><span class="no">—<span class="sr-only">No</span></span></td><td>Partial</td><td class="us"><span class="yes">{{ check }}<span class="sr-only">Yes</span></span></td></tr>
+          <tr><th scope="row">Search public sources for surviving copies</th><td><span class="no">—<span class="sr-only">No</span></span></td><td><span class="no">—<span class="sr-only">No</span></span></td><td>Continuous, commercial</td><td class="us">On demand</td></tr>
+          <tr><th scope="row">Leadership report from the evidence</th><td><span class="no">—<span class="sr-only">No</span></span></td><td><span class="no">—<span class="sr-only">No</span></span></td><td>Dashboards</td><td class="us"><span class="yes">{{ check }}<span class="sr-only">Yes</span></span></td></tr>
+          <tr><th scope="row">Check whether a found secret is still live</th><td><span class="no">—<span class="sr-only">No</span></span></td><td><span class="yes">{{ check }}<span class="sr-only">Yes</span></span></td><td><span class="yes">{{ check }}<span class="sr-only">Yes</span></span></td><td class="us">No, by design</td></tr>
+          <tr><th scope="row">Licence</th><td>MIT</td><td>AGPL-3.0</td><td>Commercial</td><td class="us">MIT</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="compare-note">Based on each project's public documentation, October 2026. Use them together: the toolkit runs gitleaks and leaves live-key checks to tools built for them.</p>
   </div>
 </section>
 
 <section class="install" id="install">
   <div class="wrap">
-    <p class="eyebrow">Get started</p>
-    <h2>Run it in under a minute</h2>
-    <div class="tabs" role="tablist" aria-label="Install options">
-      <button role="tab" id="tab-docker" aria-selected="true" aria-controls="panel-docker">Docker</button>
-      <button role="tab" id="tab-source" aria-selected="false" aria-controls="panel-source" tabindex="-1">From source</button>
-      <button role="tab" id="tab-action" aria-selected="false" aria-controls="panel-action" tabindex="-1">GitHub Action</button>
-      <button role="tab" id="tab-hooks" aria-selected="false" aria-controls="panel-hooks" tabindex="-1">pre-commit</button>
+    <div class="section-head center reveal">
+      <p class="eyebrow">Get started</p>
+      <h2>Running in under a minute</h2>
+      <p>Use the signed container image, install from source, or add it to your pipeline.</p>
     </div>
-    <div class="panel" role="tabpanel" id="panel-docker" aria-labelledby="tab-docker">
-<pre><code># No local dependencies. Signed image for amd64 and arm64.
+    <div class="install-card reveal">
+      <div class="install-tabs" role="tablist" aria-label="Ways to install">
+        <button type="button" role="tab" id="tab-docker" aria-selected="true" aria-controls="panel-docker">Docker</button>
+        <button type="button" role="tab" id="tab-source" aria-selected="false" aria-controls="panel-source" tabindex="-1">From source</button>
+        <button type="button" role="tab" id="tab-action" aria-selected="false" aria-controls="panel-action" tabindex="-1">GitHub Action</button>
+        <button type="button" role="tab" id="tab-hooks" aria-selected="false" aria-controls="panel-hooks" tabindex="-1">pre-commit</button>
+      </div>
+      <div class="panel" role="tabpanel" id="panel-docker" aria-labelledby="tab-docker">
+<pre><code><span class="c"># No local dependencies. Signed image for amd64 and arm64.</span>
 docker run --rm -v "$PWD:/repo" ghcr.io/aboutbilal/leak-response-toolkit audit /repo
 docker run --rm -v "$PWD:/repo" ghcr.io/aboutbilal/leak-response-toolkit scan /repo</code></pre>
-    </div>
-    <div class="panel" role="tabpanel" id="panel-source" aria-labelledby="tab-source" hidden>
-<pre><code># Needs bash 4.4+, git, curl, jq, and gitleaks or Docker.
-git clone https://github.com/aboutBilal/leak-response-toolkit.git
-cd leak-response-toolkit && make install
+      </div>
+      <div class="panel" role="tabpanel" id="panel-source" aria-labelledby="tab-source" hidden>
+<pre><code><span class="c"># Needs bash 4.4+, git, curl, jq, and gitleaks or Docker.</span>
+git clone https://github.com/{{ site.repository }}.git
+cd leak-response-toolkit &amp;&amp; make install
 leak doctor
 leak audit .</code></pre>
+      </div>
+      <div class="panel" role="tabpanel" id="panel-action" aria-labelledby="tab-action" hidden>
+<pre><code><span class="c"># .github/workflows/secrets.yml</span>
+<span class="k">on</span>: [push, pull_request]
+<span class="k">permissions</span>:
+  <span class="k">contents</span>: read
+<span class="k">jobs</span>:
+  <span class="k">secrets</span>:
+    <span class="k">runs-on</span>: ubuntu-latest
+    <span class="k">steps</span>:
+      - <span class="k">uses</span>: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 <span class="c"># v7.0.1</span>
+        <span class="k">with</span>: { <span class="k">fetch-depth</span>: 0, <span class="k">persist-credentials</span>: false }
+      - <span class="k">uses</span>: {{ site.repository }}@v{{ site.version }}   <span class="c"># pin to a commit SHA in production</span>
+        <span class="k">with</span>:
+          <span class="k">mode</span>: scan   <span class="c"># scan, audit, audit-org or hunt</span></code></pre>
+      </div>
+      <div class="panel" role="tabpanel" id="panel-hooks" aria-labelledby="tab-hooks" hidden>
+<pre><code><span class="c"># .pre-commit-config.yaml</span>
+<span class="k">repos</span>:
+  - <span class="k">repo</span>: https://github.com/{{ site.repository }}
+    <span class="k">rev</span>: v{{ site.version }}
+    <span class="k">hooks</span>:
+      - <span class="k">id</span>: forbid-secret-files   <span class="c"># blocks .env, keys, state files</span>
+      - <span class="k">id</span>: leak-guard            <span class="c"># also scans staged changes with gitleaks</span></code></pre>
+      </div>
     </div>
-    <div class="panel" role="tabpanel" id="panel-action" aria-labelledby="tab-action" hidden>
-<pre><code># .github/workflows/secrets.yml
-on: [push, pull_request]
-permissions:
-  contents: read
-jobs:
-  secrets:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with: { fetch-depth: 0, persist-credentials: false }
-      - uses: aboutBilal/leak-response-toolkit@v3.2.0   # pin to a commit SHA in production
-        with:
-          mode: scan   # scan, audit, audit-org or hunt</code></pre>
+    <div class="next-steps reveal">
+      <a href="{{ site.baseurl }}/overview.html#quick-start"><b>Quick start {{ arrow }}</b><span>Every command, step by step.</span></a>
+      <a href="{{ site.baseurl }}/prevention/README.html"><b>Prevention kit {{ arrow }}</b><span>Hooks, CI templates and keyless deploys.</span></a>
+      <a href="{{ site.baseurl }}/docs/07-practice-drill.html"><b>Practice drill {{ arrow }}</b><span>Rehearse a leak in 45 minutes.</span></a>
     </div>
-    <div class="panel" role="tabpanel" id="panel-hooks" aria-labelledby="tab-hooks" hidden>
-<pre><code># .pre-commit-config.yaml
-repos:
-  - repo: https://github.com/aboutBilal/leak-response-toolkit
-    rev: v3.2.0
-    hooks:
-      - id: forbid-secret-files   # blocks .env, keys, state files
-      - id: leak-guard            # also scans staged changes with gitleaks</code></pre>
+  </div>
+</section>
+
+<section class="faq">
+  <div class="wrap faq-grid">
+    <div class="section-head reveal">
+      <p class="eyebrow">Questions</p>
+      <h2>Before you adopt it</h2>
+      <p class="faq-aside">Something missing? Ask in <a href="https://github.com/{{ site.repository }}/discussions">Discussions</a>.</p>
     </div>
-    <p class="note">Then read the <a href="{{ site.baseurl }}/overview.html#quick-start">quick start</a>, or rehearse with the <a href="{{ site.baseurl }}/docs/07-practice-drill.html">45-minute drill</a> before you need it.</p>
+    <div class="faq-list reveal">
+      <details><summary>Does it send my code or secrets anywhere?<span class="plus" aria-hidden="true"></span></summary><p><code>scan</code> and <code>audit</code> run entirely on your machine. <code>hunt</code>, <code>forks</code>, <code>commits</code> and <code>audit-org</code> send only repository names, account names and commit IDs to public services. Alerts contain counts and secret types, never values.</p></details>
+      <details><summary>Why doesn't it test whether a leaked key still works?<span class="plus" aria-hidden="true"></span></summary><p>Using a leaked credential is what an attacker does, and it can trigger alarms or break a provider's terms. The answer is the same either way: rotate it.</p></details>
+      <details><summary>Does it work outside GitHub?<span class="plus" aria-hidden="true"></span></summary><p><code>scan</code>, <code>audit</code>, the hooks and the CI templates work with any Git repository on GitHub, GitLab, Azure DevOps or Bitbucket. <code>hunt</code> searches public GitHub, public GitLab, and web and code archives.</p></details>
+      <details><summary>What happens when a service is down or rate-limited?<span class="plus" aria-hidden="true"></span></summary><p>That check is reported as "not checked" and the command exits with code 4. A missing answer is never treated as a clean one.</p></details>
+      <details><summary>Can my company use and change it?<span class="plus" aria-hidden="true"></span></summary><p>Yes. It is MIT-licensed. Adapt the runbooks to your organisation and ship the prevention kit in your repository templates.</p></details>
+    </div>
   </div>
 </section>
 
 <section class="closing">
-  <div class="wrap closing-grid">
-    <div><h2>Leaked something right now?</h2><p>Rotate first. Then follow the runbook step by step.</p></div>
-    <div class="cta"><a class="btn primary" href="{{ site.baseurl }}/docs/01-runbook.html">Open the runbook</a><a class="btn" href="{{ site.baseurl }}/CHEATSHEET.html">One-page cheat sheet</a></div>
+  <div class="grid-bg" aria-hidden="true"></div>
+  <div class="glow glow-ember" aria-hidden="true"></div>
+  <div class="wrap reveal">
+    <h2>Be ready before the next leak</h2>
+    <p>Install it in a minute, run the drill once, and know exactly what to do when it happens.</p>
+    <div class="cta center">
+      <a class="btn primary" href="#install">Get started {{ arrow }}</a>
+      <a class="btn" href="https://github.com/{{ site.repository }}">View on GitHub</a>
+    </div>
+    <a class="urgent" href="{{ site.baseurl }}/CHEATSHEET.html"><span class="pulse" aria-hidden="true"></span><span><b>Leaked a secret right now?</b> Rotate it first, then open the cheat sheet.</span></a>
   </div>
 </section>

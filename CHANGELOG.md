@@ -4,7 +4,15 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
+### Added
+
+- **Redesigned documentation site and home page.** A new home page (hero terminal with real `leak audit` output, product tiles, timeline, output showcase, verification, comparison, FAQ) and a new documentation theme: light and dark themes with a switch, dark code blocks with copy buttons, callouts with icons, heading links, an "On this page" rail, a mobile drawer, print styles for runbooks, and a 404 page.
+- **Documentation search.** Press `Ctrl K`, `⌘K` or `/` on any page to search every runbook, guide and template by section.
+- **Site checks in CI.** `tools/check-site.py` checks every internal link and anchor, page titles, descriptions, headings, image alt text and the search index on every pull request, before anything is deployed.
+
 ### Fixed
+
+- Documentation site: links in the README's HTML header pointed at `.md` files and returned 404 on the site; the Overview and Incident checklist pages had no main heading.
 
 - Documentation site: the home page no longer overflows on phones (grid columns shrink; long command lines scroll inside their box).
 - The test suite no longer needs GNU `timeout`, which macOS does not have; hangs are caught by bats' own per-test limit (`BATS_TEST_TIMEOUT`) on every platform.
