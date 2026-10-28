@@ -129,6 +129,18 @@ commit_all() {
   [[ "$output" == *"Grade A"* ]] || [[ "$output" == *"Grade B"* ]]
 }
 
+@test "audit: Spillkit's own pre-commit hooks and GitHub Action count as secret scanning" {
+  new_repo "$TMP/own"
+  printf 'repos:\n  - repo: https://github.com/aboutBilal/spillkit\n    rev: v3.6.0\n    hooks:\n      - id: forbid-secret-files\n      - id: leak-guard\n' > "$TMP/own/.pre-commit-config.yaml"
+  mkdir -p "$TMP/own/.github/workflows"
+  printf 'on: [push]\njobs:\n  check:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: aboutBilal/spillkit@v3\n' > "$TMP/own/.github/workflows/checks.yml"
+  echo "hello" > "$TMP/own/README.md"
+  commit_all "$TMP/own" "init"
+  NO_COLOR=1 run "$ROOT/scripts/audit.sh" --no-scan "$TMP/own"
+  [[ "$output" == *"✔ pre-commit secret scanner configured"* ]]
+  [[ "$output" == *"✔ CI runs a secret scan"* ]]
+}
+
 @test "audit: not a git repository exits 2" {
   run "$ROOT/scripts/audit.sh" --no-scan "$TMP"
   [ "$status" -eq 2 ]

@@ -243,7 +243,7 @@ A tool that handles leak investigations has to be trustworthy itself. Each of th
 - Release archives and the install script carry SLSA build provenance; container images ship with an SBOM and SLSA build provenance.
 - [OpenSSF Scorecard](https://scorecard.dev/viewer/?uri=github.com/aboutBilal/spillkit) runs on every push to `main`.
 - GitHub Actions are pinned to commit SHAs and container images to digests; Dependabot keeps them current.
-- Every push runs shellcheck, actionlint, 54 offline tests on Linux and macOS, and a full-history secret scan; CodeQL analyses every change to `main` and every pull request.
+- Every push runs shellcheck, actionlint, 55 offline tests on Linux and macOS, and a full-history secret scan; CodeQL analyses every change to `main` and every pull request.
 - No command prints or tests a secret value, and tests enforce this. `leak snapshot` keeps a copy of a leaked repository as evidence, so evidence folders are git-ignored and must be handled as sensitive. The repository itself contains no secrets, not even fake ones.
 - Tokens and webhook URLs are passed to `curl` on standard input, never as command-line arguments, so they do not appear in process lists.
 - `leak rotate` is the only command that changes anything. It is a dry run unless you name a step with `--apply`, asks before it disables or deletes, and pipes a new secret from the provider straight into your secret store: never shown, never written to disk, never in a command line.

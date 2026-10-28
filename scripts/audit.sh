@@ -73,7 +73,7 @@ else pass "no environment-based settings detected" 5; fi
 heading "3. Commit-time blocking"
 hooksdir="$(git -C "$repo" rev-parse --git-path hooks)"; [[ "$hooksdir" = /* ]] || hooksdir="$repo/$hooksdir"
 cfg="$repo/.pre-commit-config.yaml"
-if [[ -f "$cfg" ]] && grep -qiE 'gitleaks|trufflehog|detect-secrets' "$cfg"; then pass "pre-commit secret scanner configured" 10
+if [[ -f "$cfg" ]] && grep -qiE 'gitleaks|trufflehog|detect-secrets|leak-guard' "$cfg"; then pass "pre-commit secret scanner configured" 10
 else loc=".pre-commit-config.yaml"; warn "no pre-commit secret scanner configured" 10; tip "copy prevention/pre-commit-config.yaml to .pre-commit-config.yaml"; fi
 if [[ -x "$hooksdir/pre-commit" ]] || [[ -n "$(git -C "$repo" config core.hooksPath)" ]]; then pass "pre-commit hook installed in this clone" 5
 elif [[ "${CI:-}" == true || "${TF_BUILD:-}" == True ]]; then pass "local hook not checked in CI: hooks live in developer clones" 5
@@ -81,7 +81,7 @@ else loc=".pre-commit-config.yaml"; warn "no pre-commit hook installed in this c
 
 heading "4. CI secret scanning"
 ci_files="$(cd "$repo" && ls .github/workflows/*.y*ml .gitlab-ci.yml azure-pipelines.yml bitbucket-pipelines.yml 2>/dev/null || true)"
-if [[ -n "$ci_files" ]] && (cd "$repo" && grep -qliE 'gitleaks|trufflehog|secret[-_ ]?(scan|detection)|detect-secrets' $ci_files 2>/dev/null); then
+if [[ -n "$ci_files" ]] && (cd "$repo" && grep -qliE 'gitleaks|trufflehog|secret[-_ ]?(scan|detection)|detect-secrets|aboutbilal/spillkit|leak scan' $ci_files 2>/dev/null); then
   pass "CI runs a secret scan" 15
 elif [[ -n "$ci_files" ]]; then loc="$(echo "$ci_files" | head -1)"; warn "CI exists but runs no secret scan" 15; tip "add a job from prevention/ci/"
 else loc=".github/workflows"; warn "no CI configuration found" 15; tip "add a job from prevention/ci/"; fi
