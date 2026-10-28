@@ -16,10 +16,15 @@ What is planned next. Ideas and help are welcome: open an [improvement issue](ht
 - SARIF output for `leak audit`, with a precise location for each finding.
 - Bitbucket Cloud and Azure DevOps as `audit-org` sources.
 
+## Done in 3.5
+- `leak plan`: a rotation checklist from a scan, most dangerous first.
+- `leak rotate`: AWS, Azure and Google Cloud keys rotated step by step, with a dry run by default and new secrets piped straight into a secret store.
+- `leak demo`, a one-line signed install, and GitLab groups as an `audit-org` source.
+
 ## Next
 - A Homebrew formula for macOS and Linux.
-- Rotation recipes as scripts for the most common cloud credentials (with a dry-run mode).
-- GitLab groups as an `audit-org` source.
+- More `leak rotate` recipes: GitHub App private keys, Azure DevOps and GitLab tokens, database passwords.
+- `leak plan` in the GitHub Action, so a failed scan comes with its rotation checklist.
 
 ## Later
 - Translations of the runbook and cheat sheet.

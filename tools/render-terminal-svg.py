@@ -24,6 +24,7 @@ COLOURS = [
     (r"^\s*→", INK_500, "400"),
     (r"^WRN", WARN, "400"),
     (r"^RULE", INK_500, "600"),
+    (r"^#\s+TIER", INK_500, "600"),
     (r"^Score.*Grade [AB]\b", PASS, "700"),
     (r"^Score", FAIL, "700"),
     (r"^(==>|Next:|Secret hygiene audit|\d\. )", INK_100, "600"),

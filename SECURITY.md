@@ -48,6 +48,8 @@ cosign verify-blob spillkit-vX.Y.Z.tar.gz \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com
 ```
 
+The install script is signed the same way: verify `install.sh` with `install.sh.sigstore.json` from the same release before running it, or run `bash install.sh --require-signature`, which refuses any archive whose signature does not verify.
+
 Container images are signed the same way:
 
 ```bash
@@ -58,8 +60,9 @@ cosign verify ghcr.io/aboutbilal/spillkit:X.Y.Z \
 
 ## Using the toolkit safely
 
-- `scan` and `audit` run locally. `hunt`, `forks`, `commits` and `audit-org` send only repository names, account names and commit IDs to public services: GitHub, GitLab, the Internet Archive, Software Heritage, Sourcegraph, Codeberg and play.clickhouse.com.
+- `scan`, `audit` and `plan` run locally. `hunt`, `forks`, `commits` and `audit-org` send only repository names, account names and commit IDs to public services: GitHub, GitLab, the Internet Archive, Software Heritage, Sourcegraph, Codeberg and play.clickhouse.com.
 - Tokens (`GITHUB_TOKEN`) and webhook URLs (`LEAK_WEBHOOK_URL`) are handed to `curl` and `git` through standard input or the environment, never as command-line arguments, so they do not appear in process lists. Alerts contain counts and types, never values.
 - Output and reports are **redacted**: secret values are never printed or written to reports. `leak snapshot` does keep a full copy of the leaked repository, which is the evidence itself.
+- `leak rotate` is the only command that changes anything, and only with `--apply STEP`. It uses the `aws`, `az` or `gcloud` CLI you are signed in to. A new secret travels from that CLI to your secret store through a pipe: it is held in memory for that step only, never printed, written to disk, logged or passed as an argument. `rotation-log.tsv` records times, steps and credential IDs, never values.
 - Evidence folders (`evidence/`, `hunts/`) can contain leaked code. They are git-ignored here; keep them out of any repository and share them only with the people handling the incident.
 - Releases include a source archive signed with Sigstore; container images ship with an SBOM and build provenance.

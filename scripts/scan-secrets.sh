@@ -108,5 +108,5 @@ echo
 echo "==> Distinct secret types to rotate"
 jq -r 'group_by(.RuleID)[] | "  \(.[0].RuleID): \(length) finding(s) in \([.[].File] | unique | length) file(s)"' "$json"
 echo
-echo "Next: rotate every one of these - docs/02-rotate-secrets.md"
+echo "Next: leak plan $json   (what to rotate first, and where; docs/02-rotate-secrets.md)"
 exit "$EXIT_FOUND"

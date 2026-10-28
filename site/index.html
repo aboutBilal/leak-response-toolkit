@@ -9,7 +9,7 @@ layout: home
     <div class="hero-copy">
       <p class="ticker"><span class="alert-dot" aria-hidden="true"></span><span class="clock-digits" data-clock role="timer" aria-label="Time since you opened this page">00:00</span><span class="ticker-label">since you opened this page</span></p>
       <h1>A leaked key can be in use within 5&nbsp;minutes. <span class="kicker">Be faster.</span></h1>
-      <p class="lede">Spillkit is a free, open-source kit for engineering teams. It blocks secrets at the commit, finds every one already in your Git history, tracks down copies that survive deletion and writes the report your leadership needs.</p>
+      <p class="lede">Spillkit is a free, open-source kit for engineering teams. It blocks secrets at the commit, finds every one already in your Git history, tells you what to rotate first, tracks down copies that survive deletion and writes the report your leadership needs.</p>
       <div class="actions">
         <a class="btn primary" href="#install">Install free {{ arrow }}</a>
         <a class="btn" href="{{ site.baseurl }}/CHEATSHEET.html">Get the 15-minute plan</a>
@@ -44,7 +44,7 @@ layout: home
 <span class="d">RULE                 FILE    COMMIT</span>
 <span class="r">aws-access-token</span>     .env:2  a41f9c2
 <span class="r">stripe-access-token</span>  .env:4  a41f9c2
-<span class="d">Next: rotate every one of these</span></pre>
+<span class="d">Next: leak plan secrets-report.json</span></pre>
       </div>
     </div>
   </div>
@@ -107,8 +107,8 @@ layout: home
           </svg>
         </div>
         <h3>Rotate in the right order</h3>
-        <p>A runbook for each kind of leak and provider: what to revoke first, which evidence to keep, who to tell.</p>
-        <a class="more" href="{{ site.baseurl }}/docs/01-runbook.html">Incident runbook {{ arrow }}</a>
+        <p>A plan from the scan, most dangerous first, with where to revoke each secret. Cloud keys are rotated step by step, the new one piped straight into your vault.</p>
+        <a class="more" href="{{ site.baseurl }}/docs/02-rotate-secrets.html#with-spillkit-plan-first-then-rotate-step-by-step">leak plan and leak rotate {{ arrow }}</a>
       </article>
       <article class="stage-card">
         <div class="art art-lav">
@@ -206,8 +206,8 @@ layout: home
       <ol class="clock">
         <li><span class="t">0–2 min</span><p><b>Say it out loud.</b> Tell your lead or security channel and start a timeline in UTC.</p></li>
         <li><span class="t">2–5 min</span><p><b>Keep the evidence.</b> If the copy is yours and public by mistake, make it private. Don't delete it yet.</p><code>leak snapshot owner/repo</code></li>
-        <li><span class="t">5–10 min</span><p><b>Rotate the most powerful secret first.</b> Revoke the old value; adding a new one is not enough.</p></li>
-        <li><span class="t">10–15 min</span><p><b>Scan the whole history</b> for every other secret.</p><code>leak scan ./repo</code></li>
+        <li><span class="t">5–10 min</span><p><b>Rotate the most powerful secret first.</b> Revoke the old value; adding a new one is not enough.</p><code>leak rotate aws-key</code></li>
+        <li><span class="t">10–15 min</span><p><b>Scan the whole history</b> for every other secret, then put them in order.</p><code>leak scan ./repo &amp;&amp; leak plan</code></li>
         <li><span class="t">Then</span><p><b>Remove copies, check the logs, notify.</b></p><code>leak hunt owner/repo</code></li>
       </ol>
     </article>
@@ -224,7 +224,7 @@ layout: home
       <li><span class="ti-wrap"><svg class="ti" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4.5 6v5.5c0 4.6 3.2 8.4 7.5 9.5 4.3-1.1 7.5-4.9 7.5-9.5V6Z"/><path d="m9 12 2.2 2.2L15.5 10"/></svg></span><h3>Signed releases</h3><p>Archives and images signed with Sigstore, with an SBOM and SLSA provenance. <a href="{{ site.baseurl }}/SECURITY.html#verifying-a-release">Verify one</a></p></li>
       <li><span class="ti-wrap"><svg class="ti" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span><h3>Fails closed</h3><p>A scanner error or an unreachable source is reported as not checked, never as clean.</p></li>
       <li><span class="ti-wrap"><svg class="ti" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18M10.6 6.1A9.8 9.8 0 0 1 12 6c5 0 8.5 4 9.5 6-.4.8-1.2 2-2.3 3.1M6.6 7.6C4.6 8.9 3.2 10.7 2.5 12c1 2 4.5 6 9.5 6 1.6 0 3-.4 4.3-1"/><path d="M9.9 10a3 3 0 0 0 4.1 4.1"/></svg></span><h3>Secrets stay private</h3><p>No command prints or tests a secret. Tokens never appear in process lists or logs.</p></li>
-      <li><span class="ti-wrap"><svg class="ti" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V12M10 20V5M16 20v-9M21 20H3"/></svg></span><h3>Independently scored</h3><p>OpenSSF Scorecard, CodeQL and 41 tests on Linux and macOS for every change. <a href="https://scorecard.dev/viewer/?uri=github.com/{{ site.repository }}">See the score</a></p></li>
+      <li><span class="ti-wrap"><svg class="ti" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V12M10 20V5M16 20v-9M21 20H3"/></svg></span><h3>Independently scored</h3><p>OpenSSF Scorecard, CodeQL and 51 tests on Linux and macOS for every change. <a href="https://scorecard.dev/viewer/?uri=github.com/{{ site.repository }}">See the score</a></p></li>
     </ul>
   </div>
 </section>
@@ -233,7 +233,7 @@ layout: home
   <div class="wrap install-grid">
     <div class="install-copy">
       <h2 id="install-title">Install in a minute</h2>
-      <p>Run the signed container image with nothing else installed, or add the toolkit to your pipeline and commit hooks.</p>
+      <p>One line on Linux and macOS, checked against the signed release. Or run the signed container image, or add the toolkit to your pipeline and commit hooks.</p>
       <div class="works">
         <p>Works with</p>
         <ul class="logos">
@@ -252,12 +252,19 @@ layout: home
     </div>
     <div class="install-card">
       <div class="install-tabs" role="tablist" aria-label="Ways to install">
-        <button type="button" role="tab" id="tab-docker" aria-selected="true" aria-controls="panel-docker">Docker</button>
+        <button type="button" role="tab" id="tab-oneline" aria-selected="true" aria-controls="panel-oneline">One line</button>
+        <button type="button" role="tab" id="tab-docker" aria-selected="false" aria-controls="panel-docker" tabindex="-1">Docker</button>
         <button type="button" role="tab" id="tab-source" aria-selected="false" aria-controls="panel-source" tabindex="-1">From source</button>
         <button type="button" role="tab" id="tab-action" aria-selected="false" aria-controls="panel-action" tabindex="-1">GitHub Action</button>
         <button type="button" role="tab" id="tab-hooks" aria-selected="false" aria-controls="panel-hooks" tabindex="-1">pre-commit</button>
       </div>
-      <div class="panel" role="tabpanel" id="panel-docker" aria-labelledby="tab-docker">
+      <div class="panel" role="tabpanel" id="panel-oneline" aria-labelledby="tab-oneline">
+<pre><code><span class="c"># No root. Verifies the SHA-256, and the signature if cosign is installed.</span>
+curl -fsSL https://github.com/{{ site.repository }}/releases/latest/download/install.sh \
+  | bash
+leak demo   <span class="c"># see it work in a minute, on a leak made for the purpose</span></code></pre>
+      </div>
+      <div class="panel" role="tabpanel" id="panel-docker" aria-labelledby="tab-docker" hidden>
 <pre><code><span class="c"># No local dependencies. Signed image for amd64 and arm64.</span>
 docker run --rm -v "$PWD:/repo" ghcr.io/aboutbilal/spillkit audit /repo
 docker run --rm -v "$PWD:/repo" ghcr.io/aboutbilal/spillkit scan /repo</code></pre>
@@ -303,10 +310,10 @@ leak audit .</code></pre>
       <h2 id="faq-title">Questions teams ask first</h2>
     </div>
     <dl class="qa">
-      <div><dt>Does it send my code or secrets anywhere?</dt><dd>No. <code>scan</code> and <code>audit</code> run entirely on your machine. <code>hunt</code> and <code>audit-org</code> send only repository names, account names and commit IDs to public services.</dd></div>
+      <div><dt>Does it send my code or secrets anywhere?</dt><dd>No. <code>scan</code>, <code>audit</code> and <code>plan</code> run entirely on your machine, and <code>rotate</code> uses your own cloud CLI only for the steps you apply. <code>hunt</code> and <code>audit-org</code> send only repository names, account names and commit IDs to public services.</dd></div>
       <div><dt>Why doesn't it test whether a leaked key still works?</dt><dd>Using a leaked credential is what an attacker does, and it can trigger alarms or break a provider's terms. The answer is the same either way: rotate it.</dd></div>
-      <div><dt>Does it work outside GitHub?</dt><dd>Yes. Scanning, auditing, the hooks and the CI templates work with any Git repository on GitHub, GitLab, Azure DevOps or Bitbucket.</dd></div>
-      <div><dt>How does it compare with gitleaks or TruffleHog?</dt><dd>Detection comes from gitleaks. The toolkit adds grading, runbooks, the hunt for copies and the leadership report. <a href="{{ site.baseurl }}/overview.html#comparison">See the comparison</a>.</dd></div>
+      <div><dt>Does it work outside GitHub?</dt><dd>Yes. Scanning, auditing, the hooks and the CI templates work with any Git repository on GitHub, GitLab, Azure DevOps or Bitbucket, and <code>audit-org</code> grades whole organisations on all four.</dd></div>
+      <div><dt>How does it compare with gitleaks or TruffleHog?</dt><dd>Detection comes from gitleaks. The toolkit adds grading, rotation plans and guided rotation, runbooks, the hunt for copies and the leadership report. <a href="{{ site.baseurl }}/overview.html#comparison">See the comparison</a>.</dd></div>
       <div><dt>Can my company use and change it?</dt><dd>Yes. It is MIT-licensed. Adapt the runbooks to your organisation and ship the prevention kit in your repository templates.</dd></div>
       <div><dt>Where do I get help?</dt><dd>Ask in <a href="https://github.com/{{ site.repository }}/discussions">Discussions</a>. Report vulnerabilities privately, as described in the <a href="{{ site.baseurl }}/SECURITY.html">security policy</a>.</dd></div>
     </dl>

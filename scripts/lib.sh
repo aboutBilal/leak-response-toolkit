@@ -53,6 +53,16 @@ ado_get() {
     | curl -s --max-time 60 -K - -o "$2" -w '%{http_code}' "$1" || echo "000"
 }
 
+# gitlab_url: the GitLab instance, from GITLAB_URL (default https://gitlab.com), without a trailing slash.
+gitlab_url() { local u="${GITLAB_URL:-https://gitlab.com}"; printf '%s' "${u%/}"; }
+
+# gl_get <url> <outfile>: GET a GitLab API URL. GITLAB_TOKEN (a personal, group or project access
+# token with read_api) is sent as a PRIVATE-TOKEN header on stdin. Prints the HTTP status code.
+gl_get() {
+  { if [[ -n "${GITLAB_TOKEN:-}" ]]; then printf 'header = "PRIVATE-TOKEN: %s"\n' "${GITLAB_TOKEN//\"/}"; fi; } \
+    | curl -s --max-time 60 -K - -o "$2" -w '%{http_code}' "$1" || echo "000"
+}
+
 # http_get <url> <outfile>: anonymous GET; prints the HTTP status code.
 http_get() {
   curl -s --max-time 90 -A "spillkit" -o "$2" -w '%{http_code}' "$1" || echo "000"
@@ -83,7 +93,7 @@ tlp_info() {
   esac
 }
 
-# git_auth_env: let `git clone` use GITHUB_TOKEN, BITBUCKET_TOKEN and AZURE_DEVOPS_PAT
+# git_auth_env: let `git clone` use GITHUB_TOKEN, BITBUCKET_TOKEN, AZURE_DEVOPS_PAT and GITLAB_TOKEN
 # without putting them in argv (each only for its own host), and never prompt for credentials.
 git_auth_env() {
   export GIT_TERMINAL_PROMPT=0
@@ -96,5 +106,6 @@ git_auth_env() {
   [[ -n "${GITHUB_TOKEN:-}" ]] && _git_header github.com "x-access-token:$GITHUB_TOKEN"
   [[ -n "${BITBUCKET_TOKEN:-}" ]] && _git_header bitbucket.org "x-token-auth:$BITBUCKET_TOKEN"
   [[ -n "${AZURE_DEVOPS_PAT:-}" ]] && _git_header dev.azure.com ":$AZURE_DEVOPS_PAT"
+  if [[ -n "${GITLAB_TOKEN:-}" ]]; then local h; h="$(gitlab_url)"; h="${h#https://}"; _git_header "${h%%/*}" "oauth2:$GITLAB_TOKEN"; fi
   if ((n)); then export GIT_CONFIG_COUNT=$n; fi
 }

@@ -59,6 +59,16 @@ Ask the owner for screenshots of **Insights → Traffic** and their **account se
 
 **Revoke the old secret**; creating a new one is not enough. Commands per type: [`02-rotate-secrets.md`](02-rotate-secrets.md).
 
+With a scan report, let Spillkit put them in order and walk through the cloud keys:
+
+```bash
+./leak plan secrets-report.json         # checklist, most dangerous first: rotation-plan.md for the issue, .html to print
+./leak rotate aws-key --user <user> --key-id <AKIA...>     # a dry run: every step with its exact command
+./leak rotate aws-key --user <user> --key-id <AKIA...> --apply replace --store aws-sm:<secret-id>
+```
+
+`leak rotate` also handles Azure app registration secrets, Google Cloud service account keys and Azure storage keys. Each applied step is logged with its UTC time in `rotation-log.tsv`, ready for the timeline.
+
 Record the **exact time** each secret was revoked. The investigation window ends there.
 
 ### 4. Take it down

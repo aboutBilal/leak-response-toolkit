@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Check that this machine is ready to run the toolkit, before an incident.
-# Reports required tools, a secret scanner (gitleaks or Docker), optional tools,
-# the GitHub token and the remaining API budget. Changes nothing.
+# Reports required tools, a secret scanner (gitleaks or Docker), optional tools (the
+# cloud CLIs leak rotate uses, cosign to verify releases), the GitHub token and the
+# remaining API budget. Changes nothing.
 #
 # Usage: leak doctor [--offline]
 #   --offline   skip the GitHub API budget check
@@ -57,6 +58,12 @@ echo "Optional"
 if command -v sha256sum >/dev/null || command -v shasum >/dev/null; then ok "sha256" "found (evidence checksums)"
 else warn "sha256" "missing sha256sum/shasum: evidence manifests cannot be written"; fi
 if command -v column >/dev/null; then ok "column" "found"; else warn "column" "missing: tables are printed unaligned"; fi
+for cli in aws az gcloud; do
+  if command -v "$cli" >/dev/null; then ok "$cli" "found (leak rotate)"
+  else warn "$cli" "not found: needed only to rotate its keys with leak rotate"; fi
+done
+if command -v cosign >/dev/null; then ok "cosign" "found (verifies release signatures)"
+else warn "cosign" "not found: needed only to verify release signatures"; fi
 if [[ -n "${GITHUB_TOKEN:-}" ]]; then
   ok "GITHUB_TOKEN" "set (5,000 API requests/hour)"
 else

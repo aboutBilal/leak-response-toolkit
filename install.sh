@@ -1,0 +1,84 @@
+#!/usr/bin/env bash
+# Install Spillkit from a signed GitHub release. Downloads the release archive, checks
+# its SHA-256, verifies its Sigstore signature when cosign is installed, unpacks it under
+# ~/.local/share/spillkit/<version> and links `leak` into ~/.local/bin. Needs no root.
+#
+# Usage: curl -fsSL https://github.com/aboutBilal/spillkit/releases/latest/download/install.sh | bash
+#        bash install.sh [--version vX.Y.Z] [--prefix DIR] [--require-signature]
+#   --version vX.Y.Z      install this release (default: the latest)
+#   --prefix DIR          install into DIR/share/spillkit and DIR/bin (default: ~/.local)
+#   --require-signature   stop unless cosign is installed and the signature verifies
+# Env:   SPILLKIT_RELEASES  where releases are downloaded from (default: GitHub), for mirrors
+# Runs on bash 3.2 as well (macOS), so it can check what the toolkit itself needs.
+set -euo pipefail
+
+repo="aboutBilal/spillkit"
+releases="${SPILLKIT_RELEASES:-https://github.com/$repo/releases}"
+version=""; prefix="$HOME/.local"; require_sig=0
+while [ $# -gt 0 ]; do
+  case "$1" in
+    -h|--help) sed -n '2,/^set -/{/^#/s/^# \{0,1\}//p;}' "$0" 2>/dev/null || echo "see https://github.com/$repo#install"; exit 0 ;;
+    --version) [ -n "${2:-}" ] || { echo "--version needs a value" >&2; exit 2; }; version="$2"; shift 2 ;;
+    --prefix) [ -n "${2:-}" ] || { echo "--prefix needs a value" >&2; exit 2; }; prefix="$2"; shift 2 ;;
+    --require-signature) require_sig=1; shift ;;
+    *) echo "unknown option: $1" >&2; exit 2 ;;
+  esac
+done
+
+say() { printf '==> %s\n' "$*"; }
+die() { printf 'install failed: %s\n' "$*" >&2; exit 1; }
+for c in curl tar; do command -v "$c" >/dev/null 2>&1 || die "missing: $c"; done
+if command -v sha256sum >/dev/null 2>&1; then sha_check() { sha256sum -c "$1" >/dev/null; }
+elif command -v shasum >/dev/null 2>&1; then sha_check() { shasum -a 256 -c "$1" >/dev/null; }
+else die "missing: sha256sum or shasum"; fi
+
+if [ -z "$version" ]; then
+  # The latest release page redirects to .../tag/vX.Y.Z; no API call, so no rate limit.
+  latest="$(curl -fsSLI -o /dev/null -w '%{url_effective}' "$releases/latest")" || die "could not reach $releases"
+  version="${latest##*/}"
+fi
+case "$version" in
+  v[0-9]*.[0-9]*.[0-9]*) ;;
+  [0-9]*.[0-9]*.[0-9]*) version="v$version" ;;
+  *) die "not a release version: $version" ;;
+esac
+
+name="spillkit-$version"
+tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' EXIT
+say "Downloading Spillkit $version"
+for f in "$name.tar.gz" "$name.tar.gz.sha256" "$name.tar.gz.sigstore.json"; do
+  curl -fsSL -o "$tmp/$f" "$releases/download/$version/$f" || die "could not download $f (does release $version exist?)"
+done
+
+(cd "$tmp" && sha_check "$name.tar.gz.sha256") || die "the archive does not match its SHA-256: not installed"
+say "SHA-256 matches"
+if command -v cosign >/dev/null 2>&1; then
+  cosign verify-blob "$tmp/$name.tar.gz" --bundle "$tmp/$name.tar.gz.sigstore.json" \
+    --certificate-identity "https://github.com/$repo/.github/workflows/release.yml@refs/tags/$version" \
+    --certificate-oidc-issuer https://token.actions.githubusercontent.com >/dev/null 2>&1 \
+    || die "the Sigstore signature does not verify: not installed"
+  say "Signature verified: built by this repository's release workflow for $version"
+elif [ "$require_sig" = 1 ]; then
+  die "--require-signature needs cosign: https://docs.sigstore.dev/cosign/system_config/installation/"
+else
+  echo "    cosign is not installed, so the signature was not checked. The checksum guards against a"
+  echo "    damaged download only. To verify the signature too, install cosign and run this again."
+fi
+
+dest="$prefix/share/spillkit/$version"
+rm -rf "$dest" && mkdir -p "$dest" "$prefix/bin"
+tar -xzf "$tmp/$name.tar.gz" -C "$dest" --strip-components=1
+[ -x "$dest/leak" ] || die "the archive has no leak command"
+ln -sfn "$dest/leak" "$prefix/bin/leak"
+say "Installed $("$prefix/bin/leak" version 2>/dev/null || echo "spillkit $version") in $dest"
+echo "    leak -> $prefix/bin/leak"
+
+# What the toolkit needs at run time (leak doctor checks all of it in detail).
+bash_ok="$(bash -c 'if ((BASH_VERSINFO[0] > 4 || (BASH_VERSINFO[0] == 4 && BASH_VERSINFO[1] >= 4))); then echo yes; fi' 2>/dev/null || true)"
+[ "$bash_ok" = yes ] || echo "    Note: leak needs bash 4.4 or later on PATH (macOS: brew install bash)."
+case ":$PATH:" in
+  *":$prefix/bin:"*) ;;
+  *) echo "    Add $prefix/bin to your PATH:  export PATH=\"$prefix/bin:\$PATH\"" ;;
+esac
+echo
+echo "Next: leak doctor   (checks this machine)   then   leak demo   (see it work in a minute)"

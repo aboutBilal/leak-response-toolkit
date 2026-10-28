@@ -127,7 +127,7 @@ if ((scan)); then
     0) pass "no secrets found in any commit" 20 ;;
     1) loc="$(jq -r '.[0] | "\(.File):\(.StartLine // 1)"' "$report")"
        fail "$(jq 'length' "$report") secret finding(s) in history (types: $(jq -r '[.[].RuleID]|unique|join(", ")' "$report"))" 20
-       tip "rotate them first, then see docs/06-scenarios.md (scenario A) to clean history" ;;
+       tip "rotate them first: leak scan, then leak plan; then docs/06-scenarios.md (scenario A) cleans history" ;;
     *) warn "history scan failed, so history is not checked: $(echo "$out" | tail -1)" 20; tip "leak doctor" ;;
   esac
   rm -f "$report"

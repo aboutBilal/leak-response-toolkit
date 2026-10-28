@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="520" viewBox="0 0 1000 520" role="img" aria-label="Terminal: ./leak rotate aws-key --user deploy-bot">
+<rect x="0.5" y="0.5" width="999" height="519" rx="12" fill="#111827" stroke="#2B3445"/>
+<path d="M12.5 0.5 H987.5 A12 12 0 0 1 999.5 12.5 V40 H0.5 V12.5 A12 12 0 0 1 12.5 0.5 Z" fill="#1C2433"/>
+<circle cx="24" cy="20" r="5" fill="#2B3445"/><circle cx="42" cy="20" r="5" fill="#2B3445"/><circle cx="60" cy="20" r="5" fill="#2B3445"/>
+<text x="500.0" y="25" fill="#828D9F" font-family="'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,'Liberation Mono',monospace" font-size="13" text-anchor="middle">real output</text>
+<g font-family="'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,'Liberation Mono',monospace" font-size="14.5" style="font-variant-ligatures:none">
+<text style="white-space:pre" x="24" y="72" font-weight="600"><tspan fill="#FF8A5C">$</tspan><tspan fill="#E6EAF2"> ./leak rotate aws-key --user deploy-bot</tspan></text>
+<text style="white-space:pre" x="24" y="96" fill="#A3ADBF" font-weight="400">Rotate the AWS access key &lt;key-id&gt; of IAM user deploy-bot</text>
+<text style="white-space:pre" x="24" y="120" fill="#A3ADBF" font-weight="400">Dry run: nothing was changed. Run each step with --apply STEP, in order.</text>
+<text style="white-space:pre" x="24" y="144" fill="#A3ADBF" font-weight="400"></text>
+<text style="white-space:pre" x="24" y="168" fill="#E6EAF2" font-weight="600">1. check    Who used the key, when, and whether AWS has quarantined it (read-only)</text>
+<text style="white-space:pre" x="24" y="192" fill="#A3ADBF" font-weight="400">              aws iam get-access-key-last-used --access-key-id &lt;key-id&gt;</text>
+<text style="white-space:pre" x="24" y="216" fill="#A3ADBF" font-weight="400">              aws iam list-access-keys --user-name deploy-bot</text>
+<text style="white-space:pre" x="24" y="240" fill="#A3ADBF" font-weight="400">              aws iam list-attached-user-policies --user-name deploy-bot</text>
+<text style="white-space:pre" x="24" y="264" fill="#E6EAF2" font-weight="600">2. replace  Create a new key and put it in &lt;your secret store&gt; (needs --store)</text>
+<text style="white-space:pre" x="24" y="288" fill="#A3ADBF" font-weight="400">              aws iam create-access-key --user-name deploy-bot   → piped into the store, never shown</text>
+<text style="white-space:pre" x="24" y="312" fill="#E6EAF2" font-weight="600">3. (you)    Deploy the new key everywhere the old one is used</text>
+<text style="white-space:pre" x="24" y="336" fill="#E6EAF2" font-weight="600">4. disable  Switch the leaked key off; undo with --status Active if something breaks</text>
+<text style="white-space:pre" x="24" y="360" fill="#A3ADBF" font-weight="400">              aws iam update-access-key --user-name deploy-bot --access-key-id &lt;key-id&gt; --status Inactive</text>
+<text style="white-space:pre" x="24" y="384" fill="#E6EAF2" font-weight="600">5. delete   Delete the leaked key for good</text>
+<text style="white-space:pre" x="24" y="408" fill="#A3ADBF" font-weight="400">              aws iam delete-access-key --user-name deploy-bot --access-key-id &lt;key-id&gt;</text>
+<text style="white-space:pre" x="24" y="432" fill="#A3ADBF" font-weight="400"></text>
+<text style="white-space:pre" x="24" y="456" fill="#A3ADBF" font-weight="400">Being abused right now? Revoke first (disable, delete or renew) and accept the downtime.</text>
+<text style="white-space:pre" x="24" y="480" fill="#A3ADBF" font-weight="400">Each applied step is logged with its time in ./rotation-log.tsv, ready for the incident timeline.</text>
+</g></svg>

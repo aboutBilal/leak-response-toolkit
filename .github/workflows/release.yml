@@ -1,8 +1,9 @@
 name: release
 
 # On every version tag: publish a GitHub Release from CHANGELOG.md (and backfill
-# any earlier tag that has none) with a source archive signed by Sigstore, then
-# build, publish and sign the container image (amd64 + arm64, SBOM, provenance).
+# any earlier tag that has none) with a source archive and install script signed by
+# Sigstore, then build, publish and sign the container image (amd64 + arm64, SBOM,
+# provenance).
 on:
   push:
     tags: ["v[0-9]+.[0-9]+.[0-9]+"]
@@ -61,7 +62,7 @@ jobs:
 
       - uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
 
-      - name: Attach a signed source archive to this release
+      - name: Attach a signed source archive and install script to this release
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
@@ -72,8 +73,11 @@ jobs:
           git archive --format=tar.gz --prefix="${name}/" -o "${name}.tar.gz" "$TAG"
           sha256sum "${name}.tar.gz" > "${name}.tar.gz.sha256"
           cosign sign-blob --yes --bundle "${name}.tar.gz.sigstore.json" "${name}.tar.gz"
+          # install.sh as a release asset makes .../releases/latest/download/install.sh stable
+          cosign sign-blob --yes --bundle install.sh.sigstore.json install.sh
           gh release upload "$TAG" --repo "$REPO" --clobber \
-            "${name}.tar.gz" "${name}.tar.gz.sha256" "${name}.tar.gz.sigstore.json"
+            "${name}.tar.gz" "${name}.tar.gz.sha256" "${name}.tar.gz.sigstore.json" \
+            install.sh install.sh.sigstore.json
 
   image:
     name: Container image

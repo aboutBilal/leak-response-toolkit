@@ -38,7 +38,7 @@ commit_all() {
 }
 
 @test "every script exits 2 when required arguments are missing" {
-  for s in snapshot-evidence list-forks hunt-copies find-commit-copies scan-secrets make-report notify; do
+  for s in snapshot-evidence list-forks hunt-copies find-commit-copies scan-secrets make-report notify rotation-plan rotate; do
     run "$ROOT/scripts/$s.sh"
     [ "$status" -eq 2 ] || { echo "$s exited $status"; false; }
   done
@@ -89,7 +89,7 @@ commit_all() {
 @test "leak: help lists every command and version prints" {
   run "$ROOT/leak" help
   [ "$status" -eq 0 ]
-  for c in snapshot scan forks hunt commits; do [[ "$output" == *"$c"* ]]; done
+  for c in snapshot scan forks hunt commits plan rotate demo; do [[ "$output" == *"$c"* ]]; done
   run "$ROOT/leak" version
   [ "$status" -eq 0 ]
   [[ "$output" == spillkit* ]]
@@ -472,4 +472,206 @@ MOCK
   [ "$status" -eq 4 ]
   run "$ROOT/scripts/audit-org.sh" --no-scan --bitbucket ws --azure-devops org
   [ "$status" -eq 2 ]
+}
+
+# ---------- 3.5: plan, rotate, demo, GitLab groups, install script ----------
+
+# scan_report <file>: a redacted gitleaks report with one AWS key pair, a webhook and an SSH key.
+scan_report() {
+  cat > "$1" <<'JSON'
+[{"RuleID":"slack-webhook-url","File":"notify<x>.sh","StartLine":3,"Commit":"1111111111aaaa","Date":"2026-01-02T00:00:00Z","Secret":"REDACTED"},
+ {"RuleID":"generic-api-key","File":".env","StartLine":2,"Commit":"2222222222bbbb","Date":"2026-01-05T00:00:00Z","Secret":"REDACTED"},
+ {"RuleID":"aws-access-token","File":".env","StartLine":1,"Commit":"2222222222bbbb","Date":"2026-01-05T00:00:00Z","Secret":"REDACTED"},
+ {"RuleID":"aws-access-token","File":".env","StartLine":1,"Commit":"3333333333cccc","Date":"2026-01-06T00:00:00Z","Secret":"REDACTED"},
+ {"RuleID":"private-key","File":"deploy/id_ed25519","StartLine":1,"Commit":"2222222222bbbb","Date":"2026-01-05T00:00:00Z","Secret":"REDACTED"},
+ {"RuleID":"private-key","File":"keys/ci.json","StartLine":5,"Commit":"2222222222bbbb","Date":"2026-01-05T00:00:00Z","Secret":"REDACTED"}]
+JSON
+}
+
+@test "plan: orders secrets by danger, pairs an unidentified secret with its neighbour, exits 1" {
+  scan_report "$TMP/r.json"
+  run "$ROOT/scripts/rotation-plan.sh" "$TMP/r.json" --id INC-7 --tlp red
+  [ "$status" -eq 1 ]
+  run grep -E '^- \[ \] \*\*[0-9]' "$TMP/rotation-plan.md"
+  [[ "${lines[0]}" == *"1. AWS access key"*'`.env`'*"in 2 commits"* ]]
+  [[ "${lines[1]}" == *"2. Secret next to the AWS access key"* ]]
+  [[ "${lines[2]}" == *"3. Google Cloud service account key"*"keys/ci.json"* ]]
+  [[ "${lines[3]}" == *"4. SSH or TLS private key"* ]]
+  [[ "${lines[4]}" == *"5. Chat webhook or bot credential"* ]]
+  grep -q 'leak rotate aws-key' "$TMP/rotation-plan.md"
+  grep -q 'TLP:RED' "$TMP/rotation-plan.html"
+  grep -q 'Rotation plan · INC-7' "$TMP/rotation-plan.html"
+  grep -q 'notify&lt;x&gt;.sh' "$TMP/rotation-plan.html"
+  ! grep -q 'notify<x>' "$TMP/rotation-plan.html"
+}
+
+@test "plan: a clean scan exits 0, and anything but a scan report exits 2" {
+  echo '[]' > "$TMP/clean.json"
+  run "$ROOT/scripts/rotation-plan.sh" "$TMP/clean.json" --out "$TMP/p"
+  [ "$status" -eq 0 ]
+  grep -q 'Nothing to rotate' "$TMP/p/rotation-plan.md"
+  echo '{"not":"a report"}' > "$TMP/bad.json"
+  run "$ROOT/scripts/rotation-plan.sh" "$TMP/bad.json"
+  [ "$status" -eq 2 ]
+  run "$ROOT/scripts/rotation-plan.sh" "$TMP/missing.json"
+  [ "$status" -eq 2 ]
+  run "$ROOT/scripts/rotation-plan.sh" "$TMP/clean.json" --tlp purple
+  [ "$status" -eq 2 ]
+}
+
+@test "secret types: every catalog line is complete and links to a real guide section" {
+  slugs="$(sed -n 's/^##* //p' "$ROOT/docs/02-rotate-secrets.md" | tr 'A-Z' 'a-z' | sed -E 's/[^a-z0-9 -]//g; s/ /-/g')"
+  grep -vE '^[[:space:]]*(#|$)' "$ROOT/scripts/secret-types.txt" | while IFS= read -r line; do
+    n="$(awk -F' [|] ' '{print NF}' <<<"$line")"
+    [ "$n" -eq 7 ] || { echo "not 7 columns: $line"; false; }
+    tier="$(awk -F' [|] ' '{print $3}' <<<"$line")"
+    [[ "$tier" =~ ^[1-4]$ ]] || { echo "bad tier: $line"; false; }
+    anchor="$(awk -F' [|] ' '{print $5}' <<<"$line")"
+    grep -qx "$anchor" <<<"$slugs" || { echo "no section #$anchor in docs/02-rotate-secrets.md"; false; }
+  done
+  tail -n 1 "$ROOT/scripts/secret-types.txt" | grep -q '^\* | - | 4 '
+}
+
+# key_id: a random, format-valid AWS access key ID that works nowhere.
+key_id() { printf 'AKIA%s' "$(head -c 4096 /dev/urandom | LC_ALL=C tr -dc 'A-Z2-7' | head -c 16)"; }
+
+# fake_cloud: aws, az and gcloud doubles. They record their arguments, keep what is piped to a
+# secret store, and answer "create" calls with a fresh fake secret held in $TMP/secret. Sets $old
+# (the leaked key ID) and $new (the ID the double hands out), both generated now.
+fake_cloud() {
+  mkdir -p "$TMP/bin"
+  head -c 4096 /dev/urandom | LC_ALL=C tr -dc 'A-Za-z0-9' | head -c 40 > "$TMP/secret"
+  old="$(key_id)"; new="$(key_id)"; printf '%s' "$new" > "$TMP/new-key-id"
+  for c in aws az gcloud; do
+    cat > "$TMP/bin/$c" <<MOCK
+#!/usr/bin/env bash
+printf '$c %s\n' "\$*" >> "$TMP/argv.txt"
+secret="\$(cat "$TMP/secret")"; new="\$(cat "$TMP/new-key-id")"
+case "\$*" in
+  *create-access-key*) printf '{"AccessKey":{"AccessKeyId":"%s","SecretAccessKey":"%s"}}' "\$new" "\$secret" ;;
+  *"credential reset"*) printf '%s\n' "\$secret" ;;
+  *"credential list"*rotated-*) echo "11111111-2222-3333-4444-555555555555" ;;
+  *"keys create /dev/stdout"*) printf '{"private_key_id":"feedface","private_key":"%s"}' "\$secret" ;;
+  *put-secret-value*|*"keyvault secret set"*|*"versions add"*) { cat; echo; } >> "$TMP/store.txt"; if [[ -n "\${STORE_FAILS:-}" ]]; then exit 1; fi ;;
+  *) echo "ok" ;;
+esac
+MOCK
+    chmod +x "$TMP/bin/$c"
+  done
+}
+
+@test "rotate: a dry run prints every step and calls no cloud CLI" {
+  fake_cloud
+  run env PATH="$TMP/bin:$PATH" "$ROOT/scripts/rotate.sh" aws-key --user deploy-bot --key-id "$old"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Dry run: nothing was changed"* ]]
+  [[ "$output" == *"--status Inactive"* && "$output" == *"delete-access-key"* ]]
+  [ ! -e "$TMP/argv.txt" ]
+  run "$ROOT/scripts/rotate.sh" no-such-recipe
+  [ "$status" -eq 2 ]
+  run "$ROOT/scripts/rotate.sh" aws-key --key-id not-a-key
+  [ "$status" -eq 2 ]
+  run env PATH="$TMP/bin:$PATH" "$ROOT/scripts/rotate.sh" aws-key --user u --key-id "$old" --apply deploy
+  [ "$status" -eq 2 ]
+  run env PATH="$TMP/bin:$PATH" "$ROOT/scripts/rotate.sh" aws-key --user u --key-id "$old" --apply replace
+  [ "$status" -eq 2 ]
+  [ ! -e "$TMP/argv.txt" ]
+}
+
+@test "rotate: a new secret reaches only the store, never arguments, output or the log" {
+  fake_cloud
+  cd "$TMP"
+  run env PATH="$TMP/bin:$PATH" "$ROOT/scripts/rotate.sh" aws-key --user deploy-bot --key-id "$old" --apply replace --store aws-sm:prod/deploy-bot
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"$new is in AWS Secrets Manager secret prod/deploy-bot"* ]]
+  run env PATH="$TMP/bin:$PATH" "$ROOT/scripts/rotate.sh" azure-app-secret --app 00000000-1111-2222-3333-444444444444 --key-id 99999999-1111-2222-3333-444444444444 --apply replace --store azure-kv:kv-prod/app-secret
+  [ "$status" -eq 0 ]
+  run env PATH="$TMP/bin:$PATH" "$ROOT/scripts/rotate.sh" gcp-sa-key --account ci@proj-1.iam.gserviceaccount.com --key-id 0123456789abcdef0123456789abcdef01234567 --apply replace --store gcp-sm:ci-key
+  [ "$status" -eq 0 ]
+  secret="$(cat "$TMP/secret")"
+  [ "$(grep -c "$secret" "$TMP/store.txt")" -eq 3 ]
+  ! grep -q "$secret" "$TMP/argv.txt"
+  ! grep -q "$secret" "$TMP/rotation-log.tsv"
+  [[ "$output" != *"$secret"* ]]
+  grep -q 'secret-string file:///dev/stdin' "$TMP/argv.txt"
+  grep -q 'keyvault secret set --vault-name kv-prod --name app-secret --file /dev/stdin' "$TMP/argv.txt"
+  grep -q 'secrets versions add ci-key --data-file=-' "$TMP/argv.txt"
+  [ "$(cut -f4,5 "$TMP/rotation-log.tsv" | grep -c 'replace.ok')" -eq 3 ]
+}
+
+@test "rotate: if the store refuses the new secret, the new credential is deleted again (exit 4)" {
+  fake_cloud
+  cd "$TMP"
+  run env PATH="$TMP/bin:$PATH" STORE_FAILS=1 "$ROOT/scripts/rotate.sh" aws-key --user deploy-bot --key-id "$old" --apply replace --store aws-sm:prod/deploy-bot
+  [ "$status" -eq 4 ]
+  grep -q "aws iam delete-access-key --user-name deploy-bot --access-key-id $new" "$TMP/argv.txt"
+  ! grep -q "$old --status" "$TMP/argv.txt"
+  [[ "$output" != *"$(cat "$TMP/secret")"* ]]
+}
+
+@test "rotate: disable and delete ask first; without a terminal they need --yes" {
+  fake_cloud
+  cd "$TMP"
+  run env PATH="$TMP/bin:$PATH" "$ROOT/scripts/rotate.sh" aws-key --user deploy-bot --key-id "$old" --apply disable < /dev/null
+  [ "$status" -eq 2 ]
+  [ ! -e "$TMP/argv.txt" ]
+  run env PATH="$TMP/bin:$PATH" "$ROOT/scripts/rotate.sh" aws-key --user deploy-bot --key-id "$old" --apply disable --yes
+  [ "$status" -eq 0 ]
+  grep -q "update-access-key --user-name deploy-bot --access-key-id $old --status Inactive" "$TMP/argv.txt"
+  run env PATH="$TMP/bin:$PATH" "$ROOT/scripts/rotate.sh" azure-storage-key --group rg --account stprod01 --key key2 --apply renew --yes --log "$TMP/r.tsv"
+  [ "$status" -eq 0 ]
+  grep -q 'storage account keys renew -g rg -n stprod01 --key key2 -o none' "$TMP/argv.txt"
+  grep -q $'azure-storage-key\tkey2@stprod01\trenew\tok' "$TMP/r.tsv"
+}
+
+@test "demo: builds a leak and runs audit, scan, plan and a rotation dry run" {
+  scanner_available || skip "needs gitleaks or docker"
+  cd "$TMP"
+  run "$ROOT/scripts/demo.sh" --out "$TMP/demo"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Grade F"* && "$output" == *"Rotation plan:"* && "$output" == *"Dry run: nothing was changed"* ]]
+  grep -q '1. AWS access key' "$TMP/demo/rotation-plan.md"
+  run "$ROOT/scripts/demo.sh" --out "$TMP/demo"
+  [ "$status" -eq 2 ]
+}
+
+@test "audit-org: lists a GitLab group with subgroups, skips forks, keeps the token out of arguments" {
+  mkdir -p "$TMP/bin"
+  printf '%s' '[{"path_with_namespace":"acme/platform/api","http_url_to_repo":"https://oauth2@127.0.0.1:9/acme/platform/api.git"},{"path_with_namespace":"acme/web","http_url_to_repo":"https://127.0.0.1:9/acme/web.git","forked_from_project":{"id":1}}]' > "$TMP/page1.json"
+  cat > "$TMP/bin/curl" <<MOCK
+#!/usr/bin/env bash
+printf '%s\n' "\$@" >> "$TMP/argv.txt"
+out=""; url=""; while ((\$#)); do case "\$1" in -o) out="\$2"; shift 2 ;; -K) [[ "\$2" == - ]] && cat >> "$TMP/config.txt"; shift 2 ;; http*) url="\$1"; shift ;; *) shift ;; esac; done
+if [[ "\$url" == *page=1 ]]; then cp "$TMP/page1.json" "\$out"; else echo '[]' > "\$out"; fi; printf 200
+MOCK
+  chmod +x "$TMP/bin/curl"
+  run env PATH="$TMP/bin:$PATH" GITLAB_TOKEN=gl-test-token-789 GITLAB_URL=https://gitlab.example.com/ "$ROOT/scripts/audit-org.sh" --no-scan --gitlab acme --out "$TMP/gl"
+  run jq -r '.repositories, .results[0].repository' "$TMP/gl/audit-org.json"
+  [ "${lines[0]}" = "1" ] && [ "${lines[1]}" = "platform/api" ]
+  [ -f "$TMP/gl/results/platform__api.json" ]
+  ! grep -q "gl-test-token-789" "$TMP/argv.txt"
+  grep -q "PRIVATE-TOKEN: gl-test-token-789" "$TMP/config.txt"
+  grep -q "gitlab.example.com/api/v4/groups/acme/projects?include_subgroups=true" "$TMP/argv.txt"
+  fake_curl 401 '{"message":"401 Unauthorized"}'
+  run env PATH="$TMP/bin:$PATH" "$ROOT/scripts/audit-org.sh" --no-scan --gitlab acme --out "$TMP/gl2"
+  [ "$status" -eq 4 ]
+  run "$ROOT/scripts/audit-org.sh" --gitlab "not a group"
+  [ "$status" -eq 2 ]
+}
+
+@test "install.sh: installs a release whose checksum matches, and refuses a tampered one" {
+  rel="$TMP/rel/download/v9.9.9"; mkdir -p "$rel"
+  mkdir -p "$TMP/stage/spillkit-v9.9.9" && cp -R "$ROOT/leak" "$ROOT/scripts" "$TMP/stage/spillkit-v9.9.9/"
+  tar -czf "$rel/spillkit-v9.9.9.tar.gz" -C "$TMP/stage" spillkit-v9.9.9
+  (cd "$rel" && { sha256sum spillkit-v9.9.9.tar.gz 2>/dev/null || shasum -a 256 spillkit-v9.9.9.tar.gz; } > spillkit-v9.9.9.tar.gz.sha256 && echo '{}' > spillkit-v9.9.9.tar.gz.sigstore.json)
+  run env SPILLKIT_RELEASES="file://$TMP/rel" "$ROOT/install.sh" --version 9.9.9 --prefix "$TMP/p"
+  [ "$status" -eq 0 ]
+  run "$TMP/p/bin/leak" version
+  [[ "$output" == spillkit* ]]
+  echo tampered >> "$rel/spillkit-v9.9.9.tar.gz"
+  run env SPILLKIT_RELEASES="file://$TMP/rel" "$ROOT/install.sh" --version v9.9.9 --prefix "$TMP/p2"
+  [ "$status" -ne 0 ]
+  [ ! -e "$TMP/p2/bin/leak" ]
+  run "$ROOT/install.sh" --version not-a-version
+  [ "$status" -ne 0 ]
 }

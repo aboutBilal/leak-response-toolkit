@@ -14,7 +14,12 @@
 > [!CAUTION]
 > **Leaked a secret right now?** Rotate it first. Deleting the commit or the repository does not revoke it. Then follow the [15-minute cheat sheet](CHEATSHEET.md).
 
-**Spillkit is the emergency kit for leaked secrets.** It blocks secrets before they are committed, finds every one already in your Git history, tracks down copies that survive deletion, and turns the evidence into an incident report your leadership can act on. It is free, open source and runs on your machine.
+**Spillkit is the emergency kit for leaked secrets.** It blocks secrets before they are committed, finds every one already in your Git history, tells you which to rotate first and walks you through it, tracks down copies that survive deletion, and turns the evidence into an incident report your leadership can act on. It is free, open source and runs on your machine.
+
+```bash
+curl -fsSL https://github.com/aboutBilal/spillkit/releases/latest/download/install.sh | bash
+leak demo     # a leak made for the purpose: audit, scan, rotation plan and a rotation dry run, in about a minute
+```
 
 ## Why minutes matter
 
@@ -36,6 +41,7 @@ Spillkit covers both sides of that timeline: the controls that stop the file at 
 | **Prevent** | Hooks that block `.env` files, keys and secrets at commit; CI templates for GitHub Actions, GitLab, Azure Pipelines and Bitbucket; keyless (OIDC) deployments | [Prevention kit](prevention/README.md) |
 | **Grade** | An A to F hygiene score for one repository or a whole organisation, with the exact fix for each gap | `leak audit`, `leak audit-org` |
 | **Detect** | Every commit on every branch scanned for secrets, including ones deleted later; values always redacted; SARIF for code scanning | `leak scan` |
+| **Rotate** | A rotation plan from the scan, most dangerous first, with where to revoke each secret; guided rotation of AWS, Azure and Google Cloud keys, the new secret piped straight into your secret store | `leak plan`, `leak rotate` |
 | **Respond** | A runbook for each kind of leak, rotation steps for more than 25 secret types, and evidence preserved before it disappears | [Runbook](docs/01-runbook.md), `leak snapshot` |
 | **Hunt** | Eleven checks for surviving copies: forks, re-uploads on GitHub and GitLab, the Wayback Machine, Software Heritage and code search | `leak hunt` |
 | **Report** | An incident report built from the evidence, structured like NIST SP 800-61r3, with FIRST TLP 2.0 handling labels | `leak report` |
@@ -43,6 +49,15 @@ Spillkit covers both sides of that timeline: the controls that stop the file at 
 Detection uses [gitleaks](https://github.com/gitleaks/gitleaks). Spillkit adds everything that has to happen before and after a scan.
 
 ## Install
+
+**One line** (Linux and macOS, no root): downloads the latest release, checks its SHA-256 and, when [cosign](https://docs.sigstore.dev/cosign/system_config/installation/) is installed, its Sigstore signature, then puts `leak` in `~/.local/bin`.
+
+```bash
+curl -fsSL https://github.com/aboutBilal/spillkit/releases/latest/download/install.sh | bash
+leak doctor        # confirms the machine is ready
+```
+
+Prefer to read it first: download [install.sh](install.sh), read it, then run `bash install.sh --require-signature`, which refuses to install anything whose signature it cannot verify.
 
 **Docker** (no local dependencies; signed image for amd64 and arm64):
 
@@ -63,8 +78,10 @@ leak doctor                                   # confirms the machine is ready
 ## Quick start
 
 ```bash
-leak audit .        # grade this repository's secret hygiene, A to F, with a fix for each gap
-leak scan .         # find secrets in every commit and branch; values are always redacted
+leak demo                        # see it work in about a minute, on a leak made for the purpose
+leak audit .                     # grade this repository's secret hygiene, A to F, with a fix for each gap
+leak scan .                      # find secrets in every commit and branch; values are always redacted
+leak plan secrets-report.json    # what to rotate first, and where each one is revoked
 ```
 
 <p align="center"><img src="assets/demo-audit.svg" alt="Output of leak audit on a repository with a tracked .env file, no hooks and a secret in a Dockerfile: grade F with a fix for every finding; secret values are redacted" width="92%"></p>
@@ -73,6 +90,13 @@ leak scan .         # find secrets in every commit and branch; values are always
 <summary>Output of <code>leak scan</code></summary>
 <br>
 <p align="center"><img src="assets/demo-scan.svg" alt="Output of leak scan: two secrets found in a commit that was later deleted; values redacted" width="92%"></p>
+</details>
+
+<details>
+<summary>Output of <code>leak plan</code> and <code>leak rotate</code></summary>
+<br>
+<p align="center"><img src="assets/demo-plan.svg" alt="Output of leak plan: four secrets ordered by danger, an AWS access key and its secret first, each with the command or guide section to rotate it" width="92%"></p>
+<p align="center"><img src="assets/demo-rotate.svg" alt="Output of leak rotate aws-key as a dry run: five steps, check, replace, deploy, disable and delete, each with its exact AWS CLI command" width="92%"></p>
 </details>
 
 <sub>Images show real output on demo repositories, rendered with <a href="tools/render-terminal-svg.py">tools/render-terminal-svg.py</a>. The test secrets were random and never stored.</sub>
@@ -94,7 +118,7 @@ The first hour, in order:
 
 1. **Preserve evidence** before anything is deleted: `leak snapshot owner/repo`.
 2. **Find every secret** in the full history: `leak scan <path>`.
-3. **Rotate and revoke**, most powerful credential first. The [rotation guide](docs/02-rotate-secrets.md) covers more than 25 secret types.
+3. **Rotate and revoke**, most powerful credential first: `leak plan secrets-report.json` puts them in order and says where each is revoked, and `leak rotate` takes AWS, Azure and Google Cloud keys through it step by step. The [rotation guide](docs/02-rotate-secrets.md) covers more than 25 secret types.
 4. **Remove copies and look for others**: `leak forks`, `leak hunt`, `leak commits`, and the [takedown checklist](templates/takedown-request.md).
 5. **Check for misuse** from the first push to the moment each secret was revoked: [investigation guide](docs/03-investigate.md).
 6. **Communicate**: [message templates](templates/notification-messages.md), `leak report`, and a [team checklist](templates/incident-issue.md) for your tracker.
@@ -116,7 +140,7 @@ Or use the hooks directly from this repository:
 # .pre-commit-config.yaml
 repos:
   - repo: https://github.com/aboutBilal/spillkit
-    rev: v3.4.0
+    rev: v3.5.0
     hooks:
       - id: forbid-secret-files    # no dependencies
       - id: leak-guard             # also scans staged changes with gitleaks
@@ -129,10 +153,11 @@ This repository uses the kit on itself, and `leak audit .` grades it A.
 
 ## Organisation dashboard
 
-`leak audit-org` grades every repository in a GitHub organisation, a Bitbucket Cloud workspace, an Azure DevOps organisation or project, or a local folder of repositories, and writes an HTML report, a Markdown summary and JSON for automation. Repositories are listed worst first; every finding is labelled Critical or Fix and comes with its remedy, and the method section states exactly how grades are given.
+`leak audit-org` grades every repository in a GitHub organisation, a GitLab group, a Bitbucket Cloud workspace, an Azure DevOps organisation or project, or a local folder of repositories, and writes an HTML report, a Markdown summary and JSON for automation. Repositories are listed worst first; every finding is labelled Critical or Fix and comes with its remedy, and the method section states exactly how grades are given.
 
 ```bash
 leak audit-org my-org                         # GitHub; GITHUB_TOKEN adds private repositories
+leak audit-org --gitlab my-group              # GitLab, with subgroups; GITLAB_TOKEN (read_api), GITLAB_URL if self-managed
 leak audit-org --bitbucket my-workspace       # Bitbucket Cloud; BITBUCKET_TOKEN (an access token)
 leak audit-org --azure-devops my-org/Project  # Azure DevOps; AZURE_DEVOPS_PAT (Code: Read)
 leak audit-org --no-scan my-org               # faster: skips full-history scans
@@ -188,8 +213,10 @@ Findings appear in the job summary and, with SARIF, in the repository's Security
 | Command | Purpose |
 |---|---|
 | `leak audit [--json] [--sarif file] [path]` | Grade a repository's secret hygiene from A to F, with a fix for each gap; SARIF for code scanning |
-| `leak audit-org [--no-scan] <org>` | Grade every repository in a GitHub organisation (or `--bitbucket`, `--azure-devops`, `--dir`); HTML report, Markdown and JSON |
+| `leak audit-org [--no-scan] <org>` | Grade every repository in a GitHub organisation (or `--gitlab`, `--bitbucket`, `--azure-devops`, `--dir`); HTML report, Markdown and JSON |
 | `leak scan <path> [--sarif file]` | Scan every commit for secrets; values are always redacted |
+| `leak plan <secrets-report.json>` | Turn a scan into a rotation checklist, most dangerous first: Markdown for the incident issue, HTML to print |
+| `leak rotate <recipe> [--apply step]` | Rotate an AWS access key, Azure app secret, Google Cloud service account key or Azure storage key, one step at a time; a dry run unless you name a step |
 | `leak snapshot owner/repo` | Preserve a leaked repository: mirror, metadata, forks, traffic and a checksum manifest |
 | `leak forks owner/repo` | List every fork, including forks of forks, for a takedown request |
 | `leak hunt [--since date] owner/repo` | Check GitHub, GitLab, web archives and code search for surviving copies |
@@ -197,6 +224,7 @@ Findings appear in the job summary and, with SARIF, in the repository's Security
 | `leak report <hunt-dir> [--scan file] [--id ID] [--tlp label]` | Build the incident report from the results (`--blank` for an empty one) |
 | `leak notify "message"` | Send an alert to Slack, Teams or Discord (URL from `LEAK_WEBHOOK_URL`) |
 | `leak doctor` | Check that a machine has everything it needs, before an incident |
+| `leak demo` | Build a leak made for the purpose and run audit, scan, plan and a rotation dry run on it |
 
 Every command has `--help`. Exit codes are the same everywhere: `0` clean, `1` findings, `2` usage error, `4` incomplete (a scanner or remote service failed, so the result must not be read as clean).
 
@@ -204,13 +232,14 @@ Every command has `--help`. Exit codes are the same everywhere: `0` clean, `1` f
 
 A tool that handles leak investigations has to be trustworthy itself. Each of these can be checked independently:
 
-- Release archives and container images are signed with [Sigstore](https://www.sigstore.dev/) (since v2.2.0). [How to verify](SECURITY.md#verifying-a-release).
+- Release archives, the install script and container images are signed with [Sigstore](https://www.sigstore.dev/). [How to verify](SECURITY.md#verifying-a-release).
 - Container images ship with an SBOM and SLSA build provenance.
 - [OpenSSF Scorecard](https://scorecard.dev/viewer/?uri=github.com/aboutBilal/spillkit) runs on every push to `main`.
 - GitHub Actions are pinned to commit SHAs and container images to digests; Dependabot keeps them current.
-- Every push runs shellcheck, actionlint, 41 offline tests on Linux and macOS, and a full-history secret scan; CodeQL analyses every change to `main` and every pull request.
+- Every push runs shellcheck, actionlint, 51 offline tests on Linux and macOS, and a full-history secret scan; CodeQL analyses every change to `main` and every pull request.
 - No command prints or tests a secret value, and tests enforce this. `leak snapshot` keeps a copy of a leaked repository as evidence, so evidence folders are git-ignored and must be handled as sensitive. The repository itself contains no secrets, not even fake ones.
 - Tokens and webhook URLs are passed to `curl` on standard input, never as command-line arguments, so they do not appear in process lists.
+- `leak rotate` is the only command that changes anything. It is a dry run unless you name a step with `--apply`, asks before it disables or deletes, and pipes a new secret from the provider straight into your secret store: never shown, never written to disk, never in a command line.
 - A source that fails or is rate-limited is reported as "not checked", never as clean.
 
 Report vulnerabilities privately; see [SECURITY.md](SECURITY.md).
@@ -226,6 +255,7 @@ This is not another secret scanner. It uses gitleaks and adds prevention, respon
 | Block secrets at commit | Yes | Yes | Yes | Yes, plus blocked file types |
 | Grade repositories and organisations | No | No | No | Yes |
 | Incident runbooks per leak scenario | No | No | Partial | Yes |
+| Rotation plan and guided rotation | No | No | Remediation guides | Yes |
 | Search public sources for surviving copies | No | No | Continuous (commercial) | On demand |
 | Leadership report from the evidence | No | No | Dashboards | Yes |
 | Licence | MIT | AGPL-3.0 | Commercial | MIT |
@@ -235,7 +265,7 @@ This is not another secret scanner. It uses gitleaks and adds prevention, respon
 <details>
 <summary>Does it send code or secrets anywhere?</summary>
 
-No. `scan` and `audit` run locally. `hunt`, `forks`, `commits` and `audit-org` send only repository names, account names and commit IDs to public services: GitHub, GitLab, the Internet Archive, Software Heritage, Sourcegraph, Codeberg and the public GitHub event dataset at play.clickhouse.com. Alerts contain counts and secret types, never values.
+No. `scan`, `audit` and `plan` run locally, and `rotate` calls your cloud provider's own CLI only for the steps you apply. `hunt`, `forks`, `commits` and `audit-org` send only repository names, account names and commit IDs to public services: GitHub, GitLab, the Internet Archive, Software Heritage, Sourcegraph, Codeberg and the public GitHub event dataset at play.clickhouse.com. Alerts contain counts and secret types, never values.
 </details>
 
 <details>
@@ -247,7 +277,7 @@ Using a leaked credential is what an attacker does, and it can trigger alarms or
 <details>
 <summary>Does it work outside GitHub?</summary>
 
-`scan`, `audit`, the hooks and the CI templates work with any Git repository on GitHub, GitLab, Azure DevOps or Bitbucket. `hunt` searches public GitHub, public GitLab and web and code archives.
+`scan`, `audit`, the hooks and the CI templates work with any Git repository on GitHub, GitLab, Azure DevOps or Bitbucket, and `audit-org` lists repositories from all four. `hunt` searches public GitHub, public GitLab and web and code archives.
 </details>
 
 <details>
@@ -263,7 +293,7 @@ Yes. It is MIT-licensed. Adapt the runbooks to your organisation and ship the pr
 |---|---|
 | `docs/` | Runbook, scenarios, rotation, investigation, where copies survive, prevention, secrets by design, practice drill |
 | `prevention/` | Tested hooks, gitleaks configuration, CI templates, OIDC examples, Docker and `.env` patterns |
-| `scripts/` | The commands behind `leak` |
+| `scripts/` | The commands behind `leak`, and the catalog of secret types that orders a rotation plan |
 | `templates/` | Incident checklist, timeline, messages, takedown request, post-incident review, incident report |
 | `action.yml`, `Dockerfile`, `.pre-commit-hooks.yaml` | GitHub Action, container image, pre-commit hooks |
 | `tests/` | Offline test suite (bats) |

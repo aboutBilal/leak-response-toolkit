@@ -1,5 +1,5 @@
 SHELL := /bin/bash
-SCRIPTS := $(wildcard scripts/*.sh) leak prevention/hooks/pre-commit tools/build-site.sh
+SCRIPTS := $(wildcard scripts/*.sh) leak install.sh prevention/hooks/pre-commit tools/build-site.sh
 PREFIX ?= $(HOME)/.local
 
 .PHONY: help check lint test scan audit install uninstall image

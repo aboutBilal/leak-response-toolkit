@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="328" viewBox="0 0 1000 328" role="img" aria-label="Terminal: ./leak plan secrets-report.json">
+<rect x="0.5" y="0.5" width="999" height="327" rx="12" fill="#111827" stroke="#2B3445"/>
+<path d="M12.5 0.5 H987.5 A12 12 0 0 1 999.5 12.5 V40 H0.5 V12.5 A12 12 0 0 1 12.5 0.5 Z" fill="#1C2433"/>
+<circle cx="24" cy="20" r="5" fill="#2B3445"/><circle cx="42" cy="20" r="5" fill="#2B3445"/><circle cx="60" cy="20" r="5" fill="#2B3445"/>
+<text x="500.0" y="25" fill="#828D9F" font-family="'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,'Liberation Mono',monospace" font-size="13" text-anchor="middle">real output</text>
+<g font-family="'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,'Liberation Mono',monospace" font-size="14.5" style="font-variant-ligatures:none">
+<text style="white-space:pre" x="24" y="72" font-weight="600"><tspan fill="#FF8A5C">$</tspan><tspan fill="#E6EAF2"> ./leak plan secrets-report.json</tspan></text>
+<text style="white-space:pre" x="24" y="96" fill="#E6EAF2" font-weight="600">==&gt; Rotation plan: 4 secret(s), most dangerous first (values were never read)</text>
+<text style="white-space:pre" x="24" y="120" fill="#828D9F" font-weight="600">#  TIER  TYPE                               WHERE                SINCE       HOW</text>
+<text style="white-space:pre" x="24" y="144" fill="#A3ADBF" font-weight="400">1  1     AWS access key                     .env:1               2026-10-28  leak rotate aws-key</text>
+<text style="white-space:pre" x="24" y="168" fill="#A3ADBF" font-weight="400">2  1     Secret next to the AWS access key  .env:2               2026-10-28  leak rotate aws-key</text>
+<text style="white-space:pre" x="24" y="192" fill="#A3ADBF" font-weight="400">3  3     SSH or TLS private key             deploy/id_ed25519:1  2026-10-28  by hand, guide: SSH and TLS keys</text>
+<text style="white-space:pre" x="24" y="216" fill="#A3ADBF" font-weight="400">4  4     Chat webhook or bot credential     .env:3               2026-10-28  by hand, guide: More secret types</text>
+<text style="white-space:pre" x="24" y="240" fill="#A3ADBF" font-weight="400"></text>
+<text style="white-space:pre" x="24" y="264" fill="#A3ADBF" font-weight="400">Checklist for the incident issue: ./rotation-plan.md</text>
+<text style="white-space:pre" x="24" y="288" fill="#A3ADBF" font-weight="400">Print or share:                   ./rotation-plan.html</text>
+</g></svg>

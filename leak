@@ -12,17 +12,20 @@
 #   forks <owner>/<repo>                    list every fork, for the takedown request
 #   hunt [--since date] <owner>/<repo>      check GitHub, GitLab, web archives and code search for copies
 #   commits [--exclude o/r] <sha> ...       find public repositories containing the original commits
+#   plan <secrets-report.json>              rotation checklist from a scan, most dangerous first
+#   rotate <recipe> [--apply step]          rotate a cloud key step by step (a dry run by default)
 #   report <hunt-dir> [--scan r.json]       build the leadership report from the results
 #   notify [--format f] <message>           alert Slack, Teams or Discord (URL from LEAK_WEBHOOK_URL)
 # Setup
 #   doctor [--offline]                      check this machine is ready, before an incident
+#   demo [--out dir]                        see it work in a minute, on a leak made for the purpose
 #   help [command] | version
 #
 # Exit codes: 0 clean, 1 findings, 2 usage error, 4 incomplete (a scanner or service failed)
 # In an incident: README.md, section "Responding to a leak", or docs/01-runbook.md
 set -euo pipefail
 
-VERSION="3.4.0"
+VERSION="3.5.0"
 
 # Follow symlinks (make install, the container image) to find scripts/ next to the
 # real file. Portable: does not rely on `readlink -f` (missing on older macOS).
@@ -49,6 +52,9 @@ script_for() {
     audit) echo "audit.sh" ;;
     audit-org) echo "audit-org.sh" ;;
     notify) echo "notify.sh" ;;
+    plan) echo "rotation-plan.sh" ;;
+    rotate) echo "rotate.sh" ;;
+    demo) echo "demo.sh" ;;
     *) return 1 ;;
   esac
 }

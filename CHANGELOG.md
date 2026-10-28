@@ -4,6 +4,23 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
+## [3.5.0] - 2026-10-28
+
+From finding secrets to getting them rotated, and from hearing about Spillkit to seeing it work.
+
+### Added
+
+- **`leak plan`** turns a scan report into a rotation checklist, most dangerous first: anything that can create resources or read data, then anything with billing attached, then anything that grants further access, then the rest, oldest first within each. Every item says where the secret is revoked, links to its section of the rotation guide and names the `leak rotate` recipe where one exists. An unidentified secret right next to a known one (an AWS secret key under its key ID) is kept as its own item but rotated with its pair. Output: `rotation-plan.md` with checkboxes for the incident issue and a print-ready `rotation-plan.html` with a TLP label. The order comes from `scripts/secret-types.txt`, a catalog of gitleaks rules that a test keeps in step with the guide.
+- **`leak rotate`** rotates an AWS access key, an Entra ID app registration secret, a Google Cloud service account key or an Azure storage account key, one step at a time: check, replace, disable, delete (renew for storage keys). Without `--apply` it is a dry run that prints every step with its exact command. The new secret goes from the provider's CLI straight into AWS Secrets Manager, Azure Key Vault or Google Secret Manager (`--store`) through a pipe: never shown, never written to disk, never in a command line; if the store refuses it, the new credential is deleted again. Disabling and deleting ask for the key ID first. Every applied step is logged with its UTC time in `rotation-log.tsv`.
+- **`leak demo`** builds a repository with a leak made for the purpose (random keys that work nowhere) and runs audit, scan, plan and a rotation dry run on it, in about a minute.
+- **One-line install:** `curl -fsSL https://github.com/aboutBilal/spillkit/releases/latest/download/install.sh | bash`. It checks the release's SHA-256 and, when cosign is installed, its Sigstore signature (`--require-signature` makes that mandatory), installs under `~/.local` without root, and runs on the bash 3.2 that macOS ships. Releases now carry `install.sh` and its signature.
+- **GitLab groups in `leak audit-org`:** `--gitlab <group>`, including subgroups, with `GITLAB_TOKEN` (read_api) for private projects and `GITLAB_URL` for self-managed GitLab. Forks and archived projects are skipped.
+
+### Changed
+
+- `leak scan` and `leak audit` now point to `leak plan` as the next step; `leak doctor` also reports the cloud CLIs `leak rotate` uses and cosign.
+- The runbook, cheat sheet, rotation guide, README and home page show the new commands. 51 tests, up from 41.
+
 ## [3.4.0] - 2026-10-27
 
 ### Added
@@ -198,7 +215,8 @@ Prevention becomes the second half of the kit: not only responding to leaks, but
 - Templates: incident timeline, takedown request, notification messages, post-incident review, executive report (print-ready HTML).
 - Quality: offline bats tests, shellcheck, gitleaks on full history, link and anchor checks in CI, Dependabot for pinned actions, pre-commit hook, contribution guide, issue and pull request templates, security policy.
 
-[Unreleased]: https://github.com/aboutBilal/spillkit/compare/v3.4.0...HEAD
+[Unreleased]: https://github.com/aboutBilal/spillkit/compare/v3.5.0...HEAD
+[3.5.0]: https://github.com/aboutBilal/spillkit/compare/v3.4.0...v3.5.0
 [3.4.0]: https://github.com/aboutBilal/spillkit/compare/v3.3.0...v3.4.0
 [3.3.0]: https://github.com/aboutBilal/spillkit/compare/v3.2.0...v3.3.0
 [3.2.0]: https://github.com/aboutBilal/spillkit/compare/v3.1.0...v3.2.0

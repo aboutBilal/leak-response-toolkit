@@ -2,7 +2,7 @@
 #
 #   repos:
 #     - repo: https://github.com/aboutBilal/spillkit
-#       rev: v3.4.0
+#       rev: v3.5.0
 #       hooks:
 #         - id: forbid-secret-files   # no dependencies: blocks .env, keys, state files
 #         - id: leak-guard            # file check + gitleaks on staged changes (gitleaks or Docker)

@@ -6,6 +6,35 @@ If the leaked secret is actively being abused, reverse the order: **revoke first
 
 Everything in `<angle brackets>` is a placeholder.
 
+## With Spillkit: plan first, then rotate step by step
+
+`leak plan` turns a scan report into a checklist in the order below ([order of operations](#order-of-operations-when-there-are-many)), with where to revoke each secret and a link to its section in this guide. `leak rotate` then takes the cloud keys through the pattern above, one step per run:
+
+```bash
+./leak plan secrets-report.json                    # rotation-plan.md for the incident issue, rotation-plan.html to print
+./leak rotate gcp-sa-key --account <sa>@<project>.iam.gserviceaccount.com --key-id <key-id>    # dry run
+./leak rotate gcp-sa-key ... --apply check                                   # who used it, and when
+./leak rotate gcp-sa-key ... --apply replace --store gcp-sm:<secret>         # new key, straight into Secret Manager
+./leak rotate gcp-sa-key ... --apply disable                                 # after consumers have the new key
+./leak rotate gcp-sa-key ... --apply delete
+```
+
+| Recipe | Identifies the credential with | Steps | `--store` targets |
+|---|---|---|---|
+| `aws-key` | `--user`, `--key-id` | check, replace, disable, delete | `aws-sm:<secret-id>` (Secrets Manager) |
+| `azure-app-secret` | `--app`, `--key-id` | check, replace, delete | `azure-kv:<vault>/<name>` (Key Vault) |
+| `gcp-sa-key` | `--account`, `--key-id` | check, replace, disable, delete | `gcp-sm:<secret>` (Secret Manager) |
+| `azure-storage-key` | `--group`, `--account`, `--key` | check, renew | optional: the new connection string to Key Vault |
+
+Any recipe can use any store. What it guarantees:
+
+- Without `--apply` nothing runs: you get the steps with their exact commands, to review or run by hand.
+- The new secret goes from the provider's CLI to the store through a pipe. It is never shown, never written to disk and never in a command line. If the store refuses it, the new credential is deleted again.
+- `disable`, `delete` and `renew` ask you to type the key ID first (`--yes` skips this in automation; without a terminal it is required).
+- Each applied step is appended to `rotation-log.tsv` with its UTC time: credential IDs, never values.
+
+It uses the `aws`, `az` and `gcloud` CLIs you are already signed in to. Everything else in this guide is rotated by hand.
+
 ---
 
 ## Azure

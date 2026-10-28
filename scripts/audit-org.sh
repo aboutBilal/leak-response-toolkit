@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
-# Grade every repository of a GitHub organisation or user, a Bitbucket Cloud workspace,
-# an Azure DevOps organisation (or one of its projects), or every Git repository in a
-# local folder, and build one report: HTML, Markdown and JSON.
+# Grade every repository of a GitHub organisation or user, a GitLab group (with its
+# subgroups), a Bitbucket Cloud workspace, an Azure DevOps organisation (or one of its
+# projects), or every Git repository in a local folder, and build one report: HTML,
+# Markdown and JSON.
 #
 # Usage: leak audit-org [options] <org-or-user>                  GitHub
+#        leak audit-org [options] --gitlab <group>[/<subgroup>]  GitLab (GITLAB_URL for self-managed)
 #        leak audit-org [options] --bitbucket <workspace>        Bitbucket Cloud
 #        leak audit-org [options] --azure-devops <org>[/<project>]  Azure DevOps
 #        leak audit-org [options] --dir <folder-of-repos>
@@ -13,8 +15,9 @@
 #   --include-forks    include forks and archived repositories (skipped by default)
 #   --out DIR          output folder (default: audits/audit_<time>)
 #   --tlp LABEL        handling label on the report: clear, green, amber, amber+strict (default) or red
-# Env:   GITHUB_TOKEN, BITBUCKET_TOKEN (an access token) or AZURE_DEVOPS_PAT (Code: Read), all
-#        optional: include private repositories you can read. Tokens never appear in command lines.
+# Env:   GITHUB_TOKEN, GITLAB_TOKEN (read_api), BITBUCKET_TOKEN (an access token) or
+#        AZURE_DEVOPS_PAT (Code: Read), all optional: include private repositories you can read.
+#        GITLAB_URL: a self-managed GitLab (default https://gitlab.com). Tokens never appear in command lines.
 # Exit:  0 no repository has critical findings, 1 at least one has, 2 bad arguments,
 #        4 the repositories could not be listed (API error or missing permission)
 set -uo pipefail
@@ -23,7 +26,7 @@ set -uo pipefail
 shopt -s dotglob nullglob   # include repositories such as .github
 
 help() { print_help "$0"; }
-scan_flag=(); limit=50; forks=0; out=""; owner=""; dir=""; bitbucket=""; ado=""; tlp="amber+strict"
+scan_flag=(); limit=50; forks=0; out=""; owner=""; dir=""; gitlab=""; bitbucket=""; ado=""; tlp="amber+strict"
 while (($#)); do
   case "$1" in
     -h|--help) help; exit 0 ;;
@@ -32,6 +35,7 @@ while (($#)); do
     --include-forks) forks=1; shift ;;
     --out) need_value "$1" "${2:-}"; out="$2"; shift 2 ;;
     --dir) need_value "$1" "${2:-}"; dir="$2"; shift 2 ;;
+    --gitlab) need_value "$1" "${2:-}"; gitlab="${2%/}"; shift 2 ;;
     --bitbucket) need_value "$1" "${2:-}"; bitbucket="$2"; shift 2 ;;
     --azure-devops) need_value "$1" "${2:-}"; ado="$2"; shift 2 ;;
     --tlp) need_value "$1" "${2:-}"; tlp="$2"; shift 2 ;;
@@ -40,9 +44,12 @@ while (($#)); do
   esac
 done
 [[ "$limit" =~ ^[0-9]+$ ]] || { echo "--limit needs a number" >&2; exit 2; }
-sources=0; for v in "$owner" "$dir" "$bitbucket" "$ado"; do [[ -n "$v" ]] && sources=$((sources + 1)); done
+sources=0; for v in "$owner" "$dir" "$gitlab" "$bitbucket" "$ado"; do [[ -n "$v" ]] && sources=$((sources + 1)); done
 ((sources == 1)) || { help >&2; exit 2; }
 if [[ -n "$dir" ]]; then [[ -d "$dir" ]] || { echo "not a folder: $dir" >&2; exit 2; }
+elif [[ -n "$gitlab" ]]; then
+  [[ "$gitlab" =~ ^[A-Za-z0-9_.-]+(/[A-Za-z0-9_.-]+)*$ ]] || { echo "not a GitLab group path: $gitlab" >&2; exit 2; }
+  [[ "$(gitlab_url)" =~ ^https://[A-Za-z0-9.-]+(:[0-9]+)?(/[A-Za-z0-9._~/-]*)?$ ]] || { echo "GITLAB_URL must be an https:// address" >&2; exit 2; }
 elif [[ -n "$bitbucket" ]]; then [[ "$bitbucket" =~ ^[A-Za-z0-9_.-]+$ ]] || { echo "not a Bitbucket workspace name: $bitbucket" >&2; exit 2; }
 elif [[ -n "$ado" ]]; then [[ "$ado" =~ ^[A-Za-z0-9_.-]+(/[^/]+)?$ ]] || { echo "use --azure-devops <org> or <org>/<project>" >&2; exit 2; }
 elif [[ ! "$owner" =~ ^[A-Za-z0-9_.-]+$ ]]; then help >&2; exit 2; fi
@@ -69,6 +76,23 @@ if [[ -n "$dir" ]]; then
   label="$(basename "$(cd "$dir" && pwd)")"
   for d in "$dir"/*/; do
     git -C "$d" rev-parse --is-inside-work-tree >/dev/null 2>&1 && printf '%s\t%s\n' "$(basename "$d")" "$(cd "$d" && pwd)" >> "$targets"
+  done
+elif [[ -n "$gitlab" ]]; then
+  label="$gitlab"
+  base="$(gitlab_url)/api/v4/groups/$(jq -rn --arg g "$gitlab" '$g|@uri')/projects?include_subgroups=true&per_page=100&order_by=path&sort=asc"
+  ((forks)) || base+="&archived=false"
+  page=1
+  while [[ "$(wc -l < "$targets")" -lt "$limit" ]]; do
+    code="$(gl_get "$base&page=$page" "$work/page.json")"
+    if [[ "$code" != 200 ]] || ! jq -e 'type == "array"' "$work/page.json" >/dev/null 2>&1; then
+      echo "GitLab API error (HTTP $code) listing $gitlab. For private groups set GITLAB_TOKEN (read_api)." >&2
+      exit "$EXIT_FAILED"
+    fi
+    [[ "$(jq 'length' "$work/page.json")" -eq 0 ]] && break
+    # Names are relative to the group (subgroup/project); credentials come from git_auth_env.
+    jq -r --arg g "$gitlab/" --argjson forks "$forks" '.[] | select($forks == 1 or (.forked_from_project == null))
+      | [(.path_with_namespace | ltrimstr($g)), (.http_url_to_repo | sub("^https://[^@/]*@"; "https://"))] | @tsv' "$work/page.json" >> "$targets"
+    page=$((page + 1))
   done
 elif [[ -n "$bitbucket" ]]; then
   label="$bitbucket"
@@ -109,7 +133,7 @@ else
 fi
 head -n "$limit" "$targets" > "$work/t" && mv "$work/t" "$targets"
 total="$(wc -l < "$targets" | tr -d ' ')"
-((total > 0)) || { echo "no repositories found for: ${owner:-$dir}" >&2; exit 2; }
+((total > 0)) || { echo "no repositories found for: $label" >&2; exit 2; }
 echo "==> Auditing $total repositories of $label"
 
 # 2. Audit each one
@@ -117,7 +141,7 @@ i=0
 while IFS=$'\t' read -r name src; do
   i=$((i + 1))
   path="$src"
-  file="${name//\//__}"   # Azure DevOps names are project/repo
+  file="${name//\//__}"   # Azure DevOps names are project/repo; GitLab ones subgroup/project
   if [[ "$src" == https://* ]]; then
     path="$work/repos/$file"
     depth=(); ((${#scan_flag[@]})) && depth=(--depth 1)
