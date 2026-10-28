@@ -23,7 +23,9 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 
 ### Fixed
 
-Found by an independent review of the 3.5 code.
+- **The GitHub Action stopped as soon as a scan, audit, audit-org or hunt had findings.** GitHub runs Action scripts with `bash -e`, so the first non-zero exit ended the step. That left no job summary, no outputs and no Slack, Teams or Discord alert, and it ignored `fail-on-findings: false`. Every exit code is now handled by the script itself. The new CI step that runs the Action on a leak found this.
+
+Found by an independent review of the 3.5 code:
 
 - `install.sh` with a relative `--prefix` made a `leak` link that led nowhere, yet reported success. The prefix is now made absolute, and the link is checked.
 - Reinstalling a version deleted the working copy before unpacking the new one, so a failed unpack left nothing. The new version is now unpacked beside the old one and swapped in only when complete.

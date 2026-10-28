@@ -78,7 +78,9 @@ runs:
         REPOSITORY: ${{ github.repository }}
         RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
       run: |
-        set -uo pipefail
+        # GitHub runs this with bash -e, which would stop at the first command that reports
+        # findings (exit 1). Every exit code is checked below, so -e is switched off.
+        set +e -uo pipefail
         out="${RUNNER_TEMP}/leak-toolkit"; mkdir -p "$out"
         findings=0; report=""; summary=""; plan=""
         case "$MODE" in
