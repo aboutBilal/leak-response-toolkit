@@ -6,6 +6,7 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 
 ### Changed
 
+- `leak plan` ranks 1Password service account tokens and account Secret Keys, and age encryption keys, with the most dangerous secrets: they open everything they protect. PKCS#12 files rank with private keys. All four were filed under "Other secret" before. The rotation guide has a row for password manager credentials and for age and SOPS keys.
 - Site: every name in the "Works with" row has an icon. AWS, Azure and Azure DevOps get neutral glyphs rather than their logos, which their owners do not allow on third-party sites; gitleaks has no logo.
 
 ## [3.8.0] - 2026-10-28

@@ -186,6 +186,7 @@ TLS private keys (`.pem`, `.pfx`, `.key`): **revoke the certificate** with the i
 | JWT / session signing key | New key; accept old **and** new briefly if you can, then drop the old | Users are logged out |
 | Webhook signing secret | Rotate on both sender and receiver | Brief failed deliveries |
 | Encryption key (data at rest) | New key **plus re-encrypting** data | Plan it; it is a migration |
+| age or SOPS key | New key, re-encrypt every file it protects, then rotate the secrets those files held: anyone with the old key has read them | Every encrypted file changes |
 | SMTP / email API key | Regenerate in the provider | None |
 | Payment provider key | Roll in the provider dashboard; most support an overlap period | None if overlap used |
 
@@ -198,6 +199,7 @@ The pattern is the same everywhere: **create the replacement → deploy it → r
 | Secret | Revoke or rotate at | Watch out for |
 |---|---|---|
 | **AI provider API keys** (OpenAI, Anthropic, Google Gemini, Azure OpenAI, others) | The provider console's API keys page; Azure OpenAI: regenerate the resource key | Bills grow fast when stolen keys run inference; check usage and set spend limits |
+| **Password manager credentials** (1Password service account token or account Secret Key) | 1Password → Developer → Service accounts; for a Secret Key, Profile → Security: regenerate it and change the account password | Treat every item in the vaults it could read as leaked, and rotate those too |
 | **Container registry tokens** (Docker Hub, GHCR, ACR, ECR) | Registry account → access tokens | Pushed images: an attacker could replace tags. Verify image digests |
 | **Package registry tokens** (npm, PyPI, NuGet, RubyGems) | Registry account → tokens | Check for new package versions published in the window: a supply-chain risk |
 | **Kubernetes** (kubeconfig, service account tokens) | Rotate cluster credentials or delete the token; prefer short-lived tokens | A kubeconfig with admin rights means full cluster access: review workloads and RBAC changes |
