@@ -4,6 +4,8 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
+## [3.8.1] - 2026-10-28
+
 ### Changed
 
 - `leak plan` ranks 1Password service account tokens and account Secret Keys, and age encryption keys, with the most dangerous secrets: they open everything they protect. PKCS#12 files rank with private keys. All four were filed under "Other secret" before. The rotation guide has a row for password manager credentials and for age and SOPS keys.
@@ -349,7 +351,8 @@ Prevention becomes the second half of the kit: not only responding to leaks, but
 - Templates: incident timeline, takedown request, notification messages, post-incident review, executive report (print-ready HTML).
 - Quality: offline bats tests, shellcheck, gitleaks on full history, link and anchor checks in CI, Dependabot for pinned actions, pre-commit hook, contribution guide, issue and pull request templates, security policy.
 
-[Unreleased]: https://github.com/aboutBilal/spillkit/compare/v3.8.0...HEAD
+[Unreleased]: https://github.com/aboutBilal/spillkit/compare/v3.8.1...HEAD
+[3.8.1]: https://github.com/aboutBilal/spillkit/compare/v3.8.0...v3.8.1
 [3.8.0]: https://github.com/aboutBilal/spillkit/compare/v3.7.1...v3.8.0
 [3.7.1]: https://github.com/aboutBilal/spillkit/compare/v3.7.0...v3.7.1
 [3.7.0]: https://github.com/aboutBilal/spillkit/compare/v3.6.1...v3.7.0
