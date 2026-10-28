@@ -48,7 +48,7 @@ rm -f "$json"
 # A bare mirror (repo.git) is scanned as-is; gitleaks walks every commit on every ref,
 # or only the commits in --commits. gitleaks exits 3 for findings (set below), 0 when clean
 # and anything else on errors.
-scope="every commit"; log_opts=()
+scope="any commit"; log_opts=()
 [[ -n "$range" ]] && { scope="the commits $range"; log_opts=("--log-opts=$range"); }
 set +e
 if command -v gitleaks >/dev/null; then

@@ -65,7 +65,7 @@ commit_all() {
 
   run "$ROOT/scripts/scan-secrets.sh" "$TMP/clean" "$TMP/clean-report.json"
   [ "$status" -eq 0 ]
-  [[ "$output" == *"No secrets found"* ]]
+  [[ "$output" == *"No secrets found in any commit."* ]]
 }
 
 @test "scan-secrets: finds a secret removed from history and never prints its value" {

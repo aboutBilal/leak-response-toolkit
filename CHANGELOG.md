@@ -4,6 +4,10 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
+### Fixed
+
+- A clean `leak scan` in 3.7.0 said "No secrets found in every commit"; it says "in any commit" again.
+
 ## [3.7.0] - 2026-10-28
 
 ### Added
