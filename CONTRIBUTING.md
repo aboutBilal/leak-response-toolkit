@@ -25,13 +25,13 @@ make check           # shellcheck + bats tests + secret scan (what CI runs)
 - **README images** come from real output only: capture it with `NO_COLOR=1`, then render with `tools/render-terminal-svg.py`. Colours, type and spacing follow the visual language in [`assets/DESIGN.md`](assets/DESIGN.md).
 - **Commits:** a short summary line in the imperative ("Add Bitbucket takedown steps"), then why, if it is not obvious.
 
-## Ideas that would help
+## Where to start
 
-- Rotation and investigation steps for more platforms (GitLab, Bitbucket, Azure DevOps, other clouds and SaaS)
-- More sources for `hunt-copies.sh`
-- Translations of the runbook
+- **First contribution:** the issues labelled [good first issue](https://github.com/aboutBilal/spillkit/labels/good%20first%20issue). Each says what to change, which files to touch and how to test it.
+- **Bigger pieces:** the issues labelled [help wanted](https://github.com/aboutBilal/spillkit/labels/help%20wanted): GitLab support in `leak respond`, more `leak rotate` recipes, Windows.
+- **Your own idea:** rotation and investigation steps for more platforms, more sources for `leak hunt`, translations.
 
-Open an issue first for larger changes, so we can agree on the approach.
+Comment on an issue before you start, so two people do not do the same work, and open an issue first for larger changes, so we can agree on the approach. Questions are welcome in [Discussions](https://github.com/aboutBilal/spillkit/discussions).
 
 ## Reporting a security problem
 

@@ -321,7 +321,7 @@ Yes. It is MIT-licensed. Adapt the runbooks to your organisation and ship the pr
 
 ## Contributing
 
-Contributions based on real incidents are especially welcome: a missing step, another platform, a better command. Please read [CONTRIBUTING.md](CONTRIBUTING.md) first. Two rules are firm: no secrets in the repository, not even fake ones, and no details of real incidents or people. Planned work is in the [roadmap](ROADMAP.md).
+Contributions based on real incidents are especially welcome: a missing step, another platform, a better command. Please read [CONTRIBUTING.md](CONTRIBUTING.md) first; the [good first issues](https://github.com/aboutBilal/spillkit/labels/good%20first%20issue) are the easiest way in. Two rules are firm: no secrets in the repository, not even fake ones, and no details of real incidents or people. Planned work is in the [roadmap](ROADMAP.md).
 
 ```bash
 make check    # shellcheck, tests and a secret scan: the same checks CI runs
