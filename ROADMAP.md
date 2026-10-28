@@ -31,8 +31,12 @@ What is planned next. Ideas and help are welcome: open an [improvement issue](ht
 - `leak respond`: the first hour of an incident in one command, with a UTC timeline, resumable.
 - Fast pull request scans: `leak scan --commits` and `scope: changes` in the GitHub Action.
 
+## Done in 3.8
+- `leak rotate azure-devops-pat`: Azure DevOps personal access tokens, replaced with the same scope, then revoked.
+- Accessibility: every page of the site and every generated report checked with axe-core against WCAG 2.1 AA.
+
 ## Next
-- More `leak rotate` recipes: GitHub App private keys, Azure DevOps tokens, database passwords.
+- More `leak rotate` recipes: database passwords, and GitHub App private keys once GitHub offers an API for them.
 
 ## Later
 - Translations of the runbook and cheat sheet.

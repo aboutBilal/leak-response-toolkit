@@ -672,6 +672,58 @@ MOCK
   grep -q $'azure-storage-key\tkey2@stprod01\trenew\tok' "$TMP/r.tsv"
 }
 
+# fake_ado: an Azure DevOps PAT API double for leak rotate azure-devops-pat. It records curl's
+# arguments, the header config read on stdin and the request body, and answers a create with the
+# fake secret from fake_cloud (whose az double hands out the sign-in token).
+fake_ado() {
+  mkdir -p "$TMP/bin"
+  cat > "$TMP/bin/curl" <<MOCK
+#!/usr/bin/env bash
+printf '%s\n' "\$*" >> "$TMP/argv.txt"
+method=GET; url=""
+while ((\$#)); do case "\$1" in -X) method="\$2"; shift 2 ;; -K) [[ "\$2" == - ]] && cat >> "$TMP/config.txt"; shift 2 ;; --data-binary) printf '%s\n' "\$2" >> "$TMP/body.txt"; shift 2 ;; http*) url="\$1"; shift ;; *) shift ;; esac; done
+old='{"authorizationId":"11111111-2222-3333-4444-555555555555","displayName":"ci-pipeline","scope":"vso.code_write vso.build","validFrom":"2026-01-01T00:00:00Z","validTo":"2026-12-31T00:00:00Z","targetAccounts":["acc"]}'
+case "\$method \$url" in
+  "GET "*displayFilterOption*) code=200; body="{\"patTokens\":[\$old]}" ;;
+  "GET "*authorizationId=11111111-2222-3333-4444-555555555555*) code=200; body="{\"patToken\":\$old,\"patTokenError\":\"none\"}" ;;
+  "POST "*) code=200; body="{\"patToken\":{\"authorizationId\":\"99999999-8888-7777-6666-555555555555\",\"displayName\":\"x\",\"token\":\"\$(cat "$TMP/secret")\"},\"patTokenError\":\"none\"}" ;;
+  "DELETE "*) code=204; body="" ;;
+  *) code=404; body='{"message":"not found"}' ;;
+esac
+printf '%s\n%s' "\$body" "\$code"
+MOCK
+  chmod +x "$TMP/bin/curl"
+}
+
+@test "rotate azure-devops-pat: same scope, into the store only, revoked again if the store fails" {
+  fake_cloud; fake_ado
+  cd "$TMP"
+  old=11111111-2222-3333-4444-555555555555; new=99999999-8888-7777-6666-555555555555
+  ado=(env PATH="$TMP/bin:$PATH" "$ROOT/scripts/rotate.sh" azure-devops-pat --org contoso)
+  run "${ado[@]}" --apply check
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"ci-pipeline"* && "$output" == *"$old"* ]]
+  run "${ado[@]}" --authorization-id "$old" --apply replace --store azure-kv:kv-prod/ado-pat --expires 2027-01-31
+  [ "$status" -eq 0 ]
+  secret="$(cat "$TMP/secret")"
+  grep -qx "$secret" "$TMP/store.txt"
+  ! grep -q "$secret" "$TMP/argv.txt"
+  [[ "$output" != *"$secret"* ]]
+  grep -q 'Authorization: Bearer ok' "$TMP/config.txt"   # the az sign-in token, on stdin
+  ! grep -q 'Bearer' "$TMP/argv.txt"
+  jq -e '.scope == "vso.code_write vso.build" and .allOrgs == false and .validTo == "2027-01-31T23:59:59Z"' <(tail -n 1 "$TMP/body.txt")
+  grep -q $'azure-devops-pat\t'"$old"$'@contoso\treplace\tok\t'"$new" "$TMP/rotation-log.tsv"
+  run env STORE_FAILS=1 "${ado[@]}" --authorization-id "$old" --apply replace --store azure-kv:kv-prod/ado-pat
+  [ "$status" -eq 4 ]
+  grep -q -- "-X DELETE .*authorizationId=$new" "$TMP/argv.txt"
+  ! grep -q -- "-X DELETE .*authorizationId=$old" "$TMP/argv.txt"   # the leaked one is untouched
+  run "${ado[@]}" --authorization-id "$old" --apply revoke --yes
+  [ "$status" -eq 0 ]
+  grep -q -- "-X DELETE .*authorizationId=$old" "$TMP/argv.txt"
+  run env PATH="$TMP/bin:$PATH" "$ROOT/scripts/rotate.sh" azure-devops-pat --org "not an org!" --authorization-id "$old"
+  [ "$status" -eq 2 ]
+}
+
 # fake_gitlab: a GitLab API double for leak rotate gitlab-token. It records curl's arguments and
 # the header config read on stdin, and answers a rotation with the fake secret from fake_cloud.
 fake_gitlab() {
@@ -820,13 +872,34 @@ fake_github() {
   [ "$status" -eq 4 ]
   [ "$(grep -c '| hunt | ' INC-7/timeline.md)" -eq 3 ]   # first run, the redo request, the new hunt
   grep -q '| hunt | incomplete | .* not checked' INC-7/timeline.md
+  before="$(cat INC-7/.respond)"
   run "$ROOT/scripts/respond.sh" --dir INC-7 --status
   [ "$status" -eq 0 ]
   [[ "$output" == *"✔ rotate"* ]]
+  [ "$(cat INC-7/.respond)" = "$before" ]   # --status changes nothing
+  run "$ROOT/scripts/respond.sh" acme/payments-api --dir "inc dir"
+  [ "$status" -eq 2 ]
+  [ ! -e "inc dir" ]   # so a retry with --id is not blocked
   run "$ROOT/scripts/respond.sh" other/repo --dir INC-7
   [ "$status" -eq 2 ]
   run "$ROOT/scripts/respond.sh" --dir no-such-incident --status
   [ "$status" -eq 2 ]
+}
+
+@test "respond: a repository already gone is scanned from a clone later, and the report is rebuilt" {
+  scanner_available || skip "needs gitleaks or docker"
+  fake_github
+  cd "$TMP"
+  gh=(env PATH="$TMP/bin:$PATH" GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0="url.$TMP/gh/.insteadOf" GIT_CONFIG_VALUE_0="https://github.com/")
+  run "${gh[@]}" "$ROOT/scripts/respond.sh" acme/gone-repo --id INC-8
+  [ "$status" -eq 4 ]   # no mirror to scan
+  grep -q '| scan | failed | no copy to scan' INC-8/timeline.md
+  grep -q '| hunt | ok |' INC-8/timeline.md   # the fork list of a deleted repository is covered by the same-name check
+  grep -q '| Direct forks | covered below |' INC-8/hunts/hunt_*/REPORT.md
+  run "${gh[@]}" "$ROOT/scripts/respond.sh" --dir INC-8 --repo-path "$TMP/src"
+  grep -q '| scan | found |' INC-8/timeline.md
+  [ "$(grep -c '| report | ok |' INC-8/timeline.md)" -eq 2 ]   # rebuilt with the scan
+  [ "$(grep -c '| hunt | ' INC-8/timeline.md)" -eq 1 ]          # not repeated: it does not use the scan
 }
 
 @test "demo: builds a leak and runs audit, scan, plan and a rotation dry run" {
@@ -878,6 +951,7 @@ MOCK
   [ "$status" -eq 0 ]
   run "$TMP/p/bin/leak" version
   [[ "$output" == spillkit* ]]
+  [ "$(ls -ld "$TMP/p/share/spillkit/v9.9.9" | cut -c1-10)" = "drwxr-xr-x" ]   # usable by every user of a shared prefix
   cd "$TMP"
   run env SPILLKIT_RELEASES="file://$TMP/rel" "$ROOT/install.sh" --version 9.9.9 --prefix relative-prefix
   [ "$status" -eq 0 ]

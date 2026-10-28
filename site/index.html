@@ -107,7 +107,7 @@ layout: home
           </svg>
         </div>
         <h3>Rotate in the right order</h3>
-        <p>A plan from the scan, most dangerous first, with where to revoke each secret. Cloud keys and GitLab tokens are rotated step by step, the new one piped straight into your vault.</p>
+        <p>A plan from the scan, most dangerous first, with where to revoke each secret. Cloud keys and GitLab and Azure DevOps tokens are rotated step by step, the new one piped straight into your vault.</p>
         <a class="more" href="{{ site.baseurl }}/docs/02-rotate-secrets.html#with-spillkit-plan-first-then-rotate-step-by-step">leak plan and leak rotate {{ arrow }}</a>
       </article>
       <article class="stage-card">
@@ -224,7 +224,7 @@ layout: home
       <li><span class="ti-wrap"><svg class="ti" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4.5 6v5.5c0 4.6 3.2 8.4 7.5 9.5 4.3-1.1 7.5-4.9 7.5-9.5V6Z"/><path d="m9 12 2.2 2.2L15.5 10"/></svg></span><h3>Signed releases</h3><p>Archives and images signed with Sigstore, with an SBOM and SLSA provenance. <a href="{{ site.baseurl }}/SECURITY.html#verifying-a-release">Verify one</a></p></li>
       <li><span class="ti-wrap"><svg class="ti" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span><h3>Fails closed</h3><p>A scanner error or an unreachable source is reported as not checked, never as clean.</p></li>
       <li><span class="ti-wrap"><svg class="ti" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18M10.6 6.1A9.8 9.8 0 0 1 12 6c5 0 8.5 4 9.5 6-.4.8-1.2 2-2.3 3.1M6.6 7.6C4.6 8.9 3.2 10.7 2.5 12c1 2 4.5 6 9.5 6 1.6 0 3-.4 4.3-1"/><path d="M9.9 10a3 3 0 0 0 4.1 4.1"/></svg></span><h3>Secrets stay private</h3><p>No command prints or tests a secret. Tokens never appear in process lists or logs.</p></li>
-      <li><span class="ti-wrap"><svg class="ti" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V12M10 20V5M16 20v-9M21 20H3"/></svg></span><h3>Independently scored</h3><p>OpenSSF Scorecard, CodeQL and 58 tests on Linux and macOS for every change. <a href="https://scorecard.dev/viewer/?uri=github.com/{{ site.repository }}">See the score</a></p></li>
+      <li><span class="ti-wrap"><svg class="ti" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V12M10 20V5M16 20v-9M21 20H3"/></svg></span><h3>Independently scored</h3><p>OpenSSF Scorecard, CodeQL and 60 tests on Linux and macOS for every change. <a href="https://scorecard.dev/viewer/?uri=github.com/{{ site.repository }}">See the score</a></p></li>
     </ul>
   </div>
 </section>

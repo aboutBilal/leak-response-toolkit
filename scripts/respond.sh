@@ -15,8 +15,8 @@
 #   --repo-path CLONE  scan this clone instead of the mirror (when the repository is already gone)
 #   --tlp LABEL        handling label for the plan and report: clear, green, amber, amber+strict (default), red
 #   --since DATE       for the hunt: same-name copies created on or after this date (default: 60 days ago)
-#   --redo STEP        run snapshot, scan, plan, hunt or report again, and every step after it
-#                      (repeat the hunt after 7 days: --redo hunt)
+#   --redo STEP        run snapshot, scan, plan, hunt or report again, and the steps that use its
+#                      results (a new scan means a new plan and report); after 7 days: --redo hunt
 #   --done STEP        record that you finished rotate, takedown or notify, with the time
 #   --status           show where the incident stands; change nothing
 # Env:   GITHUB_TOKEN (optional) - higher rate limits; the owner's token also saves traffic data.
@@ -72,9 +72,9 @@ if [[ -f "$state" ]]; then
   tlp="${tlp:-$(get tlp)}"; since="${since:-$(get since)}"; repo_path="${repo_path:-$(get repo_path)}"
 elif [[ -n "$repo" ]] && ((status_only == 0)) && [[ -z "$done_step" ]]; then
   [[ ! -e "$dir" || -z "$(ls -A "$dir")" ]] || usage_fail "$dir exists and is not an incident folder from leak respond"
-  mkdir -p "$dir/logs"
   id="${id:-$(basename "$dir")}"
   [[ "$id" =~ ^[A-Za-z0-9._-]{1,64}$ ]] || usage_fail "give --id: the folder name is not a usable incident ID"
+  mkdir -p "$dir/logs"
   # The evidence includes a mirror of the leaked code and its secrets: keep it out of every repository.
   printf '# Incident evidence: it holds the leaked code and secrets. Never commit this folder.\n*\n' > "$dir/.gitignore"
   put repo "$repo"; put id "$id"
@@ -83,7 +83,7 @@ else
 fi
 dir="$(cd "$dir" && pwd)"; state="$dir/.respond"
 tlp="${tlp:-amber+strict}"
-put tlp "$tlp"; [[ -n "$since" ]] && put since "$since"; [[ -n "$repo_path" ]] && put repo_path "$repo_path"
+remember() { [[ "$(get "$1")" == "$2" ]] || put "$1" "$2"; }   # record a setting only when it changed
 leak="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/leak"
 timeline="$dir/timeline.md"
 
@@ -155,7 +155,7 @@ step_plan() {
 step_hunt() {
   local rc=0 hunt found unchecked what
   run_step hunt "Hunt for copies that survive deletion" "$leak" hunt ${since:+--since "$since"} --out "$dir/hunts" "$repo" || rc=$?
-  hunt="$(ls -dt "$dir"/hunts/hunt_*/ 2>/dev/null | head -n 1)"; hunt="${hunt%/}"
+  hunt="$(sed -n 's/^Report: //p' "$dir/logs/hunt.log" | tail -n 1)"; hunt="${hunt%/REPORT.md}"
   if [[ -z "$hunt" || ! -f "$hunt/REPORT.md" ]]; then finish hunt failed "no hunt report (exit $rc); see logs/hunt.log"; return; fi
   put hunt_path "${hunt#"$dir"/}"
   found="$(grep -c '^| .*| \*\*found\*\* |' "$hunt/REPORT.md" || true)"
@@ -219,16 +219,21 @@ if [[ -n "$done_step" ]]; then
   echo "Recorded: $done_step done at $(now) UTC."
   show_status; exit "$EXIT_OK"
 fi
-if [[ -n "$redo" ]]; then   # forget this step and every one after it, so they run again
-  after=0
-  for s in $auto_steps; do [[ "$s" == "$redo" ]] && after=1; ((after)) && put "$s" ""; done
+remember tlp "$tlp"; [[ -z "$since" ]] || remember since "$since"; [[ -z "$repo_path" ]] || remember repo_path "$repo_path"
+if [[ -n "$redo" ]]; then   # forget this step, so it runs again (and so do the steps that use its results)
+  put "$redo" ""
   note "$redo" "redo" "asked to run it again"
 fi
 
+# A step runs when it is not done yet, or when a step whose results it uses has just run again:
+# a new scan means a new plan and report, a new hunt a new report.
+needs() { case "$1" in scan) echo snapshot ;; plan) echo scan ;; report) echo "scan hunt" ;; esac; }
 [[ -f "$timeline" ]] || note started ok "leak respond for $repo"
+ran=" "
 for s in $auto_steps; do
-  if is_done "$s"; then printf '%s==> %s: done at %s%s\n' "$dim" "$s" "$(get "${s}_at")" "$off"; continue; fi
-  "step_$s"
+  stale=0; for d in $(needs "$s"); do [[ "$ran" == *" $d "* ]] && stale=1; done
+  if is_done "$s" && ((stale == 0)); then printf '%s==> %s: done at %s%s\n' "$dim" "$s" "$(get "${s}_at")" "$off"; continue; fi
+  "step_$s"; ran+="$s "
 done
 show_status
 echo "Mark your steps when they are done:  leak respond --dir $dir --done rotate   (or takedown, notify)"

@@ -22,7 +22,7 @@ Steps 3 and 3b are also available as hooks published from this repository, with 
 ```yaml
 repos:
   - repo: https://github.com/aboutBilal/spillkit
-    rev: v3.7.1
+    rev: v3.8.0
     hooks:
       - id: forbid-secret-files
       - id: leak-guard

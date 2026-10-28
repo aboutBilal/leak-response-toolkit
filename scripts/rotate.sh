@@ -14,13 +14,17 @@
 #   gitlab-token       --token-id ID [--project PATH | --group PATH] [--expires YYYY-MM-DD]
 #                      personal, project or group access token; needs GITLAB_TOKEN (api scope,
 #                      not the leaked token) and GITLAB_URL when self-managed
+#   azure-devops-pat   --org ORG --authorization-id ID [--expires YYYY-MM-DD]
+#                      your own personal access token; needs az login as that user
 # Steps, in this order (deploy the new secret before revoking the old one):
 #   check     who used the leaked credential, and when (read-only)
-#   replace   create the new credential and put it in --store (aws-key, azure-app-secret, gcp-sa-key)
+#   replace   create the new credential and put it in --store (aws-key, azure-app-secret, gcp-sa-key,
+#             azure-devops-pat)
 #   disable   switch the leaked one off; can be undone (aws-key, gcp-sa-key)
 #   delete    delete the leaked one for good (renew, for azure-storage-key)
 #   rotate    gitlab-token: GitLab revokes the leaked token and puts a new one in --store, in one call
-#   revoke    gitlab-token: revoke only, when a replacement you made yourself is already deployed
+#   revoke    gitlab-token, azure-devops-pat: revoke the leaked token (for gitlab-token, when a
+#             replacement you made yourself is already deployed)
 # Options:
 #   --store TARGET   where the new secret goes: aws-sm:<secret-id> (AWS Secrets Manager),
 #                    azure-kv:<vault>/<name> (Azure Key Vault) or gcp-sm:<secret> (Secret Manager)
@@ -34,7 +38,7 @@ set +x   # never trace: a traced run would print the new secret (bash -x leak ro
 . "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 
 recipe=""; user=""; key_id=""; app=""; account=""; group=""; which_key="key1"
-token_id=""; gl_project=""; expires=""; ref=""
+token_id=""; gl_project=""; expires=""; ref=""; org=""; auth_id=""
 apply=""; store=""; yes=0; log="$PWD/rotation-log.tsv"
 while (($#)); do
   case "$1" in
@@ -48,6 +52,8 @@ while (($#)); do
     --token-id) need_value "$1" "${2:-}"; token_id="$2"; shift 2 ;;
     --project) need_value "$1" "${2:-}"; gl_project="$2"; shift 2 ;;
     --expires) need_value "$1" "${2:-}"; expires="$2"; shift 2 ;;
+    --org) need_value "$1" "${2:-}"; org="$2"; shift 2 ;;
+    --authorization-id) need_value "$1" "${2:-}"; auth_id="$2"; shift 2 ;;
     --apply) need_value "$1" "${2:-}"; apply="$2"; shift 2 ;;
     --store) need_value "$1" "${2:-}"; store="$2"; shift 2 ;;
     --log) need_value "$1" "${2:-}"; log="$2"; shift 2 ;;
@@ -107,7 +113,17 @@ case "$recipe" in
     what="GitLab $kind ${token_id:-<token-id>}${gl_project:+ of project $gl_project}${group:+ of group $group}"
     ref="${token_id}@${gl_project:-${group:-personal}}"
     need=(token_id) ;;
-  *) usage_fail "unknown recipe: $recipe (aws-key, azure-app-secret, gcp-sa-key, azure-storage-key, gitlab-token)" ;;
+  azure-devops-pat)
+    cli=az; steps="check replace revoke"
+    [[ -z "$org" || "$org" =~ ^[A-Za-z0-9][A-Za-z0-9-]{0,49}$ ]] || usage_fail "--org needs the organisation name, as in dev.azure.com/<org>: $org"
+    [[ -z "$auth_id" || "$auth_id" =~ ^[0-9a-fA-F-]{36}$ ]] || usage_fail "--authorization-id needs the token's authorization ID, a GUID (check lists them): $auth_id"
+    [[ -z "$expires" || "$expires" =~ ^20[0-9]{2}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$ ]] || usage_fail "--expires needs a date, YYYY-MM-DD: $expires"
+    expires="${expires:-$(jq -nr 'now + 90 * 86400 | strftime("%Y-%m-%d")' 2>/dev/null || echo "<YYYY-MM-DD>")}"
+    ado_base="https://vssps.dev.azure.com/${org:-<org>}/_apis/tokens/pats"
+    what="Azure DevOps personal access token ${auth_id:-<authorization-id>} in ${org:-<org>}"
+    ref="${auth_id}@${org}"
+    need=(org auth_id) ;;
+  *) usage_fail "unknown recipe: $recipe (aws-key, azure-app-secret, gcp-sa-key, azure-storage-key, gitlab-token, azure-devops-pat)" ;;
 esac
 
 store_kind=""; store_ref=""
@@ -207,6 +223,19 @@ EOF
               DELETE $gl_base$tokens_path/$(p token_id token-id)
 EOF
     ;;
+    azure-devops-pat) cat <<EOF
+1. check    Your tokens in $(p org org): names, scopes and expiry, never values (read-only)
+              GET $ado_base?displayFilterOption=active   (as the user signed in with az login)
+            Azure DevOps revokes tokens it finds on public GitHub by itself: look for Token.PatSystemRevokeEvent
+            in Organization settings → Auditing. Token use is not logged there; check the owner's activity
+2. replace  A new token with the same scope, for this organisation only, expiring $expires;
+            straight into $(store_label) (needs --store)
+              POST $ado_base   → piped into the store, never shown
+3. (you)    Deploy the new token everywhere the old one is used
+4. revoke   Revoke the leaked token; anything still using it stops working
+              DELETE $ado_base?authorizationId=$(p auth_id authorization-id)
+EOF
+    ;;
   esac
   echo
   echo "Being abused right now? Revoke first (disable, delete, renew or revoke) and accept the downtime."
@@ -222,7 +251,7 @@ log_step() {   # <step> <result> <new credential ID or "">: never a value
 }
 confirm() {    # <action>: ask on the terminal unless --yes
   ((yes)) && return 0
-  local token="${key_id:-${token_id:-$which_key}}" answer
+  local token="${key_id:-${token_id:-${auth_id:-$which_key}}}" answer
   if [[ ! -t 0 ]]; then
     echo "refusing to $1 without confirmation: run it on a terminal, or add --yes" >&2
     exit "$EXIT_USAGE"
@@ -248,11 +277,21 @@ gl_api() {   # <method> <path>: GITLAB_TOKEN goes in a header on stdin, never ar
   printf 'header = "PRIVATE-TOKEN: %s"\n' "${GITLAB_TOKEN//\"/}" \
     | curl -s --max-time 60 -K - -X "$1" -w '\n%{http_code}' "$gl_base$2" || printf '\n000'
 }
-gl_status() { printf '%s' "${1##*$'\n'}"; }
-gl_body() { printf '%s' "${1%$'\n'*}"; }
-gl_refused() {   # <response>: why GitLab said no, from its error message (errors never carry a token)
-  local msg; msg="$(gl_body "$1" | jq -r '.message // .error // empty | tostring' 2>/dev/null | head -c 200)"
-  printf 'HTTP %s%s' "$(gl_status "$1")" "${msg:+: $msg}"
+http_status() { printf '%s' "${1##*$'\n'}"; }
+http_body() { printf '%s' "${1%$'\n'*}"; }
+ado_api() {   # <method> <query> [json]: the Entra token goes in a header on stdin, never argv. Body, then status.
+  local args=(-s --max-time 60 -K - -X "$1" -w '\n%{http_code}' -H "Content-Type: application/json")
+  [[ -n "${3:-}" ]] && args+=(--data-binary "$3")   # names, scope and expiry only: no secret
+  printf 'header = "Authorization: Bearer %s"\n' "${ado_token//\"/}" \
+    | curl "${args[@]}" "$ado_base?$2${2:+&}api-version=7.1-preview.1" || printf '\n000'
+}
+ado_sign_in() {   # an Entra token for Azure DevOps, for the user signed in to az (PATs belong to a user)
+  ado_token="$(az account get-access-token --resource 499b84ac-1321-427f-aa17-267ca6975798 --query accessToken -o tsv 2>/dev/null)" \
+    && [[ -n "$ado_token" ]] || fail "could not get an Azure DevOps token: az login as the token's owner (service principals cannot manage PATs)"
+}
+refusal() {   # <response>: why the service said no, from its error message (errors never carry a token)
+  local msg; msg="$(http_body "$1" | jq -r '.message // .error // empty | tostring' 2>/dev/null | head -c 200)"
+  printf 'HTTP %s%s' "$(http_status "$1")" "${msg:+: $msg}"
 }
 
 apply_step() {
@@ -364,15 +403,15 @@ apply_step() {
       if [[ -z "$token_id" ]]; then
         printf '  $ GET %s\n' "$gl_base$tokens_path?per_page=100"
         resp="$(gl_api GET "$tokens_path?per_page=100")"
-        [[ "$(gl_status "$resp")" == 200 ]] || fail "could not list the tokens ($(gl_refused "$resp"))"
-        gl_body "$resp" | jq -r '(["ID","NAME","SCOPES","LAST USED","EXPIRES"] | @tsv),
+        [[ "$(http_status "$resp")" == 200 ]] || fail "could not list the tokens ($(refusal "$resp"))"
+        http_body "$resp" | jq -r '(["ID","NAME","SCOPES","LAST USED","EXPIRES"] | @tsv),
           (.[] | select(.active) | [(.id|tostring), .name, (.scopes|join(",")), (.last_used_at // "never"), (.expires_at // "never")] | @tsv)' | table
         echo "  Active tokens only, first 100. Run check again with --token-id ID for the leaked one."
       else
         printf '  $ GET %s\n' "$gl_base$tokens_path/$token_id"
         resp="$(gl_api GET "$tokens_path/$token_id")"
-        [[ "$(gl_status "$resp")" == 200 ]] || fail "could not read the token ($(gl_refused "$resp"))"
-        gl_body "$resp" | jq -r '"  name:       \(.name)", "  scopes:     \(.scopes | join(", "))",
+        [[ "$(http_status "$resp")" == 200 ]] || fail "could not read the token ($(refusal "$resp"))"
+        http_body "$resp" | jq -r '"  name:       \(.name)", "  scopes:     \(.scopes | join(", "))",
           "  state:      \(if .revoked then "revoked" elif .active then "active" else "inactive (expired)" end)",
           "  created:    \(.created_at // "unknown")",
           "  last used:  \(.last_used_at // "never")\(if (.last_used_ips // []) != [] then " from \(.last_used_ips | join(", "))" else "" end)",
@@ -386,21 +425,21 @@ apply_step() {
       store_check || fail "could not read $(store_label): it must exist and you need read access to its metadata. Nothing changed"
       printf '  $ POST %s   (the new token is kept in memory, piped to the store)\n' "$gl_base$tokens_path/$token_id/rotate?expires_at=$expires"
       local resp why; resp="$(gl_api POST "$tokens_path/$token_id/rotate?expires_at=$expires")"
-      if [[ "$(gl_status "$resp")" != 200 ]]; then
-        why="$(gl_refused "$resp")"; resp=""
+      if [[ "$(http_status "$resp")" != 200 ]]; then
+        why="$(refusal "$resp")"; resp=""
         fail "GitLab did not rotate the token ($why); the leaked one is unchanged"
       fi
-      id="$(gl_body "$resp" | jq -r '.id // empty')"
-      if ! gl_body "$resp" | jq -e '.token | type == "string" and length > 0' >/dev/null; then
+      id="$(http_body "$resp" | jq -r '.id // empty')"
+      if ! http_body "$resp" | jq -e '.token | type == "string" and length > 0' >/dev/null; then
         resp=""; fail "GitLab answered without a new token: check the token list, the leaked one may be revoked already"
       fi
-      if gl_body "$resp" | jq -j '.token' | store_put; then
+      if http_body "$resp" | jq -j '.token' | store_put; then
         resp=""; log_step rotate ok "$id"
         echo "  The leaked token is revoked. Its replacement ($id, expires $expires) is in $(store_label)."
         echo "  Deploy it now: anything still using the old token fails until it reads the new one."
       else
         resp=""; echo "  Could not store the new token, so it is being revoked too: $id" >&2
-        [[ -n "$id" && "$(gl_status "$(gl_api DELETE "$tokens_path/$id")")" == 204 ]] \
+        [[ -n "$id" && "$(http_status "$(gl_api DELETE "$tokens_path/$id")")" == 204 ]] \
           || echo "  revoke it by hand: GitLab → Access tokens, token $id" >&2
         fail "the store refused the new token. The leaked token is revoked; make its replacement in GitLab by hand"
       fi ;;
@@ -408,7 +447,58 @@ apply_step() {
       confirm "Revoke"
       printf '  $ DELETE %s\n' "$gl_base$tokens_path/$token_id"
       local resp; resp="$(gl_api DELETE "$tokens_path/$token_id")"
-      [[ "$(gl_status "$resp")" == 204 ]] || fail "could not revoke the token ($(gl_refused "$resp"))"
+      [[ "$(http_status "$resp")" == 204 ]] || fail "could not revoke the token ($(refusal "$resp"))"
+      log_step revoke ok ""; echo "  Revoked. Record the time in the rotation plan." ;;
+    azure-devops-pat:check)
+      ado_sign_in
+      local resp
+      if [[ -z "$auth_id" ]]; then
+        printf '  $ GET %s\n' "$ado_base?displayFilterOption=active"
+        resp="$(ado_api GET "displayFilterOption=active&isSortAscending=false")"
+        [[ "$(http_status "$resp")" == 200 ]] || fail "could not list the tokens ($(refusal "$resp"))"
+        http_body "$resp" | jq -r '(["AUTHORIZATION ID","NAME","SCOPE","EXPIRES"] | @tsv),
+          (.patTokens[] | [.authorizationId, .displayName, .scope, (.validTo // "")[:10]] | @tsv)' | table
+        echo "  Active tokens of the signed-in user, first page. Run check again with --authorization-id for the leaked one."
+      else
+        printf '  $ GET %s\n' "$ado_base?authorizationId=$auth_id"
+        resp="$(ado_api GET "authorizationId=$auth_id")"
+        [[ "$(http_status "$resp")" == 200 ]] || fail "could not read the token ($(refusal "$resp"))"
+        http_body "$resp" | jq -r '.patToken | "  name:       \(.displayName)", "  scope:      \(.scope)",
+          "  created:    \(.validFrom // "unknown")", "  expires:    \(.validTo // "unknown")",
+          "  for:        \(if .targetAccounts then "this organisation" else "all organisations (global: retired by Microsoft on 2026-12-01)" end)"'
+        echo "  Already revoked by Azure DevOps? Organization settings → Auditing: Token.PatSystemRevokeEvent, Token.PatPublicDiscoveryEvent."
+      fi
+      log_step check ok "" ;;
+    azure-devops-pat:replace)
+      ado_sign_in
+      local resp old body
+      resp="$(ado_api GET "authorizationId=$auth_id")"
+      [[ "$(http_status "$resp")" == 200 ]] || fail "could not read the leaked token to copy its scope ($(refusal "$resp"))"
+      old="$(http_body "$resp")"
+      body="$(printf '%s' "$old" | jq -c --arg d "$(date -u +%Y-%m-%d)" --arg to "${expires}T23:59:59Z" \
+        '{displayName: ((.patToken.displayName // "token") + " (rotated " + $d + ")")[:200], scope: .patToken.scope, validTo: $to, allOrgs: false}')"
+      printf '  $ POST %s   (same scope; the new token is kept in memory, piped to the store)\n' "$ado_base"
+      resp="$(ado_api POST "" "$body")"
+      if [[ "$(http_status "$resp")" != 200 ]] || ! http_body "$resp" | jq -e '.patTokenError == "none" and (.patToken.token | type == "string" and length > 0)' >/dev/null 2>&1; then
+        local why; why="$(http_body "$resp" | jq -r '.patTokenError // empty' 2>/dev/null || true)"; why="${why:-$(refusal "$resp")}"; resp=""
+        fail "Azure DevOps did not create a token ($why; an organisation policy may limit scopes or lifetime); nothing changed"
+      fi
+      id="$(http_body "$resp" | jq -r '.patToken.authorizationId')"
+      if http_body "$resp" | jq -j '.patToken.token' | store_put; then
+        resp=""; log_step replace ok "$id"
+        echo "  New token $id (expires $expires) is in $(store_label). Deploy it everywhere the old one is used, then --apply revoke."
+      else
+        resp=""; echo "  Could not store the new token, so it is being revoked again: $id" >&2
+        [[ "$(http_status "$(ado_api DELETE "authorizationId=$id")")" =~ ^20[04]$ ]] \
+          || echo "  revoke it by hand: User settings → Personal access tokens" >&2
+        fail "the store refused the new token; the leaked one is unchanged"
+      fi ;;
+    azure-devops-pat:revoke)
+      confirm "Revoke"
+      ado_sign_in
+      printf '  $ DELETE %s\n' "$ado_base?authorizationId=$auth_id"
+      local resp; resp="$(ado_api DELETE "authorizationId=$auth_id")"
+      [[ "$(http_status "$resp")" =~ ^20[04]$ ]] || fail "could not revoke the token ($(refusal "$resp"))"
       log_step revoke ok ""; echo "  Revoked. Record the time in the rotation plan." ;;
     *)
       [[ "$apply" == deploy ]] && usage_fail "deploying the new secret is yours to do: there is no --apply deploy"
@@ -422,6 +512,7 @@ if [[ -z "$apply" ]]; then
 fi
 [[ " $steps " == *" $apply "* ]] || usage_fail "$recipe has no step '$apply' (steps: $steps)"
 [[ "$recipe:$apply" == gitlab-token:check ]] && need=()   # without --token-id, check lists the tokens
+[[ "$recipe:$apply" == azure-devops-pat:check ]] && need=(org)
 for v in "${need[@]}"; do
   [[ -n "${!v}" ]] || usage_fail "--apply needs --${v//_/-} for $recipe"
 done
@@ -433,6 +524,7 @@ if [[ "$recipe" == gitlab-token ]]; then
   [[ "$gl_base" == https://* ]] || usage_fail "GITLAB_URL must start with https://"
   [[ "$expires" != "<"* ]] || usage_fail "could not work out a default expiry: give --expires YYYY-MM-DD"
 fi
+if [[ "$recipe" == azure-devops-pat && "$expires" == "<"* ]]; then usage_fail "could not work out a default expiry: give --expires YYYY-MM-DD"; fi
 for c in "$cli" jq ${store_kind:+"$(store_cli)"}; do
   command -v "$c" >/dev/null || usage_fail "missing: $c (install it and sign in first; 'leak doctor' lists what each command needs)"
 done

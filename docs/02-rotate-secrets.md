@@ -26,6 +26,7 @@ Everything in `<angle brackets>` is a placeholder.
 | `gcp-sa-key` | `--account`, `--key-id` | check, replace, disable, delete | `gcp-sm:<secret>` (Secret Manager) |
 | `azure-storage-key` | `--group`, `--account`, `--key` | check, renew | optional: the new connection string to Key Vault |
 | `gitlab-token` | `--token-id`, and `--project` or `--group` for their access tokens | check, rotate (or revoke) | any; it must already exist |
+| `azure-devops-pat` | `--org`, `--authorization-id` | check, replace, revoke | any |
 
 Any recipe can use any store. What it guarantees:
 
@@ -86,6 +87,8 @@ az sql server update -g <rg> -n <server> --admin-password '<new-password>'
 ### Azure DevOps personal access token
 
 *User settings → Personal access tokens → Revoke.* Organisation admins can revoke any user's tokens from *Organization settings*.
+
+Azure DevOps also scans public GitHub repositories for its tokens and, unless the tenant policy turns it off, revokes a leaked one itself: check the organisation's audit log for `Token.PatPublicDiscoveryEvent` and `Token.PatSystemRevokeEvent` first. `leak rotate azure-devops-pat` lists your tokens, creates the replacement with the same scope straight into your secret store, and revokes the leaked one once the new one is deployed.
 
 ---
 

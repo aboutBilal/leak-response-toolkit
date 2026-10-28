@@ -4,6 +4,32 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
+## [3.8.0] - 2026-10-28
+
+### Added
+
+- **`leak rotate azure-devops-pat`** rotates an Azure DevOps personal access token in the order that avoids downtime.
+  - `check` lists your active tokens; with `--authorization-id`, it shows the leaked one. It points at the audit events that show whether Azure DevOps has already revoked it.
+  - `replace` creates a new token with the same scope, for one organisation only, and pipes it straight into your secret store. If the store refuses it, the new token is revoked again.
+  - Once the new token is deployed, `revoke` removes the leaked one.
+  - It signs in as the user from `az login`, and the token travels in a header on stdin, never in a command line. The `leak plan` catalog points Azure DevOps token findings at the recipe.
+
+### Fixed
+
+Found by a second independent review, of the code added in 3.6 and 3.7:
+
+- `leak respond` did not rebuild the incident report when an earlier step ran again. For example, after scanning a clone of a repository that was already gone, the report still said there were no secrets. A step now also reruns when a step whose results it uses has run again: a new scan means a new plan and report, a new hunt a new report.
+- `leak respond` stopped with a usage error, and no record, when the hunt could not start. It now reads the hunt's folder from the hunt's own output, and a hunt that cannot start is recorded as failed.
+- `leak respond --status` wrote to the incident's state file. It now changes nothing. Settings are recorded only when they change.
+- `leak respond` with an unusable folder name as the incident ID created the folder before refusing it, which blocked the retry. The ID is now checked first.
+- For a repository that is already deleted, `leak hunt` reported its fork list as "not checked", so the hunt, and the incident, could never be complete. That check is covered by the same-name forks search, and is now reported as "covered below".
+- `install.sh` installed the version folder as readable by its owner only, so on a shared prefix (`sudo ... --prefix /usr/local`) nobody else could run `leak`. It is now readable by everyone.
+
+Found by an accessibility audit (axe-core, WCAG 2.1 AA) of every page of the site and every generated report:
+
+- Code blocks and tables that scroll sideways could not be reached with the keyboard on first load, because the check ran before the web fonts had loaded. It now runs again once they have.
+- The how-to box of the incident report and the rotation plan was outside every landmark, so screen reader users moving by landmark missed it. It is now a labelled aside.
+
 ## [3.7.1] - 2026-10-28
 
 ### Added
@@ -318,7 +344,8 @@ Prevention becomes the second half of the kit: not only responding to leaks, but
 - Templates: incident timeline, takedown request, notification messages, post-incident review, executive report (print-ready HTML).
 - Quality: offline bats tests, shellcheck, gitleaks on full history, link and anchor checks in CI, Dependabot for pinned actions, pre-commit hook, contribution guide, issue and pull request templates, security policy.
 
-[Unreleased]: https://github.com/aboutBilal/spillkit/compare/v3.7.1...HEAD
+[Unreleased]: https://github.com/aboutBilal/spillkit/compare/v3.8.0...HEAD
+[3.8.0]: https://github.com/aboutBilal/spillkit/compare/v3.7.1...v3.8.0
 [3.7.1]: https://github.com/aboutBilal/spillkit/compare/v3.7.0...v3.7.1
 [3.7.0]: https://github.com/aboutBilal/spillkit/compare/v3.6.1...v3.7.0
 [3.6.1]: https://github.com/aboutBilal/spillkit/compare/v3.6.0...v3.6.1

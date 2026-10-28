@@ -26,7 +26,7 @@
 # In an incident: README.md, section "Responding to a leak", or docs/01-runbook.md
 set -euo pipefail
 
-VERSION="3.7.1"
+VERSION="3.8.0"
 
 # Follow symlinks (make install, the container image) to find scripts/ next to the
 # real file. Portable: does not rely on `readlink -f` (missing on older macOS).

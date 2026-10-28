@@ -70,7 +70,7 @@ With a scan report, let Spillkit put them in order and walk through the cloud ke
 ./leak rotate aws-key --user <user> --key-id <AKIA...> --apply replace --store aws-sm:<secret-id>
 ```
 
-`leak rotate` also handles Azure app registration secrets, Google Cloud service account keys, Azure storage keys and GitLab access tokens. Each applied step is logged with its UTC time in `rotation-log.tsv`, ready for the timeline.
+`leak rotate` also handles Azure app registration secrets, Google Cloud service account keys, Azure storage keys, GitLab access tokens and Azure DevOps personal access tokens. Each applied step is logged with its UTC time in `rotation-log.tsv`, ready for the timeline.
 
 Record the **exact time** each secret was revoked. The investigation window ends there.
 

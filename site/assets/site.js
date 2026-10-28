@@ -509,6 +509,9 @@
     });
   }
   focusScrollables();
+  // Web fonts change how wide code is, so check again once they have loaded.
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(focusScrollables);
+  window.addEventListener("load", focusScrollables);
   var resizeTimer;
   window.addEventListener("resize", function () { clearTimeout(resizeTimer); resizeTimer = setTimeout(focusScrollables, 200); });
 })();

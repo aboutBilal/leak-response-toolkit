@@ -51,11 +51,11 @@ search_pause() { [[ -n "${GITHUB_TOKEN:-}" ]] && sleep 2 || sleep 7; } # search 
 fetch() { http_get "$@"; }
 is_json() { jq -e "$1" "$2" >/dev/null 2>&1; } # is_json <filter> <file>: true when the file parses and the filter holds
 safe() { echo "$1" | tr '/*:?&=' '______'; }
-CLEAN="clean"; FOUND="**found**"; UNKNOWN="not checked"; REVIEW="review"
+CLEAN="clean"; FOUND="**found**"; UNKNOWN="not checked"; REVIEW="review"; COVERED="covered below"
 row() {
   printf '| %s | %s | %s |\n' "$1" "$2" "$3" >> "$report"
   local status=info
-  case "$2" in "$CLEAN") status=clean ;; "$FOUND") status=found ;; "$UNKNOWN") status=unknown ;; esac
+  case "$2" in "$CLEAN") status=clean ;; "$FOUND") status=found ;; "$UNKNOWN") status=unknown ;; "$COVERED") status=covered ;; esac
   jq -cn --arg section "$section" --arg check "$1" --arg status "$status" --arg detail "$3" \
     '{section: $section, check: $check, status: $status, detail: $detail}' >> "$results"
 }
@@ -68,7 +68,7 @@ row() {
   echo "- **Same-name copies searched since:** $since"
   echo "- **Method:** read-only public queries; raw responses in \`raw/\`"
   echo
-  echo "Results: **found** needs follow-up; review means a match worth a look; not checked means the source was unavailable or rate-limited (check it by hand)."
+  echo "Results: **found** needs follow-up; review means a match worth a look; not checked means the source was unavailable or rate-limited (check it by hand); covered below means another check answers it."
 } > "$report"
 
 jq -cn --arg run "$stamp" --arg since "$since" --args '{run: $run, since: $since, repos: $ARGS.positional}' "${repos[@]}" > "$out/meta.json"
@@ -100,7 +100,7 @@ for r in "${repos[@]}"; do
       if ((n > 0)); then row "Direct forks" "$FOUND" "$n: $(jq -r '[.[].full_name]|join(", ")' "$raw/forks_$s.json")"; else row "Direct forks" "$CLEAN" "None"; fi
     else row "Direct forks" "$UNKNOWN" "HTTP $fcode"; fi
   elif [[ "$code" == 404 ]]; then
-    row "Direct forks" "$UNKNOWN" "Cannot be listed for a removed repository; see same-name forks below"
+    row "Direct forks" "$COVERED" "Cannot be listed for a removed repository; the same-name forks check below finds them"
   else
     row "Direct forks" "$UNKNOWN" "HTTP $code"
   fi

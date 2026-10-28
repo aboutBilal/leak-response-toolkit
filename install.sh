@@ -78,6 +78,7 @@ dest="$prefix/share/spillkit/$version"
 stage="$(mktemp -d "$prefix/share/spillkit/.install.XXXXXX")" || die "could not write to $prefix/share/spillkit"
 tar -xzf "$tmp/$name.tar.gz" -C "$stage" --strip-components=1 || die "could not unpack the archive: not installed"
 [ -x "$stage/leak" ] || die "the archive has no leak command"
+chmod 755 "$stage"   # mktemp made it private; the installed version must be readable by everyone
 rm -rf "$dest" && mv "$stage" "$dest" || die "could not move the new version into $dest"
 ln -sfn "$dest/leak" "$prefix/bin/leak"
 [ -x "$prefix/bin/leak" ] || die "$prefix/bin/leak does not lead to the installed command"
