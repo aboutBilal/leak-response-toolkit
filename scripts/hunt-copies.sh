@@ -167,7 +167,12 @@ for o in "${owners[@]}"; do
   if [[ "$code" == 200 ]]; then
     rc_repos="$(gh "/users/$o/repos?per_page=100&type=all" "$raw/user-repos_$s.json")"
     if [[ "$rc_repos" == 200 ]] && is_json 'type == "array"' "$raw/user-repos_$s.json"; then
-      row "Other public repositories" "$REVIEW" "$(jq -r 'length' "$raw/user-repos_$s.json"): $(jq -r '[.[] | "\(.name) (pushed \(.pushed_at[:10]))"] | join(", ")' "$raw/user-repos_$s.json")"
+      # The leaked repositories themselves are checked above; list only the others.
+      others="$(printf '%s\n' "${repos[@]}" | jq -R 'ascii_downcase' | jq -s -c . | jq -r --slurpfile r "$raw/user-repos_$s.json" '. as $leaked
+        | [$r[0][] | select((.full_name | ascii_downcase) as $n | $leaked | index($n) | not) | "\(.name) (pushed \(.pushed_at[:10]))"]
+        | if length > 0 then "\(length): \(join(", "))" else "" end')"
+      if [[ -n "$others" ]]; then row "Other public repositories" "$REVIEW" "$others"
+      else row "Other public repositories" "$CLEAN" "None besides the leaked repositories"; fi
     else row "Other public repositories" "$UNKNOWN" "HTTP $rc_repos"; fi
     rc_gists="$(gh "/users/$o/gists?per_page=100" "$raw/user-gists_$s.json")"
     if [[ "$rc_gists" == 200 ]] && is_json 'type == "array"' "$raw/user-gists_$s.json"; then

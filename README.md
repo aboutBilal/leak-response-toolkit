@@ -128,6 +128,8 @@ leak respond owner/repo           # snapshot, scan, plan, hunt and report, in an
 leak respond --dir INC-... --status       # where it stands; run it again to continue where it stopped
 ```
 
+<p align="center"><img src="assets/demo-respond.svg" alt="The last screen of leak respond: snapshot, scan, plan, hunt and report done in order with their UTC times, four secrets to rotate starting with an AWS access key, the original repository still public, and rotate, takedown and notify listed as yours to do" width="92%"></p>
+
 It does every step that only reads, and tells you what is yours to do (rotating, the takedown, telling people), recording the time when you mark each one done. The steps, if you would rather run them one by one:
 
 1. **Preserve evidence** before anything is deleted: `leak snapshot owner/repo`.
@@ -154,7 +156,7 @@ Or use the hooks directly from this repository:
 # .pre-commit-config.yaml
 repos:
   - repo: https://github.com/aboutBilal/spillkit
-    rev: v3.7.0
+    rev: v3.7.1
     hooks:
       - id: forbid-secret-files    # no dependencies
       - id: leak-guard             # also scans staged changes with gitleaks
@@ -254,7 +256,7 @@ A tool that handles leak investigations has to be trustworthy itself. Each of th
 - Release archives and the install script carry SLSA build provenance; container images ship with an SBOM and SLSA build provenance.
 - [OpenSSF Scorecard](https://scorecard.dev/viewer/?uri=github.com/aboutBilal/spillkit) runs on every push to `main`.
 - GitHub Actions are pinned to commit SHAs and container images to digests; Dependabot keeps them current.
-- Every push runs shellcheck, actionlint, 57 offline tests on Linux and macOS, and a full-history secret scan; CodeQL analyses every change to `main` and every pull request.
+- Every push runs shellcheck, actionlint, 58 offline tests on Linux and macOS, and a full-history secret scan; CodeQL analyses every change to `main` and every pull request.
 - No command prints or tests a secret value, and tests enforce this. `leak snapshot` keeps a copy of a leaked repository as evidence, so evidence folders are git-ignored and must be handled as sensitive. The repository itself contains no secrets, not even fake ones.
 - Tokens and webhook URLs are passed to `curl` on standard input, never as command-line arguments, so they do not appear in process lists.
 - `leak rotate` is the only command that changes anything. It is a dry run unless you name a step with `--apply`, asks before it disables or deletes, and pipes a new secret from the provider straight into your secret store: never shown, never written to disk, never in a command line.

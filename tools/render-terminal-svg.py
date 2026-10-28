@@ -21,13 +21,14 @@ COLOURS = [
     (r"^\s*✔", PASS, "400"),
     (r"^\s*✘", FAIL, "600"),
     (r"^\s*!", WARN, "400"),
+    (r"^\s*~", WARN, "400"),
     (r"^\s*→", INK_500, "400"),
     (r"^WRN", WARN, "400"),
     (r"^RULE", INK_500, "600"),
     (r"^#\s+TIER", INK_500, "600"),
     (r"^Score.*Grade [AB]\b", PASS, "700"),
     (r"^Score", FAIL, "700"),
-    (r"^(==>|Next:|Secret hygiene audit|\d\. )", INK_100, "600"),
+    (r"^(==>|Next:|Secret hygiene audit|Incident |\d\. )", INK_100, "600"),
     (r"^\s*(aws|slack|generic|private|github|gcp|stripe)-", FAIL, "400"),
 ]
 
@@ -81,6 +82,14 @@ def main():
         x, y = 24, top + i * line_height
         if i == 0:  # prompt in ember, command in primary text
             out.append(f'<text{anim} x="{x}" y="{y}" font-weight="600"><tspan fill="{EMBER_400}">$</tspan><tspan fill="{INK_100}">{html.escape(line[1:])}</tspan></text>')
+        elif m := re.match(r"^(\s*)([✔✘])(.*)$", line):
+            # Fonts draw these marks wider than one column; pin the mark and what follows to
+            # the character grid so the columns after it line up with the other lines.
+            indent, mark, rest = m.groups()
+            cw = 14.5 * 0.6  # one column of a monospace font at this size
+            mx = x + len(indent) * cw
+            out.append(f'<text{anim} x="{x}" y="{y}" fill="{fill}" font-weight="{weight}">'
+                       f'<tspan x="{mx:.1f}" font-size="12">{mark}</tspan><tspan x="{mx + cw:.1f}">{html.escape(rest)}</tspan></text>')
         else:
             out.append(f'<text{anim} x="{x}" y="{y}" fill="{fill}" font-weight="{weight}">{html.escape(line)}</text>')
     if args.animate:

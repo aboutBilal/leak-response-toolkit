@@ -737,30 +737,58 @@ MOCK
   ! grep -q 'leak rotate aws-key' "$TMP/rotation-plan.md"
 }
 
-# fake_github: a leaked repository served from a local folder (git rewrites the github.com URL)
-# and a GitHub API double that answers from the URL. Nothing leaves the machine.
+# quiet_internet: a double for every service leak hunt and leak snapshot ask. Each answers
+# "nothing found", except that acme/payments-api is still public. $TMP/user-repos.json, when
+# present, is the owner's repository list; with CURL_FAILS set, every request gets HTTP 503.
+quiet_internet() {
+  mkdir -p "$TMP/bin"
+  cat > "$TMP/bin/curl" <<'MOCK'
+#!/usr/bin/env bash
+data="$(cd "$(dirname "$0")/.." && pwd)"
+out=""; url=""
+while (($#)); do case "$1" in -o) out="$2"; shift 2 ;; -K) [[ "$2" == - ]] && cat > /dev/null; shift 2 ;; http*) url="$1"; shift ;; *) shift ;; esac; done
+code=200
+case "$url" in
+  *codeberg.org*) code=404; body='{}' ;;
+  */repos/acme/payments-api) body='{"visibility":"public","created_at":"2026-01-01T00:00:00Z","pushed_at":"2026-01-02T00:00:00Z","forks_count":0,"stargazers_count":0,"subscribers_count":0}' ;;
+  */users/acme/repos*) body="$(cat "$data/user-repos.json" 2>/dev/null || echo '[]')" ;;
+  */forks*|*/users/acme/gists*|*/events/public*|*web.archive.org/cdx*|*gitlab.com/api/v4/projects*|*gitlab.com/api/v4/users*) body='[]' ;;
+  *api.github.com/search/*) body='{"total_count":0,"incomplete_results":false,"items":[]}' ;;
+  */users/acme) body='{"login":"acme"}' ;;
+  */.api/search/stream*) body=$'event: done\ndata: {}\n' ;;   # code search, streamed
+  *play.clickhouse.com*) body=$'created_at\tevent_type\tactor_login\trepo_name\n' ;;
+  *) code=404; body='{}' ;;
+esac
+[[ -n "${CURL_FAILS:-}" ]] && { code=503; body='{}'; }
+if [[ -n "$out" ]]; then printf '%s' "$body" > "$out"; else printf '%s' "$body"; fi
+printf '%s' "$code"
+MOCK
+  chmod +x "$TMP/bin/curl"
+  printf '#!/bin/sh\nexit 0\n' > "$TMP/bin/sleep"; chmod +x "$TMP/bin/sleep"
+}
+
+@test "hunt: lists the owner's other repositories, never the leaked one itself" {
+  quiet_internet
+  printf '%s' '[{"name":"payments-api","full_name":"acme/payments-api","pushed_at":"2026-10-27T00:00:00Z"},{"name":"website","full_name":"acme/website","pushed_at":"2026-09-01T00:00:00Z"}]' > "$TMP/user-repos.json"
+  run env PATH="$TMP/bin:$PATH" "$ROOT/scripts/hunt-copies.sh" --out "$TMP/h1" acme/payments-api
+  [ "$status" -eq 1 ]   # the repository itself is still public
+  grep -q '^| Other public repositories | review | 1: website (pushed 2026-09-01) |' "$TMP"/h1/hunt_*/REPORT.md
+  ! grep -q '^| .*| not checked |' "$TMP"/h1/hunt_*/REPORT.md
+  printf '%s' '[{"name":"payments-api","full_name":"acme/payments-api","pushed_at":"2026-10-27T00:00:00Z"}]' > "$TMP/user-repos.json"
+  run env PATH="$TMP/bin:$PATH" "$ROOT/scripts/hunt-copies.sh" --out "$TMP/h2" acme/payments-api
+  grep -q '^| Other public repositories | clean | None besides the leaked repositories |' "$TMP"/h2/hunt_*/REPORT.md
+}
+
+# fake_github: a leaked repository served from a local folder (git rewrites the github.com URL),
+# with quiet_internet for the API. Nothing leaves the machine.
 fake_github() {
   new_repo "$TMP/src"
   echo "# payments-api" > "$TMP/src/README.md"; commit_all "$TMP/src" "Initial commit"
   printf 'AWS_ACCESS_KEY_ID=%s\nAWS_SECRET_ACCESS_KEY=%s\n' "$(key_id)" "$(head -c 4096 /dev/urandom | LC_ALL=C tr -dc 'A-Za-z0-9' | head -c 40)" > "$TMP/src/.env"
   commit_all "$TMP/src" "Add settings"
   git -C "$TMP/src" rm -q .env && git -C "$TMP/src" commit -qm "Remove settings"
-  mkdir -p "$TMP/gh/acme" "$TMP/bin" && git clone -q --bare "$TMP/src" "$TMP/gh/acme/payments-api.git"
-  cat > "$TMP/bin/curl" <<'MOCK'
-#!/usr/bin/env bash
-out=""; url=""
-while (($#)); do case "$1" in -o) out="$2"; shift 2 ;; -K) [[ "$2" == - ]] && cat > /dev/null; shift 2 ;; http*) url="$1"; shift ;; *) shift ;; esac; done
-case "$url" in
-  */repos/acme/payments-api) body='{"visibility":"public","created_at":"2026-01-01T00:00:00Z","pushed_at":"2026-01-02T00:00:00Z","forks_count":0,"stargazers_count":0,"subscribers_count":0}' ;;
-  *forks*) body='[]' ;;
-  *api.github.com/search/*) body='{"total_count":0,"items":[]}' ;;
-  *) body='{}' ;;
-esac
-if [[ -n "$out" ]]; then printf '%s' "$body" > "$out"; else printf '%s' "$body"; fi
-printf 200
-MOCK
-  chmod +x "$TMP/bin/curl"
-  printf '#!/bin/sh\nexit 0\n' > "$TMP/bin/sleep"; chmod +x "$TMP/bin/sleep"
+  mkdir -p "$TMP/gh/acme" && git clone -q --bare "$TMP/src" "$TMP/gh/acme/payments-api.git"
+  quiet_internet
 }
 
 @test "respond: runs the first hour in order, keeps a timeline, and continues where it stopped" {
@@ -769,9 +797,10 @@ MOCK
   cd "$TMP"
   gh=(env PATH="$TMP/bin:$PATH" GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0="url.$TMP/gh/.insteadOf" GIT_CONFIG_VALUE_0="https://github.com/")
   run "${gh[@]}" "$ROOT/scripts/respond.sh" acme/payments-api --id INC-7 --tlp red
-  [ "$status" -eq 1 ] || [ "$status" -eq 4 ]   # secrets found; a hunt source may count as not checked
+  [ "$status" -eq 1 ]   # secrets found, and the repository is still public
   for s in snapshot scan plan hunt report; do grep -q "^| [0-9-]* [0-9:]* | $s | " INC-7/timeline.md || { echo "no $s row"; false; }; done
   grep -q '| scan | found |' INC-7/timeline.md
+  grep -q '| hunt | found | 1 item(s) need follow-up (Repository on GitHub)' INC-7/timeline.md
   [ -d INC-7/evidence/acme_payments-api_*/repo.git ]
   grep -qx "\*" INC-7/.gitignore   # the evidence holds the leak: never committed by accident
   grep -q '1. AWS access key' INC-7/rotation-plan.md
@@ -786,8 +815,11 @@ MOCK
   run "$ROOT/scripts/respond.sh" --dir INC-7 --done rotate
   [ "$status" -eq 0 ]
   grep -q '| rotate | done |' INC-7/timeline.md
-  run "${gh[@]}" "$ROOT/scripts/respond.sh" --dir INC-7 --redo hunt
+  # A hunt that could not check every source is incomplete, even when it also found something.
+  run "${gh[@]}" CURL_FAILS=1 "$ROOT/scripts/respond.sh" --dir INC-7 --redo hunt
+  [ "$status" -eq 4 ]
   [ "$(grep -c '| hunt | ' INC-7/timeline.md)" -eq 3 ]   # first run, the redo request, the new hunt
+  grep -q '| hunt | incomplete | .* not checked' INC-7/timeline.md
   run "$ROOT/scripts/respond.sh" --dir INC-7 --status
   [ "$status" -eq 0 ]
   [[ "$output" == *"✔ rotate"* ]]

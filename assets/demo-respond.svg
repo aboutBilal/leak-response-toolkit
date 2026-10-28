@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="640" viewBox="0 0 1100 640" role="img" aria-label="Terminal: leak respond acme/payments-api --id INC-2026-014">
+<rect x="0.5" y="0.5" width="1099" height="639" rx="12" fill="#111827" stroke="#2B3445"/>
+<path d="M12.5 0.5 H1087.5 A12 12 0 0 1 1099.5 12.5 V40 H0.5 V12.5 A12 12 0 0 1 12.5 0.5 Z" fill="#1C2433"/>
+<circle cx="24" cy="20" r="5" fill="#2B3445"/><circle cx="42" cy="20" r="5" fill="#2B3445"/><circle cx="60" cy="20" r="5" fill="#2B3445"/>
+<text x="550.0" y="25" fill="#828D9F" font-family="'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,'Liberation Mono',monospace" font-size="13" text-anchor="middle">real output, last screen (GitHub simulated)</text>
+<g font-family="'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,'Liberation Mono',monospace" font-size="14.5" style="font-variant-ligatures:none">
+<text style="white-space:pre" x="24" y="72" font-weight="600"><tspan fill="#FF8A5C">$</tspan><tspan fill="#E6EAF2"> leak respond acme/payments-api --id INC-2026-014</tspan></text>
+<text style="white-space:pre" x="24" y="96" fill="#E6EAF2" font-weight="600">Incident INC-2026-014 · acme/payments-api · /incidents/INC-2026-014</text>
+<text style="white-space:pre" x="24" y="120" fill="#3FB950" font-weight="400"><tspan x="41.4" font-size="12">✔</tspan><tspan x="50.1"> snapshot  2026-10-28 12:57  evidence/acme_payments-api_20261028T125748Z: full mirror, 0 fork(s)</tspan></text>
+<text style="white-space:pre" x="24" y="144" fill="#D29922" font-weight="400">  ! scan      2026-10-28 12:57  4 finding(s) of 4 type(s) in the evidence mirror; values redacted</text>
+<text style="white-space:pre" x="24" y="168" fill="#D29922" font-weight="400">  ! plan      2026-10-28 12:57  4 to rotate, starting with the AWS access key (rotation-plan.md)</text>
+<text style="white-space:pre" x="24" y="192" fill="#A3ADBF" font-weight="400">  · rotate    yours to do</text>
+<text style="white-space:pre" x="24" y="216" fill="#A3ADBF" font-weight="400">             1. AWS access key in .env: leak rotate aws-key</text>
+<text style="white-space:pre" x="24" y="240" fill="#A3ADBF" font-weight="400">             2. Secret next to the AWS access key in .env: leak rotate aws-key</text>
+<text style="white-space:pre" x="24" y="264" fill="#A3ADBF" font-weight="400">             3. SSH or TLS private key in deploy/id_ed25519: by hand, guide linked in the plan</text>
+<text style="white-space:pre" x="24" y="288" fill="#A3ADBF" font-weight="400">             The whole list: rotation-plan.md. Revoke each old value; a new one alone is not enough.</text>
+<text style="white-space:pre" x="24" y="312" fill="#D29922" font-weight="400">  ! hunt      2026-10-28 12:57  1 item(s) need follow-up (Repository on GitHub): hunts/hunt_20261028T125748Z/REPORT.md</text>
+<text style="white-space:pre" x="24" y="336" fill="#A3ADBF" font-weight="400">  · takedown  yours to do</text>
+<text style="white-space:pre" x="24" y="360" fill="#A3ADBF" font-weight="400">             Ask the owner to delete it, or file a DMCA takedown listing every fork</text>
+<text style="white-space:pre" x="24" y="384" fill="#A3ADBF" font-weight="400">             (forks.json in the evidence; templates/takedown-request.md).</text>
+<text style="white-space:pre" x="24" y="408" fill="#3FB950" font-weight="400"><tspan x="41.4" font-size="12">✔</tspan><tspan x="50.1"> report    2026-10-28 12:57  incident-report.html: fill in the highlighted fields</tspan></text>
+<text style="white-space:pre" x="24" y="432" fill="#A3ADBF" font-weight="400">  · notify    yours to do</text>
+<text style="white-space:pre" x="24" y="456" fill="#A3ADBF" font-weight="400">             Manager, security and legal, and the owner of the code or data if it is not yours</text>
+<text style="white-space:pre" x="24" y="480" fill="#A3ADBF" font-weight="400">             (templates/notification-messages.md; the report: incident-report.html).</text>
+<text style="white-space:pre" x="24" y="504" fill="#A3ADBF" font-weight="400"></text>
+<text style="white-space:pre" x="24" y="528" fill="#A3ADBF" font-weight="400">Timeline: /incidents/INC-2026-014/timeline.md   ✔ done  ! found something  ~ incomplete  ✘ failed  · to do</text>
+<text style="white-space:pre" x="24" y="552" fill="#A3ADBF" font-weight="400">Mark your steps when they are done:  leak respond --dir /incidents/INC-2026-014 --done rotate   (or takedown, notify)</text>
+<text style="white-space:pre" x="24" y="576" fill="#A3ADBF" font-weight="400">Repeat the hunt in 7 days:           leak respond --dir /incidents/INC-2026-014 --redo hunt</text>
+<text style="white-space:pre" x="24" y="600" fill="#A3ADBF" font-weight="400">The full runbook:                    https://aboutbilal.github.io/spillkit/docs/01-runbook.html</text>
+</g></svg>

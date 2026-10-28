@@ -4,9 +4,22 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
+## [3.7.1] - 2026-10-28
+
+### Added
+
+- The README shows the last screen of `leak respond`, rendered from a real run.
+
+### Changed
+
+- `leak respond` names what the hunt found (for example "Repository on GitHub"), and keeps its lines short enough for a normal terminal.
+
 ### Fixed
 
+- `leak respond` recorded a hunt that found something as complete even when some sources could not be checked. `leak hunt` exits 1 in that case, so `respond` now counts the unchecked sources itself and marks the hunt incomplete, with what to do.
+- `leak hunt` listed the leaked repository among the owner's "other" public repositories, and marked an owner with none as "review: 0". It now lists only the others, and none is clean.
 - A clean `leak scan` in 3.7.0 said "No secrets found in every commit"; it says "in any commit" again.
+- Terminal images: status marks (✔ ✘) no longer push the rest of their line out of column.
 
 ## [3.7.0] - 2026-10-28
 
@@ -305,7 +318,8 @@ Prevention becomes the second half of the kit: not only responding to leaks, but
 - Templates: incident timeline, takedown request, notification messages, post-incident review, executive report (print-ready HTML).
 - Quality: offline bats tests, shellcheck, gitleaks on full history, link and anchor checks in CI, Dependabot for pinned actions, pre-commit hook, contribution guide, issue and pull request templates, security policy.
 
-[Unreleased]: https://github.com/aboutBilal/spillkit/compare/v3.7.0...HEAD
+[Unreleased]: https://github.com/aboutBilal/spillkit/compare/v3.7.1...HEAD
+[3.7.1]: https://github.com/aboutBilal/spillkit/compare/v3.7.0...v3.7.1
 [3.7.0]: https://github.com/aboutBilal/spillkit/compare/v3.6.1...v3.7.0
 [3.6.1]: https://github.com/aboutBilal/spillkit/compare/v3.6.0...v3.6.1
 [3.6.0]: https://github.com/aboutBilal/spillkit/compare/v3.5.2...v3.6.0

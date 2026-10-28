@@ -8,7 +8,7 @@ authors:
     alias: "aboutBilal"
 repository-code: "https://github.com/aboutBilal/spillkit"
 license: MIT
-version: 3.7.0
+version: 3.7.1
 date-released: "2026-10-28"
 keywords:
   - security

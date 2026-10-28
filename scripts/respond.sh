@@ -127,17 +127,18 @@ step_snapshot() {
   fi
 }
 step_scan() {
-  local rc=0 src="$repo_path" snap n
+  local rc=0 src="$repo_path" snap n where
   snap="$(get snapshot_path)"
   [[ -n "$src" || -z "$snap" || ! -d "$dir/$snap/repo.git" ]] || src="$dir/$snap/repo.git"
   if [[ -z "$src" ]]; then
     finish scan failed "no copy to scan: the mirror could not be taken; run again with --repo-path <a clone>"; return
   fi
   run_step scan "Find every secret in the full history" "$leak" scan "$src" "$dir/secrets-report.json" || rc=$?
+  where="$src"; [[ "$src" == "$dir/$snap/repo.git" ]] && where="the evidence mirror"
   case "$rc" in
-    0) finish scan ok "no secrets in any commit (${src#"$dir"/})" ;;
+    0) finish scan ok "no secrets in any commit of $where" ;;
     1) n="$(jq 'length' "$dir/secrets-report.json")"
-       finish scan found "$n finding(s) of $(jq '[.[].RuleID] | unique | length' "$dir/secrets-report.json") type(s) in ${src#"$dir"/}; values redacted" ;;
+       finish scan found "$n finding(s) of $(jq '[.[].RuleID] | unique | length' "$dir/secrets-report.json") type(s) in $where; values redacted" ;;
     *) finish scan failed "the scanner failed (exit $rc); see logs/scan.log" ;;
   esac
 }
@@ -152,17 +153,21 @@ step_plan() {
   esac
 }
 step_hunt() {
-  local rc=0 hunt found unchecked
+  local rc=0 hunt found unchecked what
   run_step hunt "Hunt for copies that survive deletion" "$leak" hunt ${since:+--since "$since"} --out "$dir/hunts" "$repo" || rc=$?
   hunt="$(ls -dt "$dir"/hunts/hunt_*/ 2>/dev/null | head -n 1)"; hunt="${hunt%/}"
   if [[ -z "$hunt" || ! -f "$hunt/REPORT.md" ]]; then finish hunt failed "no hunt report (exit $rc); see logs/hunt.log"; return; fi
   put hunt_path "${hunt#"$dir"/}"
   found="$(grep -c '^| .*| \*\*found\*\* |' "$hunt/REPORT.md" || true)"
   unchecked="$(grep -c '^| .*| not checked |' "$hunt/REPORT.md" || true)"
+  what="$(grep '^| .*| \*\*found\*\* |' "$hunt/REPORT.md" | cut -d '|' -f 2 | sed 's/^ *//; s/ *$//' | head -n 3 | paste -sd ";" - | sed 's/;/; /g' || true)"
+  # leak hunt exits 1 when it finds something even if some sources were not checked, so count both.
   case "$rc" in
-    0) finish hunt ok "no copies found: ${hunt#"$dir"/}/REPORT.md" ;;
-    1) finish hunt found "$found item(s) need follow-up: ${hunt#"$dir"/}/REPORT.md" ;;
-    4) finish hunt incomplete "$found item(s) need follow-up, $unchecked source(s) not checked: ${hunt#"$dir"/}/REPORT.md" ;;
+    0|1|4)
+      if ((unchecked > 0)); then
+        finish hunt incomplete "$found item(s) need follow-up, $unchecked source(s) not checked (rate limits or outages: set GITHUB_TOKEN, then --redo hunt): ${hunt#"$dir"/}/REPORT.md"
+      elif ((found > 0)); then finish hunt found "$found item(s) need follow-up (${what}): ${hunt#"$dir"/}/REPORT.md"
+      else finish hunt ok "no copies found: ${hunt#"$dir"/}/REPORT.md"; fi ;;
     *) finish hunt failed "exit $rc; see logs/hunt.log" ;;
   esac
 }
@@ -181,7 +186,7 @@ step_report() {
 own_hint() {
   case "$1" in
     rotate) if [[ "$(get plan)" == found ]]; then
-              jq -r '.items[:3][] | "             \(.n). \(.type) in \(.file): \(if .recipe then "leak rotate \(.recipe)" else "by hand, \(.guide_url)" end)"' "$dir/rotation-plan.json"
+              jq -r '.items[:3][] | "             \(.n). \(.type) in \(.file): \(if .recipe then "leak rotate \(.recipe)" else "by hand, guide linked in the plan" end)"' "$dir/rotation-plan.json"
               echo "             The whole list: rotation-plan.md. Revoke each old value; a new one alone is not enough."
             else echo "             Nothing found to rotate. Still check by hand: .env, *.pem, *.pfx, *.tfvars, kubeconfigs."; fi ;;
     takedown) echo "             Ask the owner to delete it, or file a DMCA takedown listing every fork"
@@ -196,7 +201,7 @@ show_status() {
   for s in snapshot scan plan rotate hunt takedown report notify; do
     when="$(get "${s}_at")"; detail="$(get "${s}_detail")"
     case "$(get "$s")" in
-      ok|done) mark="✔" ;; found) mark="!" ;; incomplete) mark="~" ;; failed) mark="✗" ;; *) mark="·" ;;
+      ok|done) mark="✔" ;; found) mark="!" ;; incomplete) mark="~" ;; failed) mark="✘" ;; *) mark="·" ;;
     esac
     if [[ " $own_steps " == *" $s "* && -z "$(get "$s")" ]]; then
       printf '  %s %-9s %syours to do%s\n' "$mark" "$s" "$dim" "$off"; own_hint "$s"
@@ -205,7 +210,7 @@ show_status() {
     fi
   done
   echo
-  echo "Timeline: $timeline   ✔ done  ! found something  ~ incomplete  ✗ failed  · to do"
+  echo "Timeline: $timeline   ✔ done  ! found something  ~ incomplete  ✘ failed  · to do"
 }
 
 if ((status_only)); then show_status; exit "$EXIT_OK"; fi
