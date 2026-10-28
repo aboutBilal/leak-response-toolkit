@@ -233,7 +233,7 @@ layout: home
   <div class="wrap install-grid">
     <div class="install-copy">
       <h2 id="install-title">Install in a minute</h2>
-      <p>One line on Linux and macOS, checked against the signed release. Or run the signed container image, or add the toolkit to your pipeline and commit hooks.</p>
+      <p>One line on Linux and macOS, checked against the signed release, or Homebrew. Or run the signed container image, or add the toolkit to your pipeline and commit hooks.</p>
       <div class="works">
         <p>Works with</p>
         <ul class="logos">
@@ -253,6 +253,7 @@ layout: home
     <div class="install-card">
       <div class="install-tabs" role="tablist" aria-label="Ways to install">
         <button type="button" role="tab" id="tab-oneline" aria-selected="true" aria-controls="panel-oneline">One line</button>
+        <button type="button" role="tab" id="tab-brew" aria-selected="false" aria-controls="panel-brew" tabindex="-1">Homebrew</button>
         <button type="button" role="tab" id="tab-docker" aria-selected="false" aria-controls="panel-docker" tabindex="-1">Docker</button>
         <button type="button" role="tab" id="tab-source" aria-selected="false" aria-controls="panel-source" tabindex="-1">From source</button>
         <button type="button" role="tab" id="tab-action" aria-selected="false" aria-controls="panel-action" tabindex="-1">GitHub Action</button>
@@ -262,6 +263,11 @@ layout: home
 <pre><code><span class="c"># No root. Verifies the SHA-256, and the signature if cosign is installed.</span>
 curl -fsSL https://github.com/{{ site.repository }}/releases/latest/download/install.sh \
   | bash
+leak demo   <span class="c"># see it work in a minute, on a leak made for the purpose</span></code></pre>
+      </div>
+      <div class="panel" role="tabpanel" id="panel-brew" aria-labelledby="tab-brew" hidden>
+<pre><code><span class="c"># macOS and Linux. Brings gitleaks, jq and, on macOS, a current bash.</span>
+brew install aboutbilal/tap/spillkit
 leak demo   <span class="c"># see it work in a minute, on a leak made for the purpose</span></code></pre>
       </div>
       <div class="panel" role="tabpanel" id="panel-docker" aria-labelledby="tab-docker" hidden>

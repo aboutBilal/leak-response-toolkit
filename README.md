@@ -60,6 +60,12 @@ leak doctor        # confirms the machine is ready
 
 Prefer to read it first: download [install.sh](install.sh), read it, then run `bash install.sh --require-signature`, which refuses to install anything whose signature it cannot verify.
 
+**Homebrew** (macOS and Linux): brings gitleaks, jq and, on macOS, a current bash with it. The formula moves to each new release only after checking its checksum and Sigstore signature.
+
+```bash
+brew install aboutbilal/tap/spillkit
+```
+
 **Docker** (no local dependencies; signed image for amd64 and arm64):
 
 ```bash

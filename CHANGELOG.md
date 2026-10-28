@@ -4,6 +4,10 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
+### Added
+
+- **Homebrew:** `brew install aboutbilal/tap/spillkit` on macOS and Linux, from the new [aboutBilal/homebrew-tap](https://github.com/aboutBilal/homebrew-tap). It brings gitleaks and jq, plus a current bash on macOS. A daily workflow moves the formula to each new release only after it has checked the archive's checksum and Sigstore signature, and has installed and tested the formula.
+
 ## [3.6.0] - 2026-10-28
 
 ### Added

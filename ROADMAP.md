@@ -25,9 +25,9 @@ What is planned next. Ideas and help are welcome: open an [improvement issue](ht
 - `leak rotate gitlab-token`: personal, project and group access tokens, checked, rotated into a secret store, or revoked.
 - `leak plan` in the GitHub Action: a scan with findings ends with what to rotate first, and the full plan as an output.
 - `leak plan` also writes JSON, for automation.
+- A Homebrew tap: `brew install aboutbilal/tap/spillkit` on macOS and Linux.
 
 ## Next
-- A Homebrew formula for macOS and Linux.
 - More `leak rotate` recipes: GitHub App private keys, Azure DevOps tokens, database passwords.
 
 ## Later
