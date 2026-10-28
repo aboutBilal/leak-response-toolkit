@@ -191,6 +191,39 @@ commit_all() {
   [[ "$output" == *"jq"* ]]
 }
 
+# tested_gitleaks: the gitleaks version Spillkit pins, without the leading v.
+tested_gitleaks() {
+  sed -n 's/^GITLEAKS_IMAGE="[^:]*:v\{0,1\}\([^@]*\)@.*/\1/p' "$ROOT/scripts/lib.sh"
+}
+
+# fake_gitleaks <version-output>: a gitleaks test double that prints the given version.
+fake_gitleaks() {
+  mkdir -p "$TMP/bin"
+  printf '#!/bin/sh\necho "%s"\n' "$1" > "$TMP/bin/gitleaks"; chmod +x "$TMP/bin/gitleaks"
+}
+
+@test "doctor: warns when the local gitleaks is older than the tested version" {
+  pinned="$(tested_gitleaks)"
+  [ -n "$pinned" ]
+  for old in 8.18.0 v8.18.0 8.9.0; do
+    fake_gitleaks "$old"
+    NO_COLOR=1 run env PATH="$TMP/bin:$PATH" "$ROOT/scripts/doctor.sh" --offline
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"! gitleaks"*"$old"*"$pinned"* ]]
+  done
+}
+
+@test "doctor: no gitleaks warning for the tested version, a newer one or an unknown one" {
+  pinned="$(tested_gitleaks)"
+  [ -n "$pinned" ]
+  for v in "$pinned" "v$pinned" 9.0.0 "version is set by build process"; do
+    fake_gitleaks "$v"
+    NO_COLOR=1 run env PATH="$TMP/bin:$PATH" "$ROOT/scripts/doctor.sh" --offline
+    [[ "$output" == *"✔ gitleaks"*"$v"* ]]
+    [[ "$output" != *"! gitleaks"* ]]
+  done
+}
+
 @test "audit: documentation and example files do not cause false warnings" {
   new_repo "$TMP/docs"
   printf 'Load settings with dotenv or os.environ.\n' > "$TMP/docs/GUIDE.md"

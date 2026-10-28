@@ -4,6 +4,10 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
+### Changed
+
+- `leak doctor` warns when the installed gitleaks is older than the version Spillkit is tested with (8.30.1), since an older gitleaks misses newer secret types. The pinned gitleaks image now lives in `scripts/lib.sh`.
+
 ## [3.8.1] - 2026-10-28
 
 ### Changed

@@ -13,6 +13,11 @@ EXIT_USAGE=2       # bad arguments or missing prerequisites
 EXIT_FAILED=4      # a scanner or remote service failed; results are incomplete
 export EXIT_OK EXIT_FOUND EXIT_USAGE EXIT_FAILED
 
+# The gitleaks image leak scan runs when gitleaks is not installed, and the version
+# Spillkit is tested with (leak doctor warns about an older local gitleaks).
+GITLEAKS_IMAGE="ghcr.io/gitleaks/gitleaks:v8.30.1@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f"
+export GITLEAKS_IMAGE
+
 # need_value <option> <value>: exit 2 unless the option was given a value.
 need_value() {
   if [[ -z "${2:-}" || "$2" == -* ]]; then
