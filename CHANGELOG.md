@@ -4,6 +4,10 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
+### Changed
+
+- Site: every name in the "Works with" row has an icon. AWS, Azure and Azure DevOps get neutral glyphs rather than their logos, which their owners do not allow on third-party sites; gitleaks has no logo.
+
 ## [3.8.0] - 2026-10-28
 
 ### Added
