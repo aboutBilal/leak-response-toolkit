@@ -6,6 +6,7 @@
   <a href="https://github.com/aboutBilal/spillkit/actions/workflows/secret-scan.yml"><img src="https://github.com/aboutBilal/spillkit/actions/workflows/secret-scan.yml/badge.svg" alt="checks"></a>
   <a href="https://scorecard.dev/viewer/?uri=github.com/aboutBilal/spillkit"><img src="https://img.shields.io/ossf-scorecard/github.com/aboutBilal/spillkit?label=openssf%20scorecard&style=flat" alt="OpenSSF Scorecard"></a>
   <a href="https://github.com/aboutBilal/spillkit/releases/latest"><img src="https://img.shields.io/github/v/release/aboutBilal/spillkit?label=release&color=ff7a59" alt="latest release"></a>
+  <a href="https://github.com/marketplace/actions/spillkit"><img src="https://img.shields.io/badge/GitHub%20Marketplace-Spillkit-ff7a59?logo=github" alt="Spillkit on GitHub Marketplace"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT license"></a>
 </p>
 
@@ -206,7 +207,7 @@ jobs:
         with: { sarif_file: leak.sarif }
 ```
 
-Findings appear in the job summary and, with SARIF, in the repository's Security tab. Alerts are sent only when something is found and never contain secret values. A scheduled `mode: hunt` job on your most sensitive repositories works as low-cost public-leak monitoring.
+The Action is listed on the [GitHub Marketplace](https://github.com/marketplace/actions/spillkit). Findings appear in the job summary and, with SARIF, in the repository's Security tab. Alerts are sent only when something is found and never contain secret values. A scheduled `mode: hunt` job on your most sensitive repositories works as low-cost public-leak monitoring.
 
 ## Command reference
 
