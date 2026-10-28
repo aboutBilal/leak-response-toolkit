@@ -4,6 +4,12 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
+## [3.5.2] - 2026-10-28
+
+### Changed
+
+- The GitHub Action's description is shorter (115 characters), so it fits a GitHub Marketplace listing.
+
 ## [3.5.1] - 2026-10-28
 
 ### Added
@@ -226,7 +232,8 @@ Prevention becomes the second half of the kit: not only responding to leaks, but
 - Templates: incident timeline, takedown request, notification messages, post-incident review, executive report (print-ready HTML).
 - Quality: offline bats tests, shellcheck, gitleaks on full history, link and anchor checks in CI, Dependabot for pinned actions, pre-commit hook, contribution guide, issue and pull request templates, security policy.
 
-[Unreleased]: https://github.com/aboutBilal/spillkit/compare/v3.5.1...HEAD
+[Unreleased]: https://github.com/aboutBilal/spillkit/compare/v3.5.2...HEAD
+[3.5.2]: https://github.com/aboutBilal/spillkit/compare/v3.5.1...v3.5.2
 [3.5.1]: https://github.com/aboutBilal/spillkit/compare/v3.5.0...v3.5.1
 [3.5.0]: https://github.com/aboutBilal/spillkit/compare/v3.4.0...v3.5.0
 [3.4.0]: https://github.com/aboutBilal/spillkit/compare/v3.3.0...v3.4.0

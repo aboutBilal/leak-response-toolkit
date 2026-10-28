@@ -140,7 +140,7 @@ Or use the hooks directly from this repository:
 # .pre-commit-config.yaml
 repos:
   - repo: https://github.com/aboutBilal/spillkit
-    rev: v3.5.1
+    rev: v3.5.2
     hooks:
       - id: forbid-secret-files    # no dependencies
       - id: leak-guard             # also scans staged changes with gitleaks

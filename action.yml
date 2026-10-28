@@ -1,5 +1,5 @@
 name: Spillkit
-description: Scan the full git history for secrets, grade one repository or a whole organisation A-F, or hunt for public copies of a leaked repository.
+description: Find secrets in full Git history, grade a repository or organisation A to F, and hunt down public copies of a leak.
 author: aboutBilal
 branding:
   icon: shield
