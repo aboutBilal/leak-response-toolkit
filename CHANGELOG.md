@@ -4,13 +4,21 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
+## [3.6.1] - 2026-10-28
+
 ### Added
 
 - **Homebrew:** `brew install aboutbilal/tap/spillkit` on macOS and Linux, from the new [aboutBilal/homebrew-tap](https://github.com/aboutBilal/homebrew-tap). It brings gitleaks and jq, plus a current bash on macOS. A daily workflow moves the formula to each new release only after it has checked the archive's checksum and Sigstore signature, and has installed and tested the formula.
 
+### Changed
+
+- `leak doctor` and `install.sh` point macOS users with an old bash at the Homebrew formula, which brings a current bash with it.
+- SECURITY.md says how the Homebrew formula is verified before it moves to a new release.
+
 ### Fixed
 
 - `leak audit` did not count Spillkit's own `leak-guard` pre-commit hook, or the Spillkit GitHub Action, as secret scanning. A repository protected by Spillkit itself lost 25 points.
+- On phones, the copy button on the home page's install commands covered the first line of code.
 
 ## [3.6.0] - 2026-10-28
 
@@ -278,7 +286,8 @@ Prevention becomes the second half of the kit: not only responding to leaks, but
 - Templates: incident timeline, takedown request, notification messages, post-incident review, executive report (print-ready HTML).
 - Quality: offline bats tests, shellcheck, gitleaks on full history, link and anchor checks in CI, Dependabot for pinned actions, pre-commit hook, contribution guide, issue and pull request templates, security policy.
 
-[Unreleased]: https://github.com/aboutBilal/spillkit/compare/v3.6.0...HEAD
+[Unreleased]: https://github.com/aboutBilal/spillkit/compare/v3.6.1...HEAD
+[3.6.1]: https://github.com/aboutBilal/spillkit/compare/v3.6.0...v3.6.1
 [3.6.0]: https://github.com/aboutBilal/spillkit/compare/v3.5.2...v3.6.0
 [3.5.2]: https://github.com/aboutBilal/spillkit/compare/v3.5.1...v3.5.2
 [3.5.1]: https://github.com/aboutBilal/spillkit/compare/v3.5.0...v3.5.1

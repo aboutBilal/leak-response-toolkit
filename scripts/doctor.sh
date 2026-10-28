@@ -41,7 +41,7 @@ for cmd in bash git curl jq; do
     bad "$cmd" "not found: install it with your package manager"
   fi
 done
-if ((BASH_VERSINFO[0] < 4 || (BASH_VERSINFO[0] == 4 && BASH_VERSINFO[1] < 4))); then bad "bash 4.4+" "found ${BASH_VERSION}; macOS: brew install bash"; fi
+if ((BASH_VERSINFO[0] < 4 || (BASH_VERSINFO[0] == 4 && BASH_VERSINFO[1] < 4))); then bad "bash 4.4+" "found ${BASH_VERSION}; macOS: brew install bash, or install Spillkit with brew install aboutbilal/tap/spillkit"; fi
 
 echo "Secret scanner (one of)"
 if command -v gitleaks >/dev/null; then

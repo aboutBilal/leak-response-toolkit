@@ -64,6 +64,8 @@ cosign verify ghcr.io/aboutbilal/spillkit:X.Y.Z \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com
 ```
 
+The [Homebrew formula](https://github.com/aboutBilal/homebrew-tap) moves to a new release only after its update workflow has verified the archive's checksum and this same Sigstore signature, for that exact tag. Homebrew then checks the archive against the SHA-256 in the formula on every install.
+
 ## Using the toolkit safely
 
 - `scan`, `audit` and `plan` run locally. `hunt`, `forks`, `commits` and `audit-org` send only repository names, account names and commit IDs to public services: GitHub, GitLab, the Internet Archive, Software Heritage, Sourcegraph, Codeberg and play.clickhouse.com.

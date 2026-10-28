@@ -244,6 +244,7 @@
   .hunt-list { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
   .hunt-list li { display: inline-flex; align-items: center; gap: 8px; padding: 7px 12px; border: 1px solid var(--line-2); border-radius: 999px; background: #FFFFFF; color: var(--text); font-size: 14px; font-weight: 500; }
   .lede { font-size: 17px; }
+  .install-card pre { padding: 54px 20px 24px; }   /* the copy button sits above the code, not on it */
   .actions .btn { flex: 1 1 100%; }
   .stats, .stage-grid, .trust-grid, .qa { grid-template-columns: minmax(0, 1fr); }
   .stats b { font-size: 40px; }

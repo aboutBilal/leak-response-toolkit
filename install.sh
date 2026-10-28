@@ -86,7 +86,10 @@ echo "    leak -> $prefix/bin/leak"
 
 # What the toolkit needs at run time (leak doctor checks all of it in detail).
 bash_ok="$(bash -c 'if ((BASH_VERSINFO[0] > 4 || (BASH_VERSINFO[0] == 4 && BASH_VERSINFO[1] >= 4))); then echo yes; fi' 2>/dev/null || true)"
-[ "$bash_ok" = yes ] || echo "    Note: leak needs bash 4.4 or later on PATH (macOS: brew install bash)."
+if [ "$bash_ok" != yes ]; then
+  echo "    Note: leak needs bash 4.4 or later on PATH. On macOS, brew install bash, or install"
+  echo "    Spillkit with Homebrew instead, which takes care of it: brew install aboutbilal/tap/spillkit"
+fi
 case ":$PATH:" in
   *":$prefix/bin:"*) ;;
   *) echo "    Add $prefix/bin to your PATH:  export PATH=\"$prefix/bin:\$PATH\"" ;;
