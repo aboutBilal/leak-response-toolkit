@@ -21,10 +21,14 @@ What is planned next. Ideas and help are welcome: open an [improvement issue](ht
 - `leak rotate`: AWS, Azure and Google Cloud keys rotated step by step, with a dry run by default and new secrets piped straight into a secret store.
 - `leak demo`, a one-line signed install, and GitLab groups as an `audit-org` source.
 
+## Done in 3.6
+- `leak rotate gitlab-token`: personal, project and group access tokens, checked, rotated into a secret store, or revoked.
+- `leak plan` in the GitHub Action: a scan with findings ends with what to rotate first, and the full plan as an output.
+- `leak plan` also writes JSON, for automation.
+
 ## Next
 - A Homebrew formula for macOS and Linux.
-- More `leak rotate` recipes: GitHub App private keys, Azure DevOps and GitLab tokens, database passwords.
-- `leak plan` in the GitHub Action, so a failed scan comes with its rotation checklist.
+- More `leak rotate` recipes: GitHub App private keys, Azure DevOps tokens, database passwords.
 
 ## Later
 - Translations of the runbook and cheat sheet.

@@ -11,23 +11,30 @@
 #   azure-app-secret   --app APP-ID --key-id KEY-ID      client secret of an Entra ID app registration
 #   gcp-sa-key         --account SA-EMAIL --key-id ID    key of a Google Cloud service account
 #   azure-storage-key  --group RG --account NAME [--key key1|key2]   storage account key (default key1)
+#   gitlab-token       --token-id ID [--project PATH | --group PATH] [--expires YYYY-MM-DD]
+#                      personal, project or group access token; needs GITLAB_TOKEN (api scope,
+#                      not the leaked token) and GITLAB_URL when self-managed
 # Steps, in this order (deploy the new secret before revoking the old one):
 #   check     who used the leaked credential, and when (read-only)
-#   replace   create the new credential and put it in --store (not azure-storage-key)
+#   replace   create the new credential and put it in --store (aws-key, azure-app-secret, gcp-sa-key)
 #   disable   switch the leaked one off; can be undone (aws-key, gcp-sa-key)
 #   delete    delete the leaked one for good (renew, for azure-storage-key)
+#   rotate    gitlab-token: GitLab revokes the leaked token and puts a new one in --store, in one call
+#   revoke    gitlab-token: revoke only, when a replacement you made yourself is already deployed
 # Options:
 #   --store TARGET   where the new secret goes: aws-sm:<secret-id> (AWS Secrets Manager),
 #                    azure-kv:<vault>/<name> (Azure Key Vault) or gcp-sm:<secret> (Secret Manager)
-#   --yes            do not ask before disable, delete or renew (without it they ask on a terminal)
+#   --yes            do not ask before disable, delete, renew, rotate or revoke (without it they ask on a terminal)
 #   --log FILE       append each applied step to FILE (default: ./rotation-log.tsv); never values
 # Exit:  0 done (or dry run printed), 2 bad arguments, missing CLI or not confirmed,
 #        4 the provider refused or failed (the step did not complete)
 set -euo pipefail
+set +x   # never trace: a traced run would print the new secret (bash -x leak rotate ...)
 # shellcheck source=scripts/lib.sh
 . "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 
 recipe=""; user=""; key_id=""; app=""; account=""; group=""; which_key="key1"
+token_id=""; gl_project=""; expires=""; ref=""
 apply=""; store=""; yes=0; log="$PWD/rotation-log.tsv"
 while (($#)); do
   case "$1" in
@@ -38,6 +45,9 @@ while (($#)); do
     --account) need_value "$1" "${2:-}"; account="$2"; shift 2 ;;
     --group) need_value "$1" "${2:-}"; group="$2"; shift 2 ;;
     --key) need_value "$1" "${2:-}"; which_key="$2"; shift 2 ;;
+    --token-id) need_value "$1" "${2:-}"; token_id="$2"; shift 2 ;;
+    --project) need_value "$1" "${2:-}"; gl_project="$2"; shift 2 ;;
+    --expires) need_value "$1" "${2:-}"; expires="$2"; shift 2 ;;
     --apply) need_value "$1" "${2:-}"; apply="$2"; shift 2 ;;
     --store) need_value "$1" "${2:-}"; store="$2"; shift 2 ;;
     --log) need_value "$1" "${2:-}"; log="$2"; shift 2 ;;
@@ -76,12 +86,35 @@ case "$recipe" in
     [[ -z "$group" || "$group" =~ ^[-A-Za-z0-9._()]{1,90}$ ]] || usage_fail "not a resource group name: $group"
     [[ "$which_key" =~ ^key[12]$ ]] || usage_fail "--key must be key1 or key2"
     need=(group account) ;;
-  *) usage_fail "unknown recipe: $recipe (aws-key, azure-app-secret, gcp-sa-key, azure-storage-key)" ;;
+  gitlab-token)
+    cli=curl; steps="check rotate revoke"
+    gl_path='^[A-Za-z0-9_][A-Za-z0-9_.-]*(/[A-Za-z0-9_][A-Za-z0-9_.-]*)*$'
+    [[ -z "$gl_project" || -z "$group" ]] || usage_fail "use --project or --group, not both (neither: a personal access token)"
+    [[ -z "$gl_project" || ( "$gl_project" =~ $gl_path && ${#gl_project} -le 255 ) ]] || usage_fail "--project needs a project path or ID: $gl_project"
+    [[ -z "$group" || ( "$group" =~ $gl_path && ${#group} -le 255 ) ]] || usage_fail "--group needs a group path or ID: $group"
+    [[ -z "$token_id" || "$token_id" =~ ^[0-9]{1,12}$ ]] || usage_fail "--token-id needs the token's numeric ID (check without it lists them): $token_id"
+    [[ -z "$expires" || "$expires" =~ ^20[0-9]{2}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$ ]] || usage_fail "--expires needs a date, YYYY-MM-DD: $expires"
+    # GitLab gives a rotated token one week unless told otherwise: default to 90 days.
+    expires="${expires:-$(jq -nr 'now + 90 * 86400 | strftime("%Y-%m-%d")' 2>/dev/null || echo "<YYYY-MM-DD>")}"
+    gl_base="$(gitlab_url)/api/v4"
+    if [[ -n "$gl_project" ]]; then
+      kind="project access token"; tokens_path="/projects/$(jq -rn --arg s "$gl_project" '$s|@uri')/access_tokens"
+    elif [[ -n "$group" ]]; then
+      kind="group access token"; tokens_path="/groups/$(jq -rn --arg s "$group" '$s|@uri')/access_tokens"
+    else
+      kind="personal access token"; tokens_path="/personal_access_tokens"
+    fi
+    what="GitLab $kind ${token_id:-<token-id>}${gl_project:+ of project $gl_project}${group:+ of group $group}"
+    ref="${token_id}@${gl_project:-${group:-personal}}"
+    need=(token_id) ;;
+  *) usage_fail "unknown recipe: $recipe (aws-key, azure-app-secret, gcp-sa-key, azure-storage-key, gitlab-token)" ;;
 esac
 
 store_kind=""; store_ref=""
 if [[ -n "$store" ]]; then
+  [[ "$store" == *:?* ]] || usage_fail "--store needs a target after the colon, such as aws-sm:<secret-id>"
   store_kind="${store%%:*}"; store_ref="${store#*:}"
+  [[ "$store_ref" != -* ]] || usage_fail "--store target cannot start with -: $store_ref"
   case "$store_kind" in
     aws-sm) [[ "$store_ref" =~ ^[A-Za-z0-9/_+=.@:-]+$ && ${#store_ref} -le 2048 ]] || usage_fail "use --store aws-sm:<secret-id or ARN>" ;;
     azure-kv) [[ "$store_ref" =~ ^[A-Za-z0-9-]{3,24}/[A-Za-z0-9-]{1,127}$ ]] || usage_fail "use --store azure-kv:<vault>/<secret-name>" ;;
@@ -98,7 +131,11 @@ store_label() {
     *) echo "<your secret store>" ;;
   esac
 }
-project="${account#*@}"; project="${project%%.*}"   # sa@PROJECT.iam.gserviceaccount.com
+case "$account" in   # the project the service account lives in
+  *@appspot.gserviceaccount.com) project="${account%@*}" ;;                 # PROJECT@appspot (App Engine default)
+  *-compute@developer.gserviceaccount.com) project="${account%-compute@*}" ;;  # NUMBER-compute@developer (Compute default)
+  *) project="${account#*@}"; project="${project%%.*}" ;;                   # sa@PROJECT.iam.gserviceaccount.com
+esac
 p() { if [[ -n "${!1}" ]]; then printf '%s' "${!1}"; else printf '<%s>' "$2"; fi; }
 
 # ---------- Dry run: every step with its command ----------
@@ -158,9 +195,21 @@ EOF
             With --store, the new connection string goes into $(store_label)
 EOF
     ;;
+    gitlab-token) cat <<EOF
+1. check    The token's name, scopes, last use and expiry, never its value (read-only)
+              GET $gl_base$tokens_path/$(p token_id token-id)
+            Without --token-id it lists the active tokens with their IDs, to find the leaked one
+2. rotate   GitLab revokes the leaked token and issues a new one, expiring $expires, in one call;
+            the new one goes into $(store_label) (needs --store, which must already exist)
+              POST $gl_base$tokens_path/$(p token_id token-id)/rotate?expires_at=$expires   → piped into the store, never shown
+3. (you)    Deploy the new token at once: anything still using the old one fails until then
+   revoke   Instead of rotate, for no downtime: make a replacement in GitLab yourself, deploy it, then revoke
+              DELETE $gl_base$tokens_path/$(p token_id token-id)
+EOF
+    ;;
   esac
   echo
-  echo "Being abused right now? Revoke first (disable, delete or renew) and accept the downtime."
+  echo "Being abused right now? Revoke first (disable, delete, renew or revoke) and accept the downtime."
   echo "Each applied step is logged with its time in $log, ready for the incident timeline."
 }
 
@@ -169,11 +218,11 @@ fail() { echo "  failed: $1" >&2; log_step "$apply" failed ""; exit "$EXIT_FAILE
 run() { printf '  $ %s\n' "$*"; "$@"; }
 log_step() {   # <step> <result> <new credential ID or "">: never a value
   [[ -f "$log" ]] || printf 'time_utc\trecipe\tcredential\tstep\tresult\tnew_credential\n' > "$log"
-  printf '%s\t%s\t%s\t%s\t%s\t%s\n' "$(date -u +%FT%TZ)" "$recipe" "${key_id:-$which_key}@${user:-${app:-${account:-}}}" "$1" "$2" "$3" >> "$log"
+  printf '%s\t%s\t%s\t%s\t%s\t%s\n' "$(date -u +%FT%TZ)" "$recipe" "${ref:-${key_id:-$which_key}@${user:-${app:-${account:-}}}}" "$1" "$2" "$3" >> "$log"
 }
 confirm() {    # <action>: ask on the terminal unless --yes
   ((yes)) && return 0
-  local token="${key_id:-$which_key}" answer
+  local token="${key_id:-${token_id:-$which_key}}" answer
   if [[ ! -t 0 ]]; then
     echo "refusing to $1 without confirmation: run it on a terminal, or add --yes" >&2
     exit "$EXIT_USAGE"
@@ -187,6 +236,23 @@ store_put() {  # the new secret arrives on stdin and goes straight to the store
     azure-kv) az keyvault secret set --vault-name "${store_ref%%/*}" --name "${store_ref#*/}" --file /dev/stdin --encoding utf-8 -o none ;;
     gcp-sm) gcloud secrets versions add "$store_ref" --data-file=- >/dev/null ;;
   esac
+}
+store_check() {   # the store exists and answers, read from its metadata only (never its value)
+  case "$store_kind" in
+    aws-sm) aws secretsmanager describe-secret --secret-id "$store_ref" --query ARN --output text >/dev/null ;;
+    azure-kv) az keyvault secret list-versions --vault-name "${store_ref%%/*}" --name "${store_ref#*/}" --maxresults 1 --query "[0].id" -o tsv >/dev/null ;;
+    gcp-sm) gcloud secrets describe "$store_ref" --format 'value(name)' >/dev/null ;;
+  esac
+}
+gl_api() {   # <method> <path>: GITLAB_TOKEN goes in a header on stdin, never argv. Prints the body, then the status on its own line.
+  printf 'header = "PRIVATE-TOKEN: %s"\n' "${GITLAB_TOKEN//\"/}" \
+    | curl -s --max-time 60 -K - -X "$1" -w '\n%{http_code}' "$gl_base$2" || printf '\n000'
+}
+gl_status() { printf '%s' "${1##*$'\n'}"; }
+gl_body() { printf '%s' "${1%$'\n'*}"; }
+gl_refused() {   # <response>: why GitLab said no, from its error message (errors never carry a token)
+  local msg; msg="$(gl_body "$1" | jq -r '.message // .error // empty | tostring' 2>/dev/null | head -c 200)"
+  printf 'HTTP %s%s' "$(gl_status "$1")" "${msg:+: $msg}"
 }
 
 apply_step() {
@@ -205,7 +271,7 @@ apply_step() {
       new="$(aws iam create-access-key --user-name "$user" --output json)" \
         || fail "could not create a key (a user can have two at most: delete an unused one first)"
       id="$(printf '%s' "$new" | jq -r '.AccessKey.AccessKeyId')"
-      if printf '%s' "$new" | jq -c '{AccessKeyId: .AccessKey.AccessKeyId, SecretAccessKey: .AccessKey.SecretAccessKey}' | store_put; then
+      if printf '%s' "$new" | jq -cj '{AccessKeyId: .AccessKey.AccessKeyId, SecretAccessKey: .AccessKey.SecretAccessKey}' | store_put; then
         new=""; log_step replace ok "$id"
         echo "  New key $id is in $(store_label). Deploy it everywhere the old key is used, then --apply disable."
       else
@@ -293,6 +359,57 @@ apply_step() {
       else
         echo "  Regenerated. Consumers read the new key from the portal, Key Vault or a managed identity."
       fi ;;
+    gitlab-token:check)
+      local resp
+      if [[ -z "$token_id" ]]; then
+        printf '  $ GET %s\n' "$gl_base$tokens_path?per_page=100"
+        resp="$(gl_api GET "$tokens_path?per_page=100")"
+        [[ "$(gl_status "$resp")" == 200 ]] || fail "could not list the tokens ($(gl_refused "$resp"))"
+        gl_body "$resp" | jq -r '(["ID","NAME","SCOPES","LAST USED","EXPIRES"] | @tsv),
+          (.[] | select(.active) | [(.id|tostring), .name, (.scopes|join(",")), (.last_used_at // "never"), (.expires_at // "never")] | @tsv)' | table
+        echo "  Active tokens only, first 100. Run check again with --token-id ID for the leaked one."
+      else
+        printf '  $ GET %s\n' "$gl_base$tokens_path/$token_id"
+        resp="$(gl_api GET "$tokens_path/$token_id")"
+        [[ "$(gl_status "$resp")" == 200 ]] || fail "could not read the token ($(gl_refused "$resp"))"
+        gl_body "$resp" | jq -r '"  name:       \(.name)", "  scopes:     \(.scopes | join(", "))",
+          "  state:      \(if .revoked then "revoked" elif .active then "active" else "inactive (expired)" end)",
+          "  created:    \(.created_at // "unknown")",
+          "  last used:  \(.last_used_at // "never")\(if (.last_used_ips // []) != [] then " from \(.last_used_ips | join(", "))" else "" end)",
+          "  expires:    \(.expires_at // "never")"'
+        echo "  Usage before that: the audit events of the user, group or project the token belongs to."
+      fi
+      log_step check ok "" ;;
+    gitlab-token:rotate)
+      confirm "Rotate (and at once revoke)"
+      printf '  Checking %s first: a revoked token cannot be brought back\n' "$(store_label)"
+      store_check || fail "could not read $(store_label): it must exist and you need read access to its metadata. Nothing changed"
+      printf '  $ POST %s   (the new token is kept in memory, piped to the store)\n' "$gl_base$tokens_path/$token_id/rotate?expires_at=$expires"
+      local resp why; resp="$(gl_api POST "$tokens_path/$token_id/rotate?expires_at=$expires")"
+      if [[ "$(gl_status "$resp")" != 200 ]]; then
+        why="$(gl_refused "$resp")"; resp=""
+        fail "GitLab did not rotate the token ($why); the leaked one is unchanged"
+      fi
+      id="$(gl_body "$resp" | jq -r '.id // empty')"
+      if ! gl_body "$resp" | jq -e '.token | type == "string" and length > 0' >/dev/null; then
+        resp=""; fail "GitLab answered without a new token: check the token list, the leaked one may be revoked already"
+      fi
+      if gl_body "$resp" | jq -j '.token' | store_put; then
+        resp=""; log_step rotate ok "$id"
+        echo "  The leaked token is revoked. Its replacement ($id, expires $expires) is in $(store_label)."
+        echo "  Deploy it now: anything still using the old token fails until it reads the new one."
+      else
+        resp=""; echo "  Could not store the new token, so it is being revoked too: $id" >&2
+        [[ -n "$id" && "$(gl_status "$(gl_api DELETE "$tokens_path/$id")")" == 204 ]] \
+          || echo "  revoke it by hand: GitLab → Access tokens, token $id" >&2
+        fail "the store refused the new token. The leaked token is revoked; make its replacement in GitLab by hand"
+      fi ;;
+    gitlab-token:revoke)
+      confirm "Revoke"
+      printf '  $ DELETE %s\n' "$gl_base$tokens_path/$token_id"
+      local resp; resp="$(gl_api DELETE "$tokens_path/$token_id")"
+      [[ "$(gl_status "$resp")" == 204 ]] || fail "could not revoke the token ($(gl_refused "$resp"))"
+      log_step revoke ok ""; echo "  Revoked. Record the time in the rotation plan." ;;
     *)
       [[ "$apply" == deploy ]] && usage_fail "deploying the new secret is yours to do: there is no --apply deploy"
       usage_fail "$recipe has no step '$apply' (steps: $steps)" ;;
@@ -304,11 +421,17 @@ if [[ -z "$apply" ]]; then
   exit "$EXIT_OK"
 fi
 [[ " $steps " == *" $apply "* ]] || usage_fail "$recipe has no step '$apply' (steps: $steps)"
+[[ "$recipe:$apply" == gitlab-token:check ]] && need=()   # without --token-id, check lists the tokens
 for v in "${need[@]}"; do
   [[ -n "${!v}" ]] || usage_fail "--apply needs --${v//_/-} for $recipe"
 done
-if [[ "$apply" == replace ]]; then
-  [[ -n "$store" ]] || usage_fail "replace needs --store, so the new secret goes straight into your secret store"
+if [[ "$apply" == replace || "$apply" == rotate ]]; then
+  [[ -n "$store" ]] || usage_fail "$apply needs --store, so the new secret goes straight into your secret store"
+fi
+if [[ "$recipe" == gitlab-token ]]; then
+  [[ -n "${GITLAB_TOKEN:-}" ]] || usage_fail "gitlab-token needs GITLAB_TOKEN: a token with the api scope that may manage this one (not the leaked token)"
+  [[ "$gl_base" == https://* ]] || usage_fail "GITLAB_URL must start with https://"
+  [[ "$expires" != "<"* ]] || usage_fail "could not work out a default expiry: give --expires YYYY-MM-DD"
 fi
 for c in "$cli" jq ${store_kind:+"$(store_cli)"}; do
   command -v "$c" >/dev/null || usage_fail "missing: $c (install it and sign in first; 'leak doctor' lists what each command needs)"

@@ -79,7 +79,7 @@ if [[ -n "$dir" ]]; then
   done
 elif [[ -n "$gitlab" ]]; then
   label="$gitlab"
-  base="$(gitlab_url)/api/v4/groups/$(jq -rn --arg g "$gitlab" '$g|@uri')/projects?include_subgroups=true&per_page=100&order_by=path&sort=asc"
+  base="$(gitlab_url)/api/v4/groups/$(jq -rn --arg g "$gitlab" '$g|@uri')/projects?include_subgroups=true&with_shared=false&per_page=100&order_by=path&sort=asc"
   ((forks)) || base+="&archived=false"
   page=1
   while [[ "$(wc -l < "$targets")" -lt "$limit" ]]; do

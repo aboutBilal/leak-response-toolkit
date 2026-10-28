@@ -503,6 +503,8 @@ JSON
   grep -q 'Rotation plan · INC-7' "$TMP/rotation-plan.html"
   grep -q 'notify&lt;x&gt;.sh' "$TMP/rotation-plan.html"
   ! grep -q 'notify<x>' "$TMP/rotation-plan.html"
+  jq -e '.count == 5 and .incident == "INC-7" and .items[0].recipe == "aws-key" and (.items[0].guide_url | endswith("#aws"))
+         and .items[1].note != null and .items[4].recipe == null' "$TMP/rotation-plan.json"
 }
 
 @test "plan: a clean scan exits 0, and anything but a scan report exits 2" {
@@ -575,7 +577,17 @@ MOCK
   [ "$status" -eq 2 ]
   run env PATH="$TMP/bin:$PATH" "$ROOT/scripts/rotate.sh" aws-key --user u --key-id "$old" --apply replace
   [ "$status" -eq 2 ]
+  for bad in aws-sm aws-sm: gcp-sm:-x azure-kv:-kv/name; do
+    run env PATH="$TMP/bin:$PATH" "$ROOT/scripts/rotate.sh" aws-key --user u --key-id "$old" --apply replace --store "$bad"
+    [ "$status" -eq 2 ]
+  done
   [ ! -e "$TMP/argv.txt" ]
+  run "$ROOT/scripts/rotate.sh" gcp-sa-key --account my-proj@appspot.gserviceaccount.com
+  [[ "$output" == *"--project my-proj"* ]]
+  run "$ROOT/scripts/rotate.sh" gcp-sa-key --account 123456789012-compute@developer.gserviceaccount.com
+  [[ "$output" == *"--project 123456789012"* ]]
+  run "$ROOT/scripts/rotate.sh" gcp-sa-key --account ci@proj-1.iam.gserviceaccount.com
+  [[ "$output" == *"--project proj-1"* ]]
 }
 
 @test "rotate: a new secret reaches only the store, never arguments, output or the log" {
@@ -597,6 +609,10 @@ MOCK
   grep -q 'keyvault secret set --vault-name kv-prod --name app-secret --file /dev/stdin' "$TMP/argv.txt"
   grep -q 'secrets versions add ci-key --data-file=-' "$TMP/argv.txt"
   [ "$(cut -f4,5 "$TMP/rotation-log.tsv" | grep -c 'replace.ok')" -eq 3 ]
+  # Tracing would print it: rotate switches it off.
+  run env PATH="$TMP/bin:$PATH" bash -x "$ROOT/scripts/rotate.sh" aws-key --user deploy-bot --key-id "$old" --apply replace --store aws-sm:prod/deploy-bot
+  [ "$status" -eq 0 ]
+  [[ "$output" != *"$secret"* ]]
 }
 
 @test "rotate: if the store refuses the new secret, the new credential is deleted again (exit 4)" {
@@ -624,6 +640,71 @@ MOCK
   grep -q $'azure-storage-key\tkey2@stprod01\trenew\tok' "$TMP/r.tsv"
 }
 
+# fake_gitlab: a GitLab API double for leak rotate gitlab-token. It records curl's arguments and
+# the header config read on stdin, and answers a rotation with the fake secret from fake_cloud.
+fake_gitlab() {
+  mkdir -p "$TMP/bin"
+  cat > "$TMP/bin/curl" <<MOCK
+#!/usr/bin/env bash
+printf '%s\n' "\$*" >> "$TMP/argv.txt"
+method=GET; url=""
+while ((\$#)); do case "\$1" in -X) method="\$2"; shift 2 ;; -K) [[ "\$2" == - ]] && cat >> "$TMP/config.txt"; shift 2 ;; http*) url="\$1"; shift ;; *) shift ;; esac; done
+case "\$method \$url" in
+  "GET "*per_page=100) code=200; body='[{"id":42,"name":"ci-deploy","scopes":["api"],"active":true,"last_used_at":"2026-10-27T10:00:00Z","expires_at":"2026-12-01"},{"id":7,"name":"retired","scopes":["read_api"],"active":false}]' ;;
+  "GET "*/42) code=200; body='{"id":42,"name":"ci-deploy","scopes":["api"],"active":true,"revoked":false,"created_at":"2026-01-01T00:00:00Z","last_used_at":"2026-10-27T10:00:00Z","last_used_ips":["203.0.113.9"],"expires_at":"2026-12-01"}' ;;
+  "POST "*/42/rotate*) code=200; body="{\"id\":43,\"name\":\"ci-deploy\",\"token\":\"\$(cat "$TMP/secret")\",\"expires_at\":\"2027-01-31\"}" ;;
+  "DELETE "*) code=204; body="" ;;
+  *) code=404; body='{"message":"404 Not Found"}' ;;
+esac
+printf '%s\n%s' "\$body" "\$code"
+MOCK
+  chmod +x "$TMP/bin/curl"
+}
+
+@test "rotate gitlab-token: finds the token, rotates it into the store only, revokes the new one if the store fails" {
+  fake_cloud; fake_gitlab
+  cd "$TMP"
+  gl=(env PATH="$TMP/bin:$PATH" GITLAB_TOKEN=gl-api-token-for-tests GITLAB_URL=https://gitlab.example.com "$ROOT/scripts/rotate.sh" gitlab-token)
+  run "${gl[@]}" --apply check
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"ci-deploy"* && "$output" != *"retired"* ]]
+  run "${gl[@]}" --token-id 42 --project acme/api --apply check
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"last used:  2026-10-27T10:00:00Z from 203.0.113.9"* ]]
+  grep -q 'https://gitlab.example.com/api/v4/projects/acme%2Fapi/access_tokens/42$' "$TMP/argv.txt"
+  run "${gl[@]}" --token-id 42 --apply rotate --store gcp-sm:gl-token < /dev/null
+  [ "$status" -eq 2 ]
+  ! grep -q 'POST' "$TMP/argv.txt"
+  run "${gl[@]}" --token-id 42 --apply rotate --store gcp-sm:gl-token --expires 2027-01-31 --yes
+  [ "$status" -eq 0 ]
+  grep -q -- '-X POST .*/personal_access_tokens/42/rotate?expires_at=2027-01-31' "$TMP/argv.txt"
+  grep -q 'gcloud secrets describe gl-token' "$TMP/argv.txt"
+  secret="$(cat "$TMP/secret")"
+  grep -qx "$secret" "$TMP/store.txt"
+  ! grep -q "$secret" "$TMP/argv.txt"
+  ! grep -q 'gl-api-token-for-tests' "$TMP/argv.txt"
+  grep -q 'PRIVATE-TOKEN: gl-api-token-for-tests' "$TMP/config.txt"
+  [[ "$output" != *"$secret"* ]]
+  grep -q $'gitlab-token\t42@personal\trotate\tok\t43' "$TMP/rotation-log.tsv"
+  run env STORE_FAILS=1 "${gl[@]}" --token-id 42 --apply rotate --store gcp-sm:gl-token --yes
+  [ "$status" -eq 4 ]
+  grep -q -- '-X DELETE .*/personal_access_tokens/43$' "$TMP/argv.txt"
+  [[ "$output" != *"$secret"* ]]
+  run env PATH="$TMP/bin:$PATH" "$ROOT/scripts/rotate.sh" gitlab-token --token-id 42 --apply check
+  [ "$status" -eq 2 ]
+  run "${gl[@]}" --token-id 42 --project acme/api --group acme
+  [ "$status" -eq 2 ]
+  run "${gl[@]}" --token-id 42 --project 'acme/api?x=1'
+  [ "$status" -eq 2 ]
+  printf '%s' '[{"RuleID":"gitlab-pat","File":"ci.env","StartLine":1,"Commit":"4444444444dddd","Date":"2026-02-01T00:00:00Z","Secret":"REDACTED"},
+    {"RuleID":"aws-amazon-bedrock-api-key-long-lived","File":"ai.env","StartLine":1,"Commit":"5555555555eeee","Date":"2026-02-02T00:00:00Z","Secret":"REDACTED"}]' > "$TMP/gl.json"
+  run "$ROOT/scripts/rotation-plan.sh" "$TMP/gl.json"
+  [ "$status" -eq 1 ]
+  grep -q 'leak rotate gitlab-token' "$TMP/rotation-plan.md"
+  grep -q 'Amazon Bedrock API key' "$TMP/rotation-plan.md"
+  ! grep -q 'leak rotate aws-key' "$TMP/rotation-plan.md"
+}
+
 @test "demo: builds a leak and runs audit, scan, plan and a rotation dry run" {
   scanner_available || skip "needs gitleaks or docker"
   cd "$TMP"
@@ -633,6 +714,11 @@ MOCK
   grep -q '1. AWS access key' "$TMP/demo/rotation-plan.md"
   run "$ROOT/scripts/demo.sh" --out "$TMP/demo"
   [ "$status" -eq 2 ]
+  # Someone who uses Spillkit's ignore file and hook globally can still run the demo.
+  printf '[core]\n\texcludesFile = %s\n\thooksPath = %s\n' "$ROOT/prevention/gitignore-secrets" "$ROOT/prevention/hooks" > "$TMP/gitconfig"
+  run env GIT_CONFIG_GLOBAL="$TMP/gitconfig" "$ROOT/scripts/demo.sh" --out "$TMP/demo2"
+  [ "$status" -eq 0 ]
+  grep -q '1. AWS access key' "$TMP/demo2/rotation-plan.md"
 }
 
 @test "audit-org: lists a GitLab group with subgroups, skips forks, keeps the token out of arguments" {
@@ -651,7 +737,7 @@ MOCK
   [ -f "$TMP/gl/results/platform__api.json" ]
   ! grep -q "gl-test-token-789" "$TMP/argv.txt"
   grep -q "PRIVATE-TOKEN: gl-test-token-789" "$TMP/config.txt"
-  grep -q "gitlab.example.com/api/v4/groups/acme/projects?include_subgroups=true" "$TMP/argv.txt"
+  grep -q "gitlab.example.com/api/v4/groups/acme/projects?include_subgroups=true&with_shared=false" "$TMP/argv.txt"
   fake_curl 401 '{"message":"401 Unauthorized"}'
   run env PATH="$TMP/bin:$PATH" "$ROOT/scripts/audit-org.sh" --no-scan --gitlab acme --out "$TMP/gl2"
   [ "$status" -eq 4 ]
@@ -668,6 +754,19 @@ MOCK
   [ "$status" -eq 0 ]
   run "$TMP/p/bin/leak" version
   [[ "$output" == spillkit* ]]
+  cd "$TMP"
+  run env SPILLKIT_RELEASES="file://$TMP/rel" "$ROOT/install.sh" --version 9.9.9 --prefix relative-prefix
+  [ "$status" -eq 0 ]
+  run "$TMP/relative-prefix/bin/leak" version
+  [[ "$output" == spillkit* ]]
+  # An archive that matches its checksum but cannot be unpacked: the installed version survives.
+  printf 'not an archive' > "$rel/spillkit-v9.9.9.tar.gz"
+  (cd "$rel" && { sha256sum spillkit-v9.9.9.tar.gz 2>/dev/null || shasum -a 256 spillkit-v9.9.9.tar.gz; } > spillkit-v9.9.9.tar.gz.sha256)
+  run env SPILLKIT_RELEASES="file://$TMP/rel" "$ROOT/install.sh" --version 9.9.9 --prefix "$TMP/p"
+  [ "$status" -ne 0 ]
+  run "$TMP/p/bin/leak" version
+  [[ "$output" == spillkit* ]]
+  [ -z "$(find "$TMP/p/share/spillkit" -maxdepth 1 -name '.install.*')" ]
   echo tampered >> "$rel/spillkit-v9.9.9.tar.gz"
   run env SPILLKIT_RELEASES="file://$TMP/rel" "$ROOT/install.sh" --version v9.9.9 --prefix "$TMP/p2"
   [ "$status" -ne 0 ]

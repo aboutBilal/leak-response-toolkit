@@ -30,10 +30,16 @@ leak="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/leak"
 bold=""; dim=""; off=""
 if [[ -t 1 && -z "${NO_COLOR:-}" ]]; then bold=$'\e[1m'; dim=$'\e[2m'; off=$'\e[0m'; fi
 stage() { printf '\n%s[%s/5] %s%s\n%s%s%s\n\n' "$bold" "$1" "$2" "$off" "$dim" "$3" "$off"; }
-random() { head -c 4096 /dev/urandom | LC_ALL=C tr -dc "$1" | head -c "$2"; }
+# Cut with bash, not a second head: under pipefail, head closing the pipe early can kill tr.
+random() { local s; s="$(head -c 4096 /dev/urandom | LC_ALL=C tr -dc "$1")"; printf '%s' "${s:0:$2}"; }
 
 mkdir -p "$out"
 out="$(cd "$out" && pwd)"
+# A demo that stops halfway leaves nothing behind, so it can simply be run again.
+trap 'rc=$?; if ((rc)); then rm -rf "$out"; echo "the demo stopped (exit $rc); removed $out" >&2; fi' EXIT
+# Your own Git settings must not stop the leak from being committed: Spillkit's ignore file
+# and pre-commit hook, if you use them globally, would (rightly) block it.
+commit() { git -C "$repo" -c core.hooksPath=/dev/null commit --no-verify -qm "$1"; }
 repo="$out/payments-api"
 mkdir -p "$repo/src" "$repo/deploy"
 start=$SECONDS
@@ -50,7 +56,7 @@ git -C "$repo" config user.email "developer@example.com"
 git -C "$repo" config commit.gpgsign false
 printf '# payments-api\n\nA demo service for Spillkit.\n' > "$repo/README.md"
 printf 'export function charge(amount) {\n  return { ok: true, amount };\n}\n' > "$repo/src/charge.js"
-git -C "$repo" add -A && git -C "$repo" commit -qm "Initial commit"
+git -C "$repo" add -A && commit "Initial commit"
 
 key_id="AKIA$(random 'A-Z2-7' 16)"
 {
@@ -64,8 +70,8 @@ kind="OPENSSH PRIVATE KEY"   # assembled at run time, so this script itself hold
   for _ in 1 2 3 4 5; do random 'A-Za-z0-9+/' 70; echo; done
   echo "-----END $kind-----"
 } > "$repo/deploy/id_ed25519"
-git -C "$repo" add -A && git -C "$repo" commit -qm "Add deployment settings"
-git -C "$repo" rm -q .env deploy/id_ed25519 && git -C "$repo" commit -qm "Remove secrets"
+git -C "$repo" add -A -f && commit "Add deployment settings"
+git -C "$repo" rm -q .env deploy/id_ed25519 && commit "Remove secrets"
 git -C "$repo" log --oneline --stat --format='  %h %s' | sed '/^$/d'
 
 # ---------- 2. Audit ----------

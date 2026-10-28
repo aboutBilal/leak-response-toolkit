@@ -8,10 +8,10 @@ Everything in `<angle brackets>` is a placeholder.
 
 ## With Spillkit: plan first, then rotate step by step
 
-`leak plan` turns a scan report into a checklist in the order below ([order of operations](#order-of-operations-when-there-are-many)), with where to revoke each secret and a link to its section in this guide. `leak rotate` then takes the cloud keys through the pattern above, one step per run:
+`leak plan` turns a scan report into a checklist in the order below ([order of operations](#order-of-operations-when-there-are-many)), with where to revoke each secret and a link to its section in this guide. `leak rotate` then takes cloud keys and GitLab tokens through the pattern above, one step per run:
 
 ```bash
-./leak plan secrets-report.json                    # rotation-plan.md for the incident issue, rotation-plan.html to print
+./leak plan secrets-report.json                    # rotation-plan.md for the incident issue, .html to print, .json for automation
 ./leak rotate gcp-sa-key --account <sa>@<project>.iam.gserviceaccount.com --key-id <key-id>    # dry run
 ./leak rotate gcp-sa-key ... --apply check                                   # who used it, and when
 ./leak rotate gcp-sa-key ... --apply replace --store gcp-sm:<secret>         # new key, straight into Secret Manager
@@ -25,15 +25,18 @@ Everything in `<angle brackets>` is a placeholder.
 | `azure-app-secret` | `--app`, `--key-id` | check, replace, delete | `azure-kv:<vault>/<name>` (Key Vault) |
 | `gcp-sa-key` | `--account`, `--key-id` | check, replace, disable, delete | `gcp-sm:<secret>` (Secret Manager) |
 | `azure-storage-key` | `--group`, `--account`, `--key` | check, renew | optional: the new connection string to Key Vault |
+| `gitlab-token` | `--token-id`, and `--project` or `--group` for their access tokens | check, rotate (or revoke) | any; it must already exist |
 
 Any recipe can use any store. What it guarantees:
 
 - Without `--apply` nothing runs: you get the steps with their exact commands, to review or run by hand.
 - The new secret goes from the provider's CLI to the store through a pipe. It is never shown, never written to disk and never in a command line. If the store refuses it, the new credential is deleted again.
-- `disable`, `delete` and `renew` ask you to type the key ID first (`--yes` skips this in automation; without a terminal it is required).
+- `disable`, `delete`, `renew`, `rotate` and `revoke` ask you to type the key ID first (`--yes` skips this in automation; without a terminal it is required).
 - Each applied step is appended to `rotation-log.tsv` with its UTC time: credential IDs, never values.
 
-It uses the `aws`, `az` and `gcloud` CLIs you are already signed in to. Everything else in this guide is rotated by hand.
+GitLab replaces a token in one call that revokes the leaked one at once, so `gitlab-token` checks the store before it rotates (a revoked token cannot be brought back), defaults the new token to 90 days instead of GitLab's one week (`--expires` to change it), and, if the store still refuses it, revokes the new token too and says so. For no downtime, make a replacement in GitLab yourself, deploy it, and use `--apply revoke` instead. `check` without `--token-id` lists the active tokens with their IDs and last use.
+
+It uses the `aws`, `az` and `gcloud` CLIs you are already signed in to, and for GitLab the API with `GITLAB_TOKEN` (the `api` scope; not the leaked token) and `GITLAB_URL` when self-managed. Everything else in this guide is rotated by hand.
 
 ---
 

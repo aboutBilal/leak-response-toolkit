@@ -54,6 +54,9 @@ outputs:
   report:
     description: "Path of the main report written by this run (JSON, markdown or HTML, depending on the mode)"
     value: ${{ steps.run.outputs.report }}
+  plan:
+    description: "For scan with findings: path of the rotation plan (rotation-plan.md, with .html and .json beside it). It names files and commits: upload it as an artifact from private repositories only"
+    value: ${{ steps.run.outputs.plan }}
 
 runs:
   using: composite
@@ -77,7 +80,7 @@ runs:
       run: |
         set -uo pipefail
         out="${RUNNER_TEMP}/leak-toolkit"; mkdir -p "$out"
-        findings=0; report=""; summary=""
+        findings=0; report=""; summary=""; plan=""
         case "$MODE" in
           scan)
             sarif_args=(); [[ -n "$SARIF" ]] && sarif_args=(--sarif "$SARIF")
@@ -98,7 +101,26 @@ runs:
                 echo; echo "| Type | Findings | Files |"; echo "|---|---|---|"
                 jq -r 'group_by(.RuleID)[] | "| \(.[0].RuleID) | \(length) | \([.[].File]|unique|length) |"' "$out/secrets-report.json"
               fi
-            } >> "$GITHUB_STEP_SUMMARY" ;;
+            } >> "$GITHUB_STEP_SUMMARY"
+            if [[ "$findings" -gt 0 ]]; then
+              "$TOOLKIT/leak" plan "$out/secrets-report.json" --out "$out/plan" >/dev/null; rc=$?
+              if [[ "$rc" == 1 ]] && jq -e '.count > 0' "$out/plan/rotation-plan.json" >/dev/null 2>&1; then
+                plan="$out/plan/rotation-plan.md"
+                {
+                  echo; echo "### Rotate first"
+                  echo "Most dangerous first. For each: create the replacement, deploy it, then revoke the old one."
+                  echo; echo "| Order | Secret | Files | Revoke at | How |"; echo "|---|---|---|---|---|"
+                  jq -r 'def cell: gsub("\\|"; "\\|");
+                    .items | group_by(.type) | sort_by(min_by(.n).n) | to_entries[] | .key as $i | .value as $g | $g[0] |
+                    "| \($i + 1) | \(.type | cell) | \([$g[].file] | unique | length) | \(.revoke | cell) | \(if .recipe then "`leak rotate \(.recipe)` · " else "" end)[guide](\(.guide_url)) |"' \
+                    "$out/plan/rotation-plan.json"
+                  echo
+                  echo "Files, lines and commits are in the full plan (the \`plan\` output: Markdown, with HTML and JSON beside it), not here: the job summaries of a public repository are public."
+                } >> "$GITHUB_STEP_SUMMARY"
+              else
+                echo "::warning::could not build the rotation plan (exit $rc)"
+              fi
+            fi ;;
           audit)
             sarif_args=(); [[ -n "$SARIF" ]] && sarif_args=(--sarif "$SARIF")
             NO_COLOR=1 "$TOOLKIT/leak" audit "${sarif_args[@]}" "$TARGET" | tee "$out/audit.txt"; findings=${PIPESTATUS[0]}
@@ -131,6 +153,7 @@ runs:
         esac
         echo "findings=$findings" >> "$GITHUB_OUTPUT"
         echo "report=$report" >> "$GITHUB_OUTPUT"
+        echo "plan=$plan" >> "$GITHUB_OUTPUT"
         if [[ -n "$LEAK_WEBHOOK_URL" && "$findings" -gt 0 ]]; then
           "$TOOLKIT/leak" notify --format "$WEBHOOK_FORMAT" "spillkit: $summary Details: $RUN_URL" || echo "::warning::notification failed"
         fi

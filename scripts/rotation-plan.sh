@@ -2,12 +2,12 @@
 # Turn a secret scan into an ordered rotation plan: one item per secret (its type and
 # file), most dangerous first, each with where to revoke it, the guide section and, where
 # one exists, the `leak rotate` recipe that automates it. Written as Markdown with
-# checkboxes (paste it into the incident issue) and as print-ready HTML. Never contains
-# secret values: it reads the redacted report written by leak scan.
+# checkboxes (paste it into the incident issue), as print-ready HTML and as JSON for
+# automation. Never contains secret values: it reads the redacted report written by leak scan.
 #
 # Usage: leak plan <secrets-report.json> [--out DIR] [--id INC-2026-014] [--tlp LABEL]
 #   <secrets-report.json>  the JSON report written by leak scan
-#   --out DIR              where to write rotation-plan.md and rotation-plan.html
+#   --out DIR              where to write rotation-plan.md, .html and .json
 #                          (default: the folder of the report)
 #   --id                   incident reference shown on the plan
 #   --tlp                  handling label: clear, green, amber, amber+strict (default) or red
@@ -119,6 +119,13 @@ md="$out/rotation-plan.md"
   echo "Detection rule IDs, for reference: $(jq -r '[.[].rule] | unique | map("`" + . + "`") | join(", ") | if . == "" then "none" else . end' <<<"$items")"
 } > "$md"
 
+# ---------- JSON: the same items for automation (the GitHub Action builds its summary from it) ----------
+jq --arg v "$version" --arg at "$generated" --arg id "$id" --arg tlp "$tlp_label" --arg report "$(basename "$report")" --arg guide "$guide" '
+  {generator: "Spillkit \($v)", generated_utc: $at, incident: (if $id == "" then null else $id end), tlp: $tlp,
+   report: $report, count: length,
+   items: map(. + {guide_url: "\($guide)#\(.guide)", recipe: (if .recipe == "-" then null else .recipe end),
+                   note: (if .note == "" then null else .note end)})}' <<<"$items" > "$out/rotation-plan.json"
+
 # ---------- HTML: the same plan, print-ready, in the style of the incident report ----------
 html() { jq -rn --arg s "$1" '$s|@html'; }
 tbc() { printf '<mark class="tbc">[%s]</mark>' "$1"; }
@@ -203,4 +210,5 @@ jq -r 'def section: {aws: "AWS", "google-cloud": "Google Cloud", github: "GitHub
 echo
 echo "Checklist for the incident issue: $md"
 echo "Print or share:                   $out/rotation-plan.html"
+echo "For automation:                   $out/rotation-plan.json"
 exit "$EXIT_FOUND"

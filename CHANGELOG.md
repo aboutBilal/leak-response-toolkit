@@ -4,6 +4,38 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
+## [3.6.0] - 2026-10-28
+
+### Added
+
+- **`leak rotate gitlab-token`** handles GitLab personal, project and group access tokens, on gitlab.com or a self-managed instance (`GITLAB_URL`).
+  - `check` shows the token's scopes, last use (with IP addresses) and expiry. Without `--token-id` it lists the active tokens, so you can find the leaked one.
+  - `rotate` has GitLab revoke the leaked token and issue its replacement in one call, piped straight into your secret store. Because a revoked token cannot be brought back, the store is checked first. The new token gets 90 days instead of GitLab's one-week default (`--expires` to change it). If the store still refuses the new token, it is revoked too.
+  - `revoke` is for when you made and deployed a replacement yourself.
+  - `GITLAB_TOKEN` is sent in a header on stdin, never in a command line. The `leak plan` catalog points `gitlab-pat` findings at the recipe.
+- **The GitHub Action's scan mode ends with what to rotate first.** When secrets are found, the job summary lists them most dangerous first, with where each is revoked, the `leak rotate` recipe and the guide section. Files and commits are left out of the summary, because the job summaries of public repositories are public. The full plan is at the new `plan` output.
+- `leak plan` also writes `rotation-plan.json`, the same items for automation.
+- CI runs the Action on a leak built by `leak demo`, so the plan in the summary is tested on every change.
+
+### Changed
+
+- A new AWS access key is stored in Secrets Manager without a trailing newline.
+
+### Fixed
+
+Found by an independent review of the 3.5 code.
+
+- `install.sh` with a relative `--prefix` made a `leak` link that led nowhere, yet reported success. The prefix is now made absolute, and the link is checked.
+- Reinstalling a version deleted the working copy before unpacking the new one, so a failed unpack left nothing. The new version is now unpacked beside the old one and swapped in only when complete.
+- `leak demo` stopped at its first step for anyone using Spillkit's ignore file or pre-commit hook globally, because they rightly blocked the planted secrets. It now commits past both, in its own throwaway repository only.
+- `leak demo` could also stop at random on Alpine, because a pipe closed early under `pipefail`. A demo that stops now removes its folder, so it can simply be run again.
+- `leak plan` listed Amazon Bedrock API keys as AWS access keys and pointed them at `leak rotate aws-key`. They now have their own entry (billing attached, no recipe), with where to revoke them.
+- `leak audit-org --gitlab` also graded projects shared into the group by other groups. It now lists only the group's own projects.
+- `leak rotate`:
+  - `--store` without a target (`--store aws-sm`) wrote to a secret named after the store type. It is now refused, as are targets that start with `-`.
+  - The `check` step used the wrong project for App Engine and Compute Engine default service accounts.
+  - Tracing (`bash -x`) is switched off, because it would print the new secret.
+
 ### Removed
 
 - The old container package `ghcr.io/aboutbilal/leak-response-toolkit` (images 2.1.0 to 3.2.0, from before the rename). Use `ghcr.io/aboutbilal/spillkit`, which has every release since 3.3.0.
@@ -236,7 +268,8 @@ Prevention becomes the second half of the kit: not only responding to leaks, but
 - Templates: incident timeline, takedown request, notification messages, post-incident review, executive report (print-ready HTML).
 - Quality: offline bats tests, shellcheck, gitleaks on full history, link and anchor checks in CI, Dependabot for pinned actions, pre-commit hook, contribution guide, issue and pull request templates, security policy.
 
-[Unreleased]: https://github.com/aboutBilal/spillkit/compare/v3.5.2...HEAD
+[Unreleased]: https://github.com/aboutBilal/spillkit/compare/v3.6.0...HEAD
+[3.6.0]: https://github.com/aboutBilal/spillkit/compare/v3.5.2...v3.6.0
 [3.5.2]: https://github.com/aboutBilal/spillkit/compare/v3.5.1...v3.5.2
 [3.5.1]: https://github.com/aboutBilal/spillkit/compare/v3.5.0...v3.5.1
 [3.5.0]: https://github.com/aboutBilal/spillkit/compare/v3.4.0...v3.5.0

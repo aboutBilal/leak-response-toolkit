@@ -44,7 +44,8 @@ case "$version" in
 esac
 
 name="spillkit-$version"
-tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' EXIT
+stage=""
+tmp="$(mktemp -d)"; trap 'rm -rf "$tmp" ${stage:+"$stage"}' EXIT
 say "Downloading Spillkit $version"
 for f in "$name.tar.gz" "$name.tar.gz.sha256" "$name.tar.gz.sigstore.json"; do
   curl -fsSL -o "$tmp/$f" "$releases/download/$version/$f" || die "could not download $f (does release $version exist?)"
@@ -70,11 +71,16 @@ else
   echo "    damaged download only. To verify the signature too, install cosign and run this again."
 fi
 
+mkdir -p "$prefix/share/spillkit" "$prefix/bin" || die "could not create $prefix"
+prefix="$(cd "$prefix" && pwd)"   # absolute, so the link resolves from bin/
 dest="$prefix/share/spillkit/$version"
-rm -rf "$dest" && mkdir -p "$dest" "$prefix/bin"
-tar -xzf "$tmp/$name.tar.gz" -C "$dest" --strip-components=1
-[ -x "$dest/leak" ] || die "the archive has no leak command"
+# Unpack beside the destination and swap it in only when complete: a failed install keeps the old one.
+stage="$(mktemp -d "$prefix/share/spillkit/.install.XXXXXX")" || die "could not write to $prefix/share/spillkit"
+tar -xzf "$tmp/$name.tar.gz" -C "$stage" --strip-components=1 || die "could not unpack the archive: not installed"
+[ -x "$stage/leak" ] || die "the archive has no leak command"
+rm -rf "$dest" && mv "$stage" "$dest" || die "could not move the new version into $dest"
 ln -sfn "$dest/leak" "$prefix/bin/leak"
+[ -x "$prefix/bin/leak" ] || die "$prefix/bin/leak does not lead to the installed command"
 say "Installed $("$prefix/bin/leak" version 2>/dev/null || echo "spillkit $version") in $dest"
 echo "    leak -> $prefix/bin/leak"
 
