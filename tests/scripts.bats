@@ -675,3 +675,33 @@ MOCK
   run "$ROOT/install.sh" --version not-a-version
   [ "$status" -ne 0 ]
 }
+
+@test "audit: in CI, a missing local hook is not a finding (hooks live in developer clones)" {
+  new_repo "$TMP/ci"
+  cp "$ROOT/prevention/pre-commit-config.yaml" "$TMP/ci/.pre-commit-config.yaml"
+  commit_all "$TMP/ci" "init"
+  run env -u TF_BUILD CI=true "$ROOT/scripts/audit.sh" --no-scan "$TMP/ci"
+  [[ "$output" == *"local hook not checked in CI"* && "$output" != *"no pre-commit hook installed"* ]]
+  run env -u CI -u TF_BUILD "$ROOT/scripts/audit.sh" --no-scan "$TMP/ci"
+  [[ "$output" == *"no pre-commit hook installed in this clone"* ]]
+}
+
+@test "install.sh: verifies the signature for this exact release, with cosign 2 or 3" {
+  rel="$TMP/rel/download/v9.9.9"; mkdir -p "$rel" "$TMP/stage/spillkit-v9.9.9" "$TMP/bin"
+  cp -R "$ROOT/leak" "$ROOT/scripts" "$TMP/stage/spillkit-v9.9.9/"
+  tar -czf "$rel/spillkit-v9.9.9.tar.gz" -C "$TMP/stage" spillkit-v9.9.9
+  (cd "$rel" && { sha256sum spillkit-v9.9.9.tar.gz 2>/dev/null || shasum -a 256 spillkit-v9.9.9.tar.gz; } > spillkit-v9.9.9.tar.gz.sha256 && echo '{}' > spillkit-v9.9.9.tar.gz.sigstore.json)
+  for v in v2.4.1 v3.0.2; do
+    cat > "$TMP/bin/cosign" <<MOCK
+#!/usr/bin/env bash
+if [[ "\$1" == version ]]; then echo "GitVersion:    $v"; exit 0; fi
+printf '%s\n' "\$*" > "$TMP/cosign-args.txt"
+MOCK
+    chmod +x "$TMP/bin/cosign"
+    run env PATH="$TMP/bin:$PATH" SPILLKIT_RELEASES="file://$TMP/rel" "$ROOT/install.sh" --version v9.9.9 --prefix "$TMP/p-$v" --require-signature
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Signature verified"* ]]
+    grep -q -- "--certificate-identity https://github.com/aboutBilal/spillkit/.github/workflows/release.yml@refs/tags/v9.9.9" "$TMP/cosign-args.txt"
+    if [[ "$v" == v2* ]]; then grep -q -- "--new-bundle-format" "$TMP/cosign-args.txt"; else ! grep -q -- "--new-bundle-format" "$TMP/cosign-args.txt"; fi
+  done
+}

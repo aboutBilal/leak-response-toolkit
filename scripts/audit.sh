@@ -76,6 +76,7 @@ cfg="$repo/.pre-commit-config.yaml"
 if [[ -f "$cfg" ]] && grep -qiE 'gitleaks|trufflehog|detect-secrets' "$cfg"; then pass "pre-commit secret scanner configured" 10
 else loc=".pre-commit-config.yaml"; warn "no pre-commit secret scanner configured" 10; tip "copy prevention/pre-commit-config.yaml to .pre-commit-config.yaml"; fi
 if [[ -x "$hooksdir/pre-commit" ]] || [[ -n "$(git -C "$repo" config core.hooksPath)" ]]; then pass "pre-commit hook installed in this clone" 5
+elif [[ "${CI:-}" == true || "${TF_BUILD:-}" == True ]]; then pass "local hook not checked in CI: hooks live in developer clones" 5
 else loc=".pre-commit-config.yaml"; warn "no pre-commit hook installed in this clone" 5; tip "pre-commit install   (or copy prevention/hooks/pre-commit)"; fi
 
 heading "4. CI secret scanning"

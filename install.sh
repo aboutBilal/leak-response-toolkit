@@ -53,10 +53,15 @@ done
 (cd "$tmp" && sha_check "$name.tar.gz.sha256") || die "the archive does not match its SHA-256: not installed"
 say "SHA-256 matches"
 if command -v cosign >/dev/null 2>&1; then
-  cosign verify-blob "$tmp/$name.tar.gz" --bundle "$tmp/$name.tar.gz.sigstore.json" \
+  # Releases use the Sigstore bundle format of cosign 3; cosign 2.4 and later read it with a flag.
+  bundle_flag=""
+  case "$(cosign version 2>/dev/null | sed -n 's/^GitVersion:[[:space:]]*v\{0,1\}//p')" in
+    2.*) bundle_flag="--new-bundle-format" ;;
+  esac
+  cosign verify-blob "$tmp/$name.tar.gz" --bundle "$tmp/$name.tar.gz.sigstore.json" ${bundle_flag:+"$bundle_flag"} \
     --certificate-identity "https://github.com/$repo/.github/workflows/release.yml@refs/tags/$version" \
     --certificate-oidc-issuer https://token.actions.githubusercontent.com >/dev/null 2>&1 \
-    || die "the Sigstore signature does not verify: not installed"
+    || die "the Sigstore signature does not verify (or cosign is older than 2.4): not installed"
   say "Signature verified: built by this repository's release workflow for $version"
 elif [ "$require_sig" = 1 ]; then
   die "--require-signature needs cosign: https://docs.sigstore.dev/cosign/system_config/installation/"

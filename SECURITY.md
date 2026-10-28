@@ -39,13 +39,19 @@ Every command uses placeholders such as `<app-id>`, test secrets are generated a
 
 ## Verifying a release
 
-Release archives are signed with [Sigstore](https://www.sigstore.dev/) by this repository's release workflow, with no long-lived key. To verify one:
+Release archives are signed with [Sigstore](https://www.sigstore.dev/) by this repository's release workflow, with no long-lived key. To verify one with cosign 3 (with cosign 2.4 or later, add `--new-bundle-format`):
 
 ```bash
 cosign verify-blob spillkit-vX.Y.Z.tar.gz \
   --bundle spillkit-vX.Y.Z.tar.gz.sigstore.json \
   --certificate-identity-regexp '^https://github.com/aboutBilal/spillkit/\.github/workflows/release\.yml@refs/tags/v' \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com
+```
+
+Since 3.5.1, each release also carries SLSA build provenance for the archive and the install script (`spillkit-vX.Y.Z.intoto.jsonl`). With the GitHub CLI:
+
+```bash
+gh attestation verify spillkit-vX.Y.Z.tar.gz --repo aboutBilal/spillkit
 ```
 
 The install script is signed the same way: verify `install.sh` with `install.sh.sigstore.json` from the same release before running it, or run `bash install.sh --require-signature`, which refuses any archive whose signature does not verify.

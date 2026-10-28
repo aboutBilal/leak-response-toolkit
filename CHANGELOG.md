@@ -4,6 +4,17 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
+## [3.5.1] - 2026-10-28
+
+### Added
+
+- **SLSA build provenance on every release** for the source archive and the install script, attached as `spillkit-vX.Y.Z.intoto.jsonl` and verifiable with `gh attestation verify spillkit-vX.Y.Z.tar.gz --repo aboutBilal/spillkit`.
+
+### Fixed
+
+- `install.sh` refused to install when cosign 2 was installed, because releases use the newer Sigstore bundle format. It now passes `--new-bundle-format` to cosign 2.4 and later, and says when cosign is too old.
+- `leak audit` in CI (and the GitHub Action in `audit` mode) no longer reports "no pre-commit hook installed in this clone": a CI checkout never has one, so the finding was noise in code scanning. Developer clones are still checked.
+
 ## [3.5.0] - 2026-10-28
 
 From finding secrets to getting them rotated, and from hearing about Spillkit to seeing it work.
@@ -215,7 +226,8 @@ Prevention becomes the second half of the kit: not only responding to leaks, but
 - Templates: incident timeline, takedown request, notification messages, post-incident review, executive report (print-ready HTML).
 - Quality: offline bats tests, shellcheck, gitleaks on full history, link and anchor checks in CI, Dependabot for pinned actions, pre-commit hook, contribution guide, issue and pull request templates, security policy.
 
-[Unreleased]: https://github.com/aboutBilal/spillkit/compare/v3.5.0...HEAD
+[Unreleased]: https://github.com/aboutBilal/spillkit/compare/v3.5.1...HEAD
+[3.5.1]: https://github.com/aboutBilal/spillkit/compare/v3.5.0...v3.5.1
 [3.5.0]: https://github.com/aboutBilal/spillkit/compare/v3.4.0...v3.5.0
 [3.4.0]: https://github.com/aboutBilal/spillkit/compare/v3.3.0...v3.4.0
 [3.3.0]: https://github.com/aboutBilal/spillkit/compare/v3.2.0...v3.3.0
