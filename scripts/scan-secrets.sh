@@ -2,9 +2,11 @@
 # Scan the FULL git history of a repository for secrets, with values redacted.
 # Uses a local gitleaks if installed, otherwise the official gitleaks Docker image.
 #
-# Usage: leak scan <path-to-repo-or-mirror> [report.json] [--sarif findings.sarif]
+# Usage: leak scan <path-to-repo-or-mirror> [report.json] [--sarif findings.sarif] [--commits BASE..HEAD]
 #   report.json    where to write the redacted JSON report (default: ./secrets-report.json)
 #   --sarif FILE   also write SARIF 2.1.0 for GitHub code scanning; values stay redacted
+#   --commits R    only the commits in this git range, such as a pull request's (BASE..HEAD):
+#                  fast on large repositories. Keep a full-history scan on main or on a schedule
 # Exit:  0 clean, 1 secrets found, 2 bad arguments, 4 the scanner failed (results incomplete)
 set -euo pipefail
 # shellcheck source=scripts/lib.sh
@@ -12,17 +14,28 @@ set -euo pipefail
 
 GITLEAKS_IMAGE="ghcr.io/gitleaks/gitleaks:v8.30.1@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f"
 
-src=""; report=""; sarif=""
+src=""; report=""; sarif=""; range=""
 while (($#)); do
   case "$1" in
     -h|--help) print_help "$0"; exit 0 ;;
     --sarif) need_value "$1" "${2:-}"; sarif="$2"; shift 2 ;;
+    --commits) need_value "$1" "${2:-}"; range="$2"; shift 2 ;;
     -*) echo "unknown option: $1" >&2; exit "$EXIT_USAGE" ;;
     *) if [[ -z "$src" ]]; then src="$1"; elif [[ -z "$report" ]]; then report="$1"; else echo "unexpected argument: $1" >&2; exit "$EXIT_USAGE"; fi; shift ;;
   esac
 done
 [[ -n "$src" && -d "$src" ]] || { echo "usage: leak scan <path-to-repo-or-mirror> [report.json] [--sarif findings.sarif]" >&2; exit "$EXIT_USAGE"; }
 command -v jq >/dev/null || { echo "missing: jq" >&2; exit "$EXIT_USAGE"; }
+if [[ -n "$range" ]]; then
+  rev='^[A-Za-z0-9][A-Za-z0-9._/~^-]*$'   # a commit or ref; never an option, never a second range
+  base="${range%%..*}"; head="${range#*..}"
+  [[ "$range" == *..* && "$base" =~ $rev && "$head" =~ $rev && "$base" != *..* && "$head" != *..* ]] \
+    || { echo "--commits needs a git range, BASE..HEAD: $range" >&2; exit "$EXIT_USAGE"; }
+  for r in "$base" "$head"; do
+    git -C "$src" rev-parse --verify --quiet "$r^{commit}" >/dev/null \
+      || { echo "--commits: no commit $r in $src (check it out with its history: fetch-depth 0)" >&2; exit "$EXIT_USAGE"; }
+  done
+fi
 
 src="$(cd "$src" && pwd)"
 report="${report:-$PWD/secrets-report.json}"
@@ -32,20 +45,23 @@ report_name="$(basename "$report")"
 json="$report_dir/$report_name"
 rm -f "$json"
 
-# A bare mirror (repo.git) is scanned as-is; gitleaks walks every commit on every ref.
-# gitleaks exits 3 for findings (set below), 0 when clean and anything else on errors.
+# A bare mirror (repo.git) is scanned as-is; gitleaks walks every commit on every ref,
+# or only the commits in --commits. gitleaks exits 3 for findings (set below), 0 when clean
+# and anything else on errors.
+scope="every commit"; log_opts=()
+[[ -n "$range" ]] && { scope="the commits $range"; log_opts=("--log-opts=$range"); }
 set +e
 if command -v gitleaks >/dev/null; then
-  echo "==> gitleaks $(gitleaks version) on $src"
-  gitleaks git "$src" --redact --no-banner --exit-code 3 \
+  echo "==> gitleaks $(gitleaks version) on $src${range:+ ($scope)}"
+  gitleaks git "$src" --redact --no-banner --exit-code 3 "${log_opts[@]}" \
     --report-format json --report-path "$json"
   rc=$?
 elif command -v docker >/dev/null; then
   version="${GITLEAKS_IMAGE#*:}"; version="${version%%@*}"
-  echo "==> gitleaks $version (Docker image, pinned by digest) on $src"
+  echo "==> gitleaks $version (Docker image, pinned by digest) on $src${range:+ ($scope)}"
   docker run --rm --network none --user "$(id -u):$(id -g)" \
     -v "$src:/repo:ro" -v "$report_dir:/out" \
-    "$GITLEAKS_IMAGE" git /repo --redact --no-banner --exit-code 3 \
+    "$GITLEAKS_IMAGE" git /repo --redact --no-banner --exit-code 3 "${log_opts[@]}" \
     --report-format json --report-path "/out/$report_name"
   rc=$?
 else
@@ -90,7 +106,7 @@ write_sarif() {
 
 if [[ "$rc" == 0 ]]; then
   echo
-  echo "No secrets found in any commit. Report: $json"
+  echo "No secrets found in $scope. Report: $json"
   echo "Still check by hand: .env, *.pem, *.pfx, *.tfvars, appsettings*.json, kubeconfigs."
   exit "$EXIT_OK"
 fi

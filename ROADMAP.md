@@ -27,6 +27,10 @@ What is planned next. Ideas and help are welcome: open an [improvement issue](ht
 - `leak plan` also writes JSON, for automation.
 - A Homebrew tap: `brew install aboutbilal/tap/spillkit` on macOS and Linux.
 
+## Done in 3.7
+- `leak respond`: the first hour of an incident in one command, with a UTC timeline, resumable.
+- Fast pull request scans: `leak scan --commits` and `scope: changes` in the GitHub Action.
+
 ## Next
 - More `leak rotate` recipes: GitHub App private keys, Azure DevOps tokens, database passwords.
 

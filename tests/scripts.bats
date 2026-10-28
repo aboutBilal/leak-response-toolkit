@@ -38,14 +38,14 @@ commit_all() {
 }
 
 @test "every script exits 2 when required arguments are missing" {
-  for s in snapshot-evidence list-forks hunt-copies find-commit-copies scan-secrets make-report notify rotation-plan rotate; do
+  for s in snapshot-evidence list-forks hunt-copies find-commit-copies scan-secrets make-report notify rotation-plan rotate respond; do
     run "$ROOT/scripts/$s.sh"
     [ "$status" -eq 2 ] || { echo "$s exited $status"; false; }
   done
 }
 
 @test "repository arguments must look like owner/repo" {
-  for s in snapshot-evidence list-forks hunt-copies; do
+  for s in snapshot-evidence list-forks hunt-copies respond; do
     run "$ROOT/scripts/$s.sh" "not a repo"
     [ "$status" -eq 2 ] || { echo "$s exited $status"; false; }
   done
@@ -86,10 +86,30 @@ commit_all() {
   [ "$output" = "0" ]
 }
 
+@test "scan --commits: only the commits in the range, such as a pull request's" {
+  scanner_available || skip "needs gitleaks or docker"
+  new_repo "$TMP/pr"
+  echo "# app" > "$TMP/pr/README.md"; commit_all "$TMP/pr" "Initial commit"
+  base="$(git -C "$TMP/pr" rev-parse HEAD)"
+  echo "aws_access_key_id = $(key_id)" > "$TMP/pr/config"; commit_all "$TMP/pr" "add config"
+  leaked="$(git -C "$TMP/pr" rev-parse HEAD)"
+  echo "fixed" > "$TMP/pr/notes.txt"; commit_all "$TMP/pr" "unrelated change"
+  run "$ROOT/scripts/scan-secrets.sh" "$TMP/pr" "$TMP/r1.json" --commits "$leaked..HEAD"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"No secrets found in the commits $leaked..HEAD"* ]]
+  run "$ROOT/scripts/scan-secrets.sh" "$TMP/pr" "$TMP/r2.json" --commits "$base..HEAD"
+  [ "$status" -eq 1 ]
+  [ "$(jq -r '.[0].Commit' "$TMP/r2.json")" = "$leaked" ]
+  for bad in "$base" "$base...HEAD" "--all..HEAD" "$base..no-such-ref"; do
+    run "$ROOT/scripts/scan-secrets.sh" "$TMP/pr" "$TMP/r3.json" --commits "$bad"
+    [ "$status" -eq 2 ] || { echo "accepted: $bad"; false; }
+  done
+}
+
 @test "leak: help lists every command and version prints" {
   run "$ROOT/leak" help
   [ "$status" -eq 0 ]
-  for c in snapshot scan forks hunt commits plan rotate demo; do [[ "$output" == *"$c"* ]]; done
+  for c in respond snapshot scan forks hunt commits plan rotate demo; do [[ "$output" == *"$c"* ]]; done
   run "$ROOT/leak" version
   [ "$status" -eq 0 ]
   [[ "$output" == spillkit* ]]
@@ -715,6 +735,66 @@ MOCK
   grep -q 'leak rotate gitlab-token' "$TMP/rotation-plan.md"
   grep -q 'Amazon Bedrock API key' "$TMP/rotation-plan.md"
   ! grep -q 'leak rotate aws-key' "$TMP/rotation-plan.md"
+}
+
+# fake_github: a leaked repository served from a local folder (git rewrites the github.com URL)
+# and a GitHub API double that answers from the URL. Nothing leaves the machine.
+fake_github() {
+  new_repo "$TMP/src"
+  echo "# payments-api" > "$TMP/src/README.md"; commit_all "$TMP/src" "Initial commit"
+  printf 'AWS_ACCESS_KEY_ID=%s\nAWS_SECRET_ACCESS_KEY=%s\n' "$(key_id)" "$(head -c 4096 /dev/urandom | LC_ALL=C tr -dc 'A-Za-z0-9' | head -c 40)" > "$TMP/src/.env"
+  commit_all "$TMP/src" "Add settings"
+  git -C "$TMP/src" rm -q .env && git -C "$TMP/src" commit -qm "Remove settings"
+  mkdir -p "$TMP/gh/acme" "$TMP/bin" && git clone -q --bare "$TMP/src" "$TMP/gh/acme/payments-api.git"
+  cat > "$TMP/bin/curl" <<'MOCK'
+#!/usr/bin/env bash
+out=""; url=""
+while (($#)); do case "$1" in -o) out="$2"; shift 2 ;; -K) [[ "$2" == - ]] && cat > /dev/null; shift 2 ;; http*) url="$1"; shift ;; *) shift ;; esac; done
+case "$url" in
+  */repos/acme/payments-api) body='{"visibility":"public","created_at":"2026-01-01T00:00:00Z","pushed_at":"2026-01-02T00:00:00Z","forks_count":0,"stargazers_count":0,"subscribers_count":0}' ;;
+  *forks*) body='[]' ;;
+  *api.github.com/search/*) body='{"total_count":0,"items":[]}' ;;
+  *) body='{}' ;;
+esac
+if [[ -n "$out" ]]; then printf '%s' "$body" > "$out"; else printf '%s' "$body"; fi
+printf 200
+MOCK
+  chmod +x "$TMP/bin/curl"
+  printf '#!/bin/sh\nexit 0\n' > "$TMP/bin/sleep"; chmod +x "$TMP/bin/sleep"
+}
+
+@test "respond: runs the first hour in order, keeps a timeline, and continues where it stopped" {
+  scanner_available || skip "needs gitleaks or docker"
+  fake_github
+  cd "$TMP"
+  gh=(env PATH="$TMP/bin:$PATH" GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0="url.$TMP/gh/.insteadOf" GIT_CONFIG_VALUE_0="https://github.com/")
+  run "${gh[@]}" "$ROOT/scripts/respond.sh" acme/payments-api --id INC-7 --tlp red
+  [ "$status" -eq 1 ] || [ "$status" -eq 4 ]   # secrets found; a hunt source may count as not checked
+  for s in snapshot scan plan hunt report; do grep -q "^| [0-9-]* [0-9:]* | $s | " INC-7/timeline.md || { echo "no $s row"; false; }; done
+  grep -q '| scan | found |' INC-7/timeline.md
+  [ -d INC-7/evidence/acme_payments-api_*/repo.git ]
+  grep -qx "\*" INC-7/.gitignore   # the evidence holds the leak: never committed by accident
+  grep -q '1. AWS access key' INC-7/rotation-plan.md
+  grep -q 'TLP:RED' INC-7/incident-report.html
+  [[ "$output" == *"yours to do"* && "$output" == *"leak rotate aws-key"* ]]
+  secret="$(git -C "$TMP/src" show HEAD~1:.env | sed -n 's/^AWS_SECRET_ACCESS_KEY=//p')"
+  ! grep -rq "$secret" INC-7/timeline.md INC-7/logs INC-7/rotation-plan.md INC-7/incident-report.html INC-7/secrets-report.json
+  # Again: finished steps are not repeated; marking a step done is recorded with its time.
+  run "${gh[@]}" "$ROOT/scripts/respond.sh" --dir INC-7
+  [[ "$output" == *"scan: done at"* ]]
+  [ "$(grep -c '| scan | ' INC-7/timeline.md)" -eq 1 ]
+  run "$ROOT/scripts/respond.sh" --dir INC-7 --done rotate
+  [ "$status" -eq 0 ]
+  grep -q '| rotate | done |' INC-7/timeline.md
+  run "${gh[@]}" "$ROOT/scripts/respond.sh" --dir INC-7 --redo hunt
+  [ "$(grep -c '| hunt | ' INC-7/timeline.md)" -eq 3 ]   # first run, the redo request, the new hunt
+  run "$ROOT/scripts/respond.sh" --dir INC-7 --status
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"✔ rotate"* ]]
+  run "$ROOT/scripts/respond.sh" other/repo --dir INC-7
+  [ "$status" -eq 2 ]
+  run "$ROOT/scripts/respond.sh" --dir no-such-incident --status
+  [ "$status" -eq 2 ]
 }
 
 @test "demo: builds a leak and runs audit, scan, plan and a rotation dry run" {

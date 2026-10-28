@@ -7,7 +7,7 @@ Print this, pin it, or keep it open during an incident. The full guide is in the
 | **0–2 min** | Say it out loud: tell your lead or security channel. Start a timeline with times in UTC | Quietly delete the commit and hope |
 | **2–5 min** | If you control the copy and it was **public by mistake**, make it **private** (keeps evidence). Otherwise ask the owner for **Insights → Traffic** screenshots before anything is deleted | Delete first: you lose clone counts and the exact contents |
 | **5–10 min** | **Rotate the most powerful secret first**: cloud keys, service accounts, database passwords. Revoke the old value, not just add a new one | Wait to "see if anyone used it" |
-| **10–15 min** | Scan the **whole history** for the rest: `./leak scan <repo>`, then `./leak plan secrets-report.json` for the order to rotate them in | Trust that "it was only in one file" |
+| **10–15 min** | Scan the **whole history** for the rest: `./leak scan <repo>`, then `./leak plan secrets-report.json` for the order to rotate them in. Or `./leak respond owner/repo`, which runs snapshot, scan, plan, hunt and report in order and keeps the timeline | Trust that "it was only in one file" |
 | **Then** | Remove copies (owner deletes, or DMCA with every fork) → `./leak hunt` → check logs from first push to rotation → notify | Treat deletion as the fix |
 
 ## Five rules that never change

@@ -4,6 +4,21 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
+## [3.7.0] - 2026-10-28
+
+### Added
+
+- **`leak respond <owner>/<repo>`** runs the first hour of an incident in order, in one incident folder: evidence snapshot, full-history scan, rotation plan, copy hunt and incident report.
+  - Every step is written to `timeline.md` with its UTC time, and its full output to `logs/`.
+  - Rotating, the takedown and telling people stay with you. It says what to do for each one, and `--done rotate` (or `takedown`, `notify`) records the time you finished.
+  - Run it again with `--dir` to continue where it stopped. `--redo hunt` repeats the hunt a week later, as the runbook asks, and `--status` shows where the incident stands.
+  - It only reads, like the steps it runs. The folder gets a `.gitignore` because the evidence holds the leaked code.
+- **Fast pull request scans.**
+  - `leak scan --commits BASE..HEAD` scans only the commits in a range.
+  - The GitHub Action's new `scope: changes` input scans only the commits a pull request or push adds, in seconds on a large repository.
+  - If that range is not in the checkout (a branch's first push, or a shallow clone), the Action scans the full history and says so, so nothing is skipped silently.
+  - `scope: history` stays the default.
+
 ## [3.6.1] - 2026-10-28
 
 ### Added
@@ -286,7 +301,8 @@ Prevention becomes the second half of the kit: not only responding to leaks, but
 - Templates: incident timeline, takedown request, notification messages, post-incident review, executive report (print-ready HTML).
 - Quality: offline bats tests, shellcheck, gitleaks on full history, link and anchor checks in CI, Dependabot for pinned actions, pre-commit hook, contribution guide, issue and pull request templates, security policy.
 
-[Unreleased]: https://github.com/aboutBilal/spillkit/compare/v3.6.1...HEAD
+[Unreleased]: https://github.com/aboutBilal/spillkit/compare/v3.7.0...HEAD
+[3.7.0]: https://github.com/aboutBilal/spillkit/compare/v3.6.1...v3.7.0
 [3.6.1]: https://github.com/aboutBilal/spillkit/compare/v3.6.0...v3.6.1
 [3.6.0]: https://github.com/aboutBilal/spillkit/compare/v3.5.2...v3.6.0
 [3.5.2]: https://github.com/aboutBilal/spillkit/compare/v3.5.1...v3.5.2

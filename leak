@@ -7,13 +7,14 @@
 #   audit [--no-scan] [--json] [path]       grade a repository's secret hygiene, A to F
 #   audit-org [--no-scan] <org> | --dir d   grade every repository; HTML dashboard
 # Respond
+#   respond <owner>/<repo> [--dir d]        run the first hour in order: snapshot, scan, plan, hunt, report
 #   snapshot <owner>/<repo> [dir]           save evidence before the repository is deleted
 #   scan <path> [report.json] [--sarif f]   find secrets in every commit (values redacted)
 #   forks <owner>/<repo>                    list every fork, for the takedown request
 #   hunt [--since date] <owner>/<repo>      check GitHub, GitLab, web archives and code search for copies
 #   commits [--exclude o/r] <sha> ...       find public repositories containing the original commits
 #   plan <secrets-report.json>              rotation checklist from a scan, most dangerous first
-#   rotate <recipe> [--apply step]          rotate a cloud key step by step (a dry run by default)
+#   rotate <recipe> [--apply step]          rotate a cloud key or GitLab token step by step (a dry run by default)
 #   report <hunt-dir> [--scan r.json]       build the leadership report from the results
 #   notify [--format f] <message>           alert Slack, Teams or Discord (URL from LEAK_WEBHOOK_URL)
 # Setup
@@ -25,7 +26,7 @@
 # In an incident: README.md, section "Responding to a leak", or docs/01-runbook.md
 set -euo pipefail
 
-VERSION="3.6.1"
+VERSION="3.7.0"
 
 # Follow symlinks (make install, the container image) to find scripts/ next to the
 # real file. Portable: does not rely on `readlink -f` (missing on older macOS).
@@ -55,6 +56,7 @@ script_for() {
     plan) echo "rotation-plan.sh" ;;
     rotate) echo "rotate.sh" ;;
     demo) echo "demo.sh" ;;
+    respond) echo "respond.sh" ;;
     *) return 1 ;;
   esac
 }

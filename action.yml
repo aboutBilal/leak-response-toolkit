@@ -7,13 +7,17 @@ branding:
 
 inputs:
   mode:
-    description: "scan (secrets in full history), audit (grade A-F), audit-org (grade every repository of `owner`), or hunt (public copies of `repos`)"
+    description: "scan (secrets in Git history; see scope), audit (grade A-F), audit-org (grade every repository of `owner`), or hunt (public copies of `repos`)"
     required: false
     default: scan
   path:
     description: Repository path for scan and audit (check it out with fetch-depth 0)
     required: false
     default: "."
+  scope:
+    description: "For scan: history (default) checks every commit on every branch; changes checks only the commits this pull request or push adds, in seconds on large repositories. With changes, keep a history scan on main or on a schedule"
+    required: false
+    default: history
   repos:
     description: "For hunt: space-separated owner/repo list"
     required: false
@@ -66,6 +70,11 @@ runs:
       env:
         MODE: ${{ inputs.mode }}
         TARGET: ${{ inputs.path }}
+        SCOPE: ${{ inputs.scope }}
+        EVENT: ${{ github.event_name }}
+        PR_BASE: ${{ github.event.pull_request.base.sha }}
+        PR_HEAD: ${{ github.event.pull_request.head.sha }}
+        PUSH_BEFORE: ${{ github.event.before }}
         REPOS: ${{ inputs.repos }}
         SINCE: ${{ inputs.since }}
         OWNER: ${{ inputs.owner }}
@@ -86,7 +95,26 @@ runs:
         case "$MODE" in
           scan)
             sarif_args=(); [[ -n "$SARIF" ]] && sarif_args=(--sarif "$SARIF")
-            "$TOOLKIT/leak" scan "$TARGET" "$out/secrets-report.json" "${sarif_args[@]}" | tee "$out/log.txt"; rc=${PIPESTATUS[0]}
+            # scope: changes scans only what this pull request or push adds, when that range is checked out.
+            range_args=(); where="full history"; in_what="the history of $REPOSITORY"; none="No secrets found in any commit."
+            case "$SCOPE" in
+              history) ;;
+              changes)
+                base=""; head=""
+                case "$EVENT" in
+                  pull_request|pull_request_target) base="$PR_BASE"; head="$PR_HEAD"; what="this pull request" ;;
+                  push) base="$PUSH_BEFORE"; head="$GITHUB_SHA"; what="this push" ;;
+                esac
+                if [[ "$base" =~ ^[0-9a-f]{40}$ && "$base" != 0000000000000000000000000000000000000000 && "$head" =~ ^[0-9a-f]{40}$ ]] \
+                   && git -C "$TARGET" cat-file -e "$base^{commit}" 2>/dev/null && git -C "$TARGET" cat-file -e "$head^{commit}" 2>/dev/null; then
+                  range_args=(--commits "$base..$head"); where="commits in $what"; in_what="the commits $what adds to $REPOSITORY"
+                  none="No secrets in the commits $what adds."
+                else
+                  echo "::notice::scope changes: no commit range to scan for this $EVENT event (a new branch, or a shallow checkout: use fetch-depth 0), so the full history is scanned"
+                fi ;;
+              *) echo "::error::unknown scope: $SCOPE (use history or changes)"; exit 2 ;;
+            esac
+            "$TOOLKIT/leak" scan "$TARGET" "$out/secrets-report.json" "${sarif_args[@]}" "${range_args[@]}" | tee "$out/log.txt"; rc=${PIPESTATUS[0]}
             # Fail closed: anything but "clean" or "found", or a missing report, is a failed scan.
             if [[ "$rc" != 0 && "$rc" != 1 ]] || ! jq -e 'type == "array"' "$out/secrets-report.json" >/dev/null 2>&1; then
               echo "::error::the secret scan failed (exit $rc); results are incomplete"
@@ -94,10 +122,10 @@ runs:
             fi
             report="$out/secrets-report.json"
             findings="$(jq 'length' "$out/secrets-report.json")"
-            summary="$findings secret finding(s) in the history of $REPOSITORY (types: $(jq -r '[.[].RuleID]|unique|join(", ")' "$out/secrets-report.json" 2>/dev/null)). Values are redacted."
+            summary="$findings secret finding(s) in $in_what (types: $(jq -r '[.[].RuleID]|unique|join(", ")' "$out/secrets-report.json" 2>/dev/null)). Values are redacted."
             {
-              echo "## Secret scan (full history)"
-              if [[ "$findings" -eq 0 ]]; then echo "No secrets found in any commit."
+              echo "## Secret scan ($where)"
+              if [[ "$findings" -eq 0 ]]; then echo "$none"
               else
                 echo "**$findings finding(s).** Values are redacted. Rotate each secret first, then clean history."
                 echo; echo "| Type | Findings | Files |"; echo "|---|---|---|"

@@ -26,6 +26,9 @@ One person can hold several roles. Write down who holds which.
 
 ## First hour
 
+> [!TIP]
+> `leak respond <owner>/<repo>` runs the read-only parts of steps 1 to 4 in order (evidence snapshot, history scan, rotation plan, copy hunt) and builds the incident report, in one incident folder with a UTC timeline. It tells you what is yours to do, records the time when you mark it done (`--done rotate`), and continues where it stopped when you run it again. The steps below are what it does, and what to do by hand.
+
 ### 1. Snapshot evidence (5 minutes)
 
 Do this **before** the repo is deleted: once it is gone, you lose the exact contents, the commit times and GitHub's traffic numbers.
