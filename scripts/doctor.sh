@@ -45,7 +45,13 @@ if ((BASH_VERSINFO[0] < 4 || (BASH_VERSINFO[0] == 4 && BASH_VERSINFO[1] < 4))); 
 
 echo "Secret scanner (one of)"
 if command -v gitleaks >/dev/null; then
-  ok "gitleaks" "$(gitleaks version 2>/dev/null)"
+  found="$(gitleaks version 2>/dev/null)"
+  tested="${GITLEAKS_IMAGE#*:}"; tested="${tested%%@*}"; tested="${tested#v}"
+  if [[ "${found#v}" =~ ^[0-9]+(\.[0-9]+)*$ && "$(printf '%s\n' "${found#v}" "$tested" | sort -V | head -n 1)" != "$tested" ]]; then
+    warn "gitleaks" "$found is older than $tested, the version Spillkit is tested with (without gitleaks, leak scan uses the Docker image)"
+  else
+    ok "gitleaks" "$found"
+  fi
 elif command -v docker >/dev/null && docker info >/dev/null 2>&1; then
   ok "docker" "will run the official gitleaks image"
 elif command -v docker >/dev/null; then
